@@ -1,10 +1,10 @@
 import Header from '@/components/layout/Header';
-import Footer from '@/components/layout/Footer.jsx';
-import ServicesHero from '@/components/services/ServicesHero.jsx';
-import ServicesGrid from '@/components/services/ServicesGrid.jsx';
-import PricingSection from '@/components/services/PricingSection.jsx';
-import ProcessSection from '@/components/services/ProcessSection.jsx';
-import FAQSection from '@/components/services/FAQSection.jsx';
+import Footer from '@/components/layout/Footer';
+import ServicesHero from '@/components/services/ServicesHero';
+import ServicesGrid from '@/components/services/ServicesGrid';
+import PricingSection from '@/components/services/PricingSection';
+import ProcessSection from '@/components/services/ProcessSection';
+import FAQSection from '@/components/services/FAQSection';
 
 export const metadata = {
   title: 'Servicios - Luis Granero | Desarrollo Web Personalizado',

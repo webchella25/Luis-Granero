@@ -1,10 +1,10 @@
 import Header from '@/components/layout/Header';
-import HeroSection from '@/components/home/HeroSection.jsx';
-import ServicesPreview from '@/components/home/ServicesPreview.jsx';
-import TechStack from '@/components/home/TechStack.jsx';
-import ProjectsPreview from '@/components/home/ProjectsPreview.jsx';
-import ContactCTA from '@/components/home/ContactCTA.jsx';
-import Footer from '@/components/layout/Footer.jsx';
+import HeroSection from '@/components/home/HeroSection';
+import ServicesPreview from '@/components/home/ServicesPreview';
+import TechStack from '@/components/home/TechStack';
+import ProjectsPreview from '@/components/home/ProjectsPreview';
+import ContactCTA from '@/components/home/ContactCTA';
+import Footer from '@/components/layout/Footer';
 
 export default function Home() {
   return (

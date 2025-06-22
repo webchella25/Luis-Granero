@@ -1,10 +1,10 @@
 import Header from '@/components/layout/Header';
-import Footer from '@/components/layout/Footer.jsx';
-import ContactHero from '@/components/contact/ContactHero.jsx';
-import ContactForm from '@/components/contact/ContactForm.jsx';
-import BudgetCalculator from '@/components/contact/BudgetCalculator.jsx';
-import ContactInfo from '@/components/contact/ContactInfo.jsx';
-import ProcessTimeline from '@/components/contact/ProcessTimeline.jsx';
+import Footer from '@/components/layout/Footer';
+import ContactHero from '@/components/contact/ContactHero';
+import ContactForm from '@/components/contact/ContactForm';
+import BudgetCalculator from '@/components/contact/BudgetCalculator';
+import ContactInfo from '@/components/contact/ContactInfo';
+import ProcessTimeline from '@/components/contact/ProcessTimeline';
 
 export const metadata = {
   title: 'Contacto - Luis Granero | Solicita tu Presupuesto Web',
