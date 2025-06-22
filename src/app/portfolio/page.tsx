@@ -1,9 +1,9 @@
-import Header from '@/components/layout/Header';
-import Footer from '@/components/layout/Footer';
-import PortfolioHero from '@/components/portfolio/PortfolioHero';
-import ProjectsGrid from '@/components/portfolio/ProjectsGrid';
-import TechnologiesUsed from '@/components/portfolio/TechnologiesUsed';
-import ClientTestimonials from '@/components/portfolio/ClientTestimonials';
+import Header from '../../components/layout/Header';
+import Footer from '../../components/layout/Footer';
+import PortfolioHero from '../../components/portfolio/PortfolioHero';
+import ProjectsGrid from '../../components/portfolio/ProjectsGrid';
+import TechnologiesUsed from '../../components/portfolio/TechnologiesUsed';
+import ClientTestimonials from '../../components/portfolio/ClientTestimonials';
 
 export const metadata = {
   title: 'Portfolio - Luis Granero | Casos de Éxito en Desarrollo Web',
