@@ -167,3 +167,48 @@ function BlogCategories() {
             {learningPaths.map((path, index) => (
               <div
                 key={index}
+                className="bg-gray-900/30 backdrop-blur-sm border border-gray-800 rounded-xl p-6 hover:border-cyan-500/30 transition-all duration-300"
+              >
+                <div className="text-center mb-6">
+                  <h3 className="text-xl font-bold text-white mb-2">{path.title}</h3>
+                  <p className="text-gray-400 text-sm mb-4">{path.description}</p>
+                  
+                  <div className="grid grid-cols-2 gap-4 mb-4">
+                    <div className="bg-gray-800/50 rounded-lg p-3">
+                      <div className="text-lg font-bold gradient-text">{path.duration}</div>
+                      <div className="text-xs text-gray-400">Duración</div>
+                    </div>
+                    <div className="bg-gray-800/50 rounded-lg p-3">
+                      <div className="text-lg font-bold gradient-text">{path.articles}</div>
+                      <div className="text-xs text-gray-400">Artículos</div>
+                    </div>
+                  </div>
+                  
+                  <div className="text-sm text-cyan-400 mb-4">
+                    Nivel: {path.difficulty}
+                  </div>
+                </div>
+
+                <div className="space-y-2 mb-6">
+                  <div className="text-xs font-semibold text-white">Temas cubiertos:</div>
+                  {path.topics.map((topic, topicIndex) => (
+                    <div key={topicIndex} className="flex items-center space-x-2">
+                      <span className="text-green-400 text-xs">✓</span>
+                      <span className="text-gray-300 text-xs">{topic}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <button className="w-full py-3 px-4 bg-gradient-to-r from-cyan-400 to-green-400 text-black font-bold rounded-lg hover:shadow-xl transition-all duration-300">
+                  Comenzar ruta
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+export default BlogCategories;
