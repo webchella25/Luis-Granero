@@ -1,48 +1,74 @@
-import type { Metadata } from "next";
-import { Inter, JetBrains_Mono } from "next/font/google";
-import "./globals.css";
+// src/app/layout.js
+import { Inter } from 'next/font/google'
+import './globals.css'
+import SessionWrapper from '@/components/providers/SessionWrapper'
 
-const inter = Inter({ 
-  subsets: ["latin"],
-  variable: "--font-inter",
-});
+const inter = Inter({ subsets: ['latin'] })
 
-const jetbrainsMono = JetBrains_Mono({
-  subsets: ["latin"],
-  variable: "--font-jetbrains-mono",
-});
-
-export const metadata: Metadata = {
-  title: "Luis Granero - Desarrollador Web Freelance",
-  description: "Desarrollador web especializado en React, Next.js y soluciones personalizadas. Creando aplicaciones web modernas y de alto rendimiento.",
-  keywords: "desarrollador web, freelance, React, Next.js, TypeScript, desarrollo personalizado",
-  authors: [{ name: "Luis Granero" }],
-  creator: "Luis Granero",
+export const metadata = {
+  title: 'Luis Granero - Desarrollador Web Freelance',
+  description: 'Desarrollador web especializado en React, Next.js y soluciones personalizadas',
+  keywords: ['desarrollador web', 'freelance', 'React', 'Next.js', 'TypeScript', 'frontend', 'backend'],
+  authors: [{ name: 'Luis Granero' }],
+  creator: 'Luis Granero',
+  publisher: 'Luis Granero',
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
+  metadataBase: new URL('https://www.luisgranero.com'),
+  alternates: {
+    canonical: '/',
+  },
   openGraph: {
-    type: "website",
-    locale: "es_ES",
-    url: "https://luisgranero.com",
-    title: "Luis Granero - Desarrollador Web Freelance",
-    description: "Desarrollador web especializado en React, Next.js y soluciones personalizadas.",
-    siteName: "Luis Granero",
+    title: 'Luis Granero - Desarrollador Web Freelance',
+    description: 'Desarrollador web especializado en React, Next.js y soluciones personalizadas',
+    url: 'https://www.luisgranero.com',
+    siteName: 'Luis Granero',
+    locale: 'es_ES',
+    type: 'website',
   },
   twitter: {
-    card: "summary_large_image",
-    title: "Luis Granero - Desarrollador Web Freelance",
-    description: "Desarrollador web especializado en React, Next.js y soluciones personalizadas.",
+    card: 'summary_large_image',
+    title: 'Luis Granero - Desarrollador Web Freelance',
+    description: 'Desarrollador web especializado en React, Next.js y soluciones personalizadas',
   },
-};
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+}
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+}
+
+export default function RootLayout({ children }) {
   return (
-    <html lang="es" className="dark">
-      <body className={`${inter.variable} ${jetbrainsMono.variable} font-sans bg-dark-800 text-white antialiased`}>
-        {children}
+    <html lang="es" className="scroll-smooth">
+      <head>
+        <link rel="icon" href="/favicon.ico" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+        <link rel="manifest" href="/site.webmanifest" />
+        <meta name="theme-color" content="#000000" />
+      </head>
+      <body className={`${inter.className} bg-gray-900 text-white antialiased`}>
+        <SessionWrapper>
+          {children}
+        </SessionWrapper>
       </body>
     </html>
-  );
+  )
 }
