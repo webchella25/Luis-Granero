@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^5.1.1",
+    "autoprefixer": "^10.4.21",
     "emailjs-com": "^3.2.0",
     "framer-motion": "^12.18.1",
     "lucide-react": "^0.522.0",
@@ -17,21 +18,20 @@
     "mongoose": "^8.16.0",
     "next": "15.3.4",
     "next-auth": "^4.24.11",
+    "postcss": "^8.5.6",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-hook-form": "^7.58.1",
-    "zod": "^3.25.67",
     "tailwindcss": "^3.4.0",
-    "postcss": "^8.5.6",
-    "autoprefixer": "^10.4.21"
+    "zod": "^3.25.67"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
-    "@types/node": "^20",
-    "@types/react": "^19",
+    "@types/node": "^20.19.1",
+    "@types/react": "^19.1.8",
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "15.3.4",
-    "typescript": "^5"
+    "typescript": "^5.8.3"
   }
 }
