@@ -1,38 +1,48 @@
-// src/app/layout.js
+// src/app/layout.tsx - Versión corregida
+import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
-import SessionWrapper from '@/components/providers/SessionWrapper'
+import { SessionProvider } from '@/components/providers/SessionProvider'
 
 const inter = Inter({ subsets: ['latin'] })
 
-export const metadata = {
-  title: 'Luis Granero - Desarrollador Web Freelance',
-  description: 'Desarrollador web especializado en React, Next.js y soluciones personalizadas',
-  keywords: ['desarrollador web', 'freelance', 'React', 'Next.js', 'TypeScript', 'frontend', 'backend'],
+export const metadata: Metadata = {
+  title: {
+    default: 'Luis Granero - Desarrollador Web Freelance',
+    template: '%s | Luis Granero'
+  },
+  description: 'Desarrollador web freelance especializado en React, Next.js y soluciones personalizadas. Más de 10 años creando aplicaciones web de alto rendimiento.',
+  keywords: [
+    'desarrollador web freelance',
+    'react developer',
+    'nextjs developer',
+    'desarrollo web personalizado',
+    'aplicaciones web',
+    'ecommerce personalizado'
+  ],
   authors: [{ name: 'Luis Granero' }],
   creator: 'Luis Granero',
-  publisher: 'Luis Granero',
-  formatDetection: {
-    email: false,
-    address: false,
-    telephone: false,
-  },
-  metadataBase: new URL('https://www.luisgranero.com'),
-  alternates: {
-    canonical: '/',
-  },
   openGraph: {
-    title: 'Luis Granero - Desarrollador Web Freelance',
-    description: 'Desarrollador web especializado en React, Next.js y soluciones personalizadas',
-    url: 'https://www.luisgranero.com',
-    siteName: 'Luis Granero',
-    locale: 'es_ES',
     type: 'website',
+    locale: 'es_ES',
+    url: 'https://luisgranero.com',
+    title: 'Luis Granero - Desarrollador Web Freelance',
+    description: 'Especializado en React, Next.js y soluciones web personalizadas',
+    siteName: 'Luis Granero',
+    images: [
+      {
+        url: '/images/og-image.jpg',
+        width: 1200,
+        height: 630,
+        alt: 'Luis Granero - Desarrollador Web Freelance'
+      }
+    ]
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Luis Granero - Desarrollador Web Freelance',
-    description: 'Desarrollador web especializado en React, Next.js y soluciones personalizadas',
+    description: 'Especializado en React, Next.js y soluciones web personalizadas',
+    creator: '@luisgranero'
   },
   robots: {
     index: true,
@@ -47,28 +57,26 @@ export const metadata = {
   },
 }
 
-export const viewport = {
-  width: 'device-width',
-  initialScale: 1,
-  maximumScale: 1,
+interface RootLayoutProps {
+  children: React.ReactNode
 }
 
-export default function RootLayout({ children }) {
+export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html lang="es" className="scroll-smooth">
       <head>
         <link rel="icon" href="/favicon.ico" />
-        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
-        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
-        <link rel="manifest" href="/site.webmanifest" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="theme-color" content="#000000" />
       </head>
-      <body className={`${inter.className} bg-gray-900 text-white antialiased`}>
-        <SessionWrapper>
-          {children}
-        </SessionWrapper>
+      <body className={`${inter.className} antialiased`}>
+        <SessionProvider>
+          <div className="min-h-screen bg-black text-white">
+            {children}
+          </div>
+        </SessionProvider>
       </body>
     </html>
   )
 }
+  
