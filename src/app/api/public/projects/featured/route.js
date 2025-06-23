@@ -1,4 +1,4 @@
-// src/app/api/public/projects/featured/route.js
+// src/app/api/public/projects/featured/route.js - Actualizar
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import Project from '@/models/Project';
@@ -7,14 +7,15 @@ export async function GET() {
   try {
     await dbConnect();
     
-    // Obtener 3 proyectos destacados y publicados
+    // Obtener proyectos destacados y publicados
     const projects = await Project.find({ 
       isPublished: true,
       isFeatured: true 
     })
-    .select('title description technologies metrics images slug status')
+    .select('title description technologies metrics images slug status category year')
     .sort({ createdAt: -1 })
-    .limit(3);
+    .limit(3)
+    .lean();
     
     return NextResponse.json(projects, {
       headers: {
@@ -29,7 +30,7 @@ export async function GET() {
     return NextResponse.json([], { 
       status: 200,
       headers: {
-        'Cache-Control': 'public, s-maxage=300', // Cache más corto para errores
+        'Cache-Control': 'public, s-maxage=300',
       }
     });
   }

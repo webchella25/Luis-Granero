@@ -1,4 +1,4 @@
-// src/app/page.tsx - Versión corregida
+// src/app/page.tsx - Actualizado para usar servicios del admin
 import { Suspense } from 'react';
 import Header from '../components/layout/Header';
 import Footer from '../components/layout/Footer';
@@ -14,7 +14,7 @@ async function getHomepageData() {
   try {
     const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
     const res = await fetch(`${baseUrl}/api/public/homepage`, {
-      cache: 'no-store', // Por ahora sin cache para desarrollo
+      cache: 'no-store',
     });
     
     if (!res.ok) {
@@ -24,17 +24,35 @@ async function getHomepageData() {
     return res.json();
   } catch (error) {
     console.error('Error:', error);
-    // Fallback a datos estáticos si hay error
     return null;
   }
 }
 
-// Función para obtener proyectos destacados
+// NUEVA: Función para obtener servicios del admin
+async function getServicesData() {
+  try {
+    const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+    const res = await fetch(`${baseUrl}/api/public/services`, {
+      cache: 'no-store',
+    });
+    
+    if (!res.ok) {
+      throw new Error('Error fetching services data');
+    }
+    
+    const data = await res.json();
+    return data.services || [];
+  } catch (error) {
+    console.error('Error fetching services:', error);
+    return [];
+  }
+}
+
 async function getFeaturedProjects() {
   try {
     const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
     const res = await fetch(`${baseUrl}/api/public/projects/featured`, {
-      cache: 'no-store', // Por ahora sin cache para desarrollo
+      cache: 'no-store',
     });
     
     return res.ok ? res.json() : [];
@@ -45,13 +63,14 @@ async function getFeaturedProjects() {
 }
 
 export default async function Home() {
-  // Por ahora obtengamos los datos de forma síncrona para evitar errores
   let homepageData = null;
+  let servicesData = [];
   let featuredProjects = [];
 
   try {
-    [homepageData, featuredProjects] = await Promise.all([
+    [homepageData, servicesData, featuredProjects] = await Promise.all([
       getHomepageData(),
+      getServicesData(), // ← NUEVA llamada para servicios
       getFeaturedProjects()
     ]);
   } catch (error) {
@@ -67,7 +86,7 @@ export default async function Home() {
       </Suspense>
       
       <Suspense fallback={<SectionLoading />}>
-        <ServicesPreview data={homepageData?.content?.services} />
+        <ServicesPreview data={servicesData} />
       </Suspense>
       
       <Suspense fallback={<SectionLoading />}>

@@ -1,3 +1,4 @@
+// src/app/portfolio/page.tsx
 import Header from '../../components/layout/Header';
 import Footer from '../../components/layout/Footer';
 import PortfolioHero from '../../components/portfolio/PortfolioHero';
@@ -5,17 +6,42 @@ import ProjectsGrid from '../../components/portfolio/ProjectsGrid';
 import TechnologiesUsed from '../../components/portfolio/TechnologiesUsed';
 import ClientTestimonials from '../../components/portfolio/ClientTestimonials';
 
-export const metadata = {
-  title: 'Portfolio - Luis Granero | Casos de Éxito en Desarrollo Web',
-  description: 'Explora mis proyectos de desarrollo web: e-commerce, aplicaciones personalizadas, dashboards y más. Casos de estudio con código y resultados reales.',
-};
+// Función para obtener proyectos
+async function getPortfolioData() {
+  try {
+    const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+    const res = await fetch(`${baseUrl}/api/public/projects`, {
+      cache: 'no-store',
+    });
+    
+    if (!res.ok) {
+      throw new Error('Error fetching portfolio data');
+    }
+    
+    return res.json();
+  } catch (error) {
+    console.error('Error:', error);
+    return [];
+  }
+}
 
-export default function PortfolioPage() {
+export async function generateMetadata() {
+  const projects = await getPortfolioData();
+  
+  return {
+    title: 'Portfolio - Luis Granero | Casos de Éxito en Desarrollo Web',
+    description: `Explora mis ${projects.length} proyectos de desarrollo web: e-commerce, aplicaciones personalizadas, dashboards y más. Casos de estudio con código y resultados reales.`,
+  };
+}
+
+export default async function PortfolioPage() {
+  const projects = await getPortfolioData();
+
   return (
     <main className="min-h-screen bg-black">
       <Header />
-      <PortfolioHero />
-      <ProjectsGrid />
+      <PortfolioHero projectCount={projects.length} />
+      <ProjectsGrid projects={projects} />
       <TechnologiesUsed />
       <ClientTestimonials />
       <Footer />
