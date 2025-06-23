@@ -1,6 +1,7 @@
-function PortfolioHero() {
+// src/components/portfolio/PortfolioHero.jsx - Versión corregida
+function PortfolioHero({ projectCount = 50 }) {
   const stats = [
-    { number: "50+", label: "Proyectos completados", icon: "🚀" },
+    { number: `${projectCount}+`, label: "Proyectos completados", icon: "🚀" },
     { number: "98%", label: "Satisfacción cliente", icon: "⭐" },
     { number: "300%", label: "ROI promedio", icon: "📈" },
     { number: "1.2s", label: "Tiempo de carga medio", icon: "⚡" }
@@ -66,38 +67,8 @@ function PortfolioHero() {
                   <span className="text-cyan-400 text-xl mt-1">⚡</span>
                   <div>
                     <h3 className="font-semibold text-white">Performance excepcional</h3>
-                    <p className="text-gray-400">Lighthouse scores 90+ y Core Web Vitals optimizados</p>
+                    <p className="text-gray-400">Velocidad de carga sub-2 segundos y puntuaciones Lighthouse 90+</p>
                   </div>
-                </div>
-                <div className="flex items-start space-x-3">
-                  <span className="text-purple-400 text-xl mt-1">🔧</span>
-                  <div>
-                    <h3 className="font-semibold text-white">Código limpio y escalable</h3>
-                    <p className="text-gray-400">Arquitectura pensada para crecer y facilitar mantenimiento</p>
-                  </div>
-                </div>
-                <div className="flex items-start space-x-3">
-                  <span className="text-orange-400 text-xl mt-1">📱</span>
-                  <div>
-                    <h3 className="font-semibold text-white">Mobile-first design</h3>
-                    <p className="text-gray-400">Experiencia perfecta en cualquier dispositivo</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-gradient-to-br from-gray-900/50 to-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-2xl p-8">
-              <h3 className="text-2xl font-bold gradient-text mb-6 text-center">
-                Lo que incluye cada caso de estudio
-              </h3>
-              <div className="space-y-3">
-                <div className="flex items-center space-x-3">
-                  <span className="text-green-400">✓</span>
-                  <span className="text-gray-300">Descripción del desafío</span>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <span className="text-green-400">✓</span>
-                  <span className="text-gray-300">Solución técnica implementada</span>
                 </div>
                 <div className="flex items-center space-x-3">
                   <span className="text-green-400">✓</span>

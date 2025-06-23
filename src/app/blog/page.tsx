@@ -1,3 +1,4 @@
+// src/app/blog/page.tsx
 import Header from '../../components/layout/Header';
 import Footer from '../../components/layout/Footer';
 import BlogHero from '../../components/blog/BlogHero';
@@ -6,19 +7,81 @@ import BlogGrid from '../../components/blog/BlogGrid';
 import BlogCategories from '../../components/blog/BlogCategories';
 import NewsletterSignup from '../../components/blog/NewsletterSignup';
 
-export const metadata = {
-  title: 'Blog - Luis Granero | Tutoriales y Artículos de Desarrollo Web',
-  description: 'Artículos técnicos, tutoriales de React/Next.js, mejores prácticas de desarrollo web y tendencias tecnológicas.',
-};
+// Función para obtener datos del blog
+async function getBlogData(searchParams = {}) {
+  try {
+    const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+    const params = new URLSearchParams();
+    
+    if (searchParams.category) params.append('category', searchParams.category);
+    if (searchParams.page) params.append('page', searchParams.page.toString());
+    
+    const res = await fetch(`${baseUrl}/api/public/blog?${params}`, {
+      cache: 'no-store',
+    });
+    
+    if (!res.ok) {
+      throw new Error('Error fetching blog data');
+    }
+    
+    return res.json();
+  } catch (error) {
+    console.error('Error:', error);
+    return {
+      posts: [],
+      pagination: { current: 1, total: 1, hasNext: false, hasPrev: false },
+      categories: [],
+      total: 0
+    };
+  }
+}
 
-export default function BlogPage() {
+// Función para obtener post destacado
+async function getFeaturedPost() {
+  try {
+    const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+    const res = await fetch(`${baseUrl}/api/public/blog/featured`, {
+      cache: 'no-store',
+    });
+    
+    if (!res.ok) {
+      throw new Error('Error fetching featured post');
+    }
+    
+    return res.json();
+  } catch (error) {
+    console.error('Error:', error);
+    return null;
+  }
+}
+
+export async function generateMetadata({ searchParams }) {
+  const blogData = await getBlogData(searchParams);
+  
+  return {
+    title: `Blog - Luis Granero | ${blogData.total} Artículos de Desarrollo Web`,
+    description: 'Artículos técnicos, tutoriales de React/Next.js, mejores prácticas de desarrollo web y tendencias tecnológicas.',
+  };
+}
+
+export default async function BlogPage({ searchParams }) {
+  const [blogData, featuredPost] = await Promise.all([
+    getBlogData(searchParams),
+    getFeaturedPost()
+  ]);
+
   return (
     <main className="min-h-screen bg-black">
       <Header />
-      <BlogHero />
-      <FeaturedPost />
-      <BlogGrid />
-      <BlogCategories />
+      <BlogHero totalPosts={blogData.total} />
+      {featuredPost && <FeaturedPost post={featuredPost} />}
+      <BlogGrid 
+        posts={blogData.posts} 
+        categories={blogData.categories}
+        pagination={blogData.pagination}
+        currentCategory={searchParams.category}
+      />
+      <BlogCategories categories={blogData.categories} />
       <NewsletterSignup />
       <Footer />
     </main>

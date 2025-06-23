@@ -1,4 +1,4 @@
-// src/app/portfolio/page.tsx
+// src/app/portfolio/page.tsx - Versión final
 import Header from '../../components/layout/Header';
 import Footer from '../../components/layout/Footer';
 import PortfolioHero from '../../components/portfolio/PortfolioHero';
@@ -25,6 +25,25 @@ async function getPortfolioData() {
   }
 }
 
+// Función para obtener configuración del portfolio
+async function getPortfolioSettings() {
+  try {
+    const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+    const res = await fetch(`${baseUrl}/api/public/portfolio/settings`, {
+      cache: 'no-store',
+    });
+    
+    if (!res.ok) {
+      throw new Error('Error fetching portfolio settings');
+    }
+    
+    return res.json();
+  } catch (error) {
+    console.error('Error:', error);
+    return { content: {} };
+  }
+}
+
 export async function generateMetadata() {
   const projects = await getPortfolioData();
   
@@ -35,12 +54,18 @@ export async function generateMetadata() {
 }
 
 export default async function PortfolioPage() {
-  const projects = await getPortfolioData();
+  const [projects, portfolioSettings] = await Promise.all([
+    getPortfolioData(),
+    getPortfolioSettings()
+  ]);
 
   return (
     <main className="min-h-screen bg-black">
       <Header />
-      <PortfolioHero projectCount={projects.length} />
+      <PortfolioHero 
+        data={portfolioSettings.content} 
+        projectCount={projects.length} 
+      />
       <ProjectsGrid projects={projects} />
       <TechnologiesUsed />
       <ClientTestimonials />
