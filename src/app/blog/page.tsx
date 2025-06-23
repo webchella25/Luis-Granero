@@ -1,4 +1,4 @@
-// src/app/blog/page.tsx
+// src/app/blog/page.tsx - Versión corregida
 import Header from '../../components/layout/Header';
 import Footer from '../../components/layout/Footer';
 import BlogHero from '../../components/blog/BlogHero';
@@ -55,8 +55,14 @@ async function getFeaturedPost() {
   }
 }
 
-export async function generateMetadata({ searchParams }) {
-  const blogData = await getBlogData(searchParams);
+// Cambiar interface para searchParams
+interface BlogPageProps {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+}
+
+export async function generateMetadata({ searchParams }: BlogPageProps) {
+  const resolvedSearchParams = await searchParams;
+  const blogData = await getBlogData(resolvedSearchParams);
   
   return {
     title: `Blog - Luis Granero | ${blogData.total} Artículos de Desarrollo Web`,
@@ -64,9 +70,12 @@ export async function generateMetadata({ searchParams }) {
   };
 }
 
-export default async function BlogPage({ searchParams }) {
+export default async function BlogPage({ searchParams }: BlogPageProps) {
+  // ✅ AWAIT searchParams antes de usar
+  const resolvedSearchParams = await searchParams;
+  
   const [blogData, featuredPost] = await Promise.all([
-    getBlogData(searchParams),
+    getBlogData(resolvedSearchParams),
     getFeaturedPost()
   ]);
 
@@ -79,7 +88,7 @@ export default async function BlogPage({ searchParams }) {
         posts={blogData.posts} 
         categories={blogData.categories}
         pagination={blogData.pagination}
-        currentCategory={searchParams.category}
+        currentCategory={resolvedSearchParams.category as string}
       />
       <BlogCategories categories={blogData.categories} />
       <NewsletterSignup />

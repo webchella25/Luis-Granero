@@ -2,8 +2,13 @@
 'use client'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { PlusIcon, PencilIcon, TrashIcon, EyeIcon, CalendarIcon } from '@heroicons/react/24/outline'
-
+import { 
+  PlusIcon, 
+  PencilIcon, 
+  TrashIcon, 
+  EyeIcon,
+  AcademicCapIcon 
+} from '@heroicons/react/24/outline'
 export default function BlogManager() {
   const [posts, setPosts] = useState([])
   const [loading, setLoading] = useState(true)
@@ -72,18 +77,34 @@ export default function BlogManager() {
   return (
     <div>
       <div className="mb-8 flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-white">Gestión de Blog</h1>
-          <p className="text-gray-400">Administra tus artículos y contenido técnico</p>
-        </div>
-        <Link
-          href="/admin/blog/new"
-          className="bg-cyan-600 hover:bg-cyan-700 text-white px-4 py-2 rounded-md flex items-center space-x-2"
-        >
-          <PlusIcon className="w-4 h-4" />
-          <span>Nuevo Artículo</span>
-        </Link>
-      </div>
+  <div>
+    <h1 className="text-2xl font-bold text-white">Gestión de Blog</h1>
+    <p className="text-gray-400">Administra tus artículos y contenido técnico</p>
+  </div>
+  <div className="flex space-x-3">
+    <Link
+      href="/admin/blog/learning-paths"
+      className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md flex items-center space-x-2"
+    >
+      <AcademicCapIcon className="w-4 h-4" />
+      <span>Rutas</span>
+    </Link>
+    <Link
+      href="/admin/blog/categories"
+      className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md flex items-center space-x-2"
+    >
+      <span>🏷️</span>
+      <span>Categorías</span>
+    </Link>
+    <Link
+      href="/admin/blog/new"
+      className="bg-cyan-600 hover:bg-cyan-700 text-white px-4 py-2 rounded-md flex items-center space-x-2"
+    >
+      <PlusIcon className="w-4 h-4" />
+      <span>Nuevo Artículo</span>
+    </Link>
+  </div>
+</div>
 
       {/* Filtros y búsqueda */}
       <div className="mb-6 flex flex-col sm:flex-row gap-4">

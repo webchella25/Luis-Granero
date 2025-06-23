@@ -1,4 +1,4 @@
-// src/app/portfolio/page.tsx - Versión final
+// src/app/portfolio/page.tsx - Versión completa corregida
 import Header from '../../components/layout/Header';
 import Footer from '../../components/layout/Footer';
 import PortfolioHero from '../../components/portfolio/PortfolioHero';
@@ -44,7 +44,15 @@ async function getPortfolioSettings() {
   }
 }
 
-export async function generateMetadata() {
+// Interface para props si necesitas searchParams en el futuro
+interface PortfolioPageProps {
+  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>
+}
+
+export async function generateMetadata({ searchParams }: PortfolioPageProps = {}) {
+  // Si necesitas searchParams en el futuro:
+  // const resolvedSearchParams = searchParams ? await searchParams : {};
+  
   const projects = await getPortfolioData();
   
   return {
@@ -53,7 +61,10 @@ export async function generateMetadata() {
   };
 }
 
-export default async function PortfolioPage() {
+export default async function PortfolioPage({ searchParams }: PortfolioPageProps = {}) {
+  // Si en el futuro necesitas usar searchParams (para filtros por ejemplo):
+  // const resolvedSearchParams = searchParams ? await searchParams : {};
+  
   const [projects, portfolioSettings] = await Promise.all([
     getPortfolioData(),
     getPortfolioSettings()
