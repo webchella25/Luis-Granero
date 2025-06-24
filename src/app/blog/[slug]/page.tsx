@@ -1,110 +1,85 @@
 // src/app/blog/[slug]/page.tsx
-import { notFound } from 'next/navigation';
-import Header from '../../../components/layout/Header';
-import Footer from '../../../components/layout/Footer';
-import BlogPost from '../../../components/blog/BlogPost';
-import RelatedPosts from '../../../components/blog/RelatedPosts';
+import { notFound } from 'next/navigation'
+import Header from '../../../components/layout/Header'
+import Footer from '../../../components/layout/Footer'
 
-// Función para obtener un post por slug
-async function getPostBySlug(slug: string) {
+interface PageProps {
+  params: Promise<{ slug: string }>
+}
+
+// Función para obtener el post
+async function getPost(slug: string) {
   try {
-    const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
-    const res = await fetch(`${baseUrl}/api/public/blog/${slug}`, {
-      cache: 'no-store',
-    });
+    const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000'
+    const response = await fetch(`${baseUrl}/api/public/blog/${slug}`, {
+      cache: 'no-store'
+    })
     
-    if (!res.ok) {
-      return null;
+    if (!response.ok) {
+      return null
     }
     
-    return res.json();
+    const data = await response.json()
+    return data.post
   } catch (error) {
-    console.error('Error fetching post:', error);
-    return null;
+    console.error('Error fetching post:', error)
+    return null
   }
 }
 
-// Función para obtener posts relacionados
-async function getRelatedPosts(category: string, currentSlug: string) {
-  try {
-    const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
-    const res = await fetch(`${baseUrl}/api/public/blog?category=${category}&limit=3`, {
-      cache: 'no-store',
-    });
-    
-    if (!res.ok) {
-      return [];
-    }
-    
-    const data = await res.json();
-    // Filtrar el post actual
-    return data.posts.filter((post: any) => post.slug !== currentSlug);
-  } catch (error) {
-    console.error('Error fetching related posts:', error);
-    return [];
-  }
-}
-
-export async function generateMetadata({ params }: { params: { slug: string } }) {
-  const post = await getPostBySlug(params.slug);
+// Metadata dinámica
+export async function generateMetadata({ params }: PageProps) {
+  const { slug } = await params
+  const post = await getPost(slug)
   
   if (!post) {
     return {
-      title: 'Artículo no encontrado - Luis Granero Blog',
-    };
+      title: 'Post no encontrado - Luis Granero',
+      description: 'El artículo que buscas no existe.'
+    }
   }
-  
+
   return {
     title: `${post.title} - Luis Granero Blog`,
     description: post.excerpt || post.description,
-    keywords: post.tags?.join(', '),
-    openGraph: {
-      title: post.title,
-      description: post.excerpt,
-      type: 'article',
-      publishedTime: post.publishDate,
-      authors: ['Luis Granero'],
-      tags: post.tags,
-    },
-  };
+  }
 }
 
-export default async function BlogPostPage({ params }: { params: { slug: string } }) {
-  const post = await getPostBySlug(params.slug);
-  
+// Componente principal
+export default async function BlogPostPage({ params }: PageProps) {
+  const { slug } = await params
+  const post = await getPost(slug)
+
   if (!post) {
-    notFound();
+    notFound()
   }
-  
-  const relatedPosts = await getRelatedPosts(post.category, post.slug);
 
   return (
     <main className="min-h-screen bg-black">
       <Header />
-      <BlogPost post={post} />
-      <RelatedPosts posts={relatedPosts} currentCategory={post.category} />
+      <div className="py-20">
+        <div className="container mx-auto px-4">
+          <h1 className="text-4xl font-bold text-white mb-8">{post.title}</h1>
+          <div className="prose prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: post.content }} />
+        </div>
+      </div>
       <Footer />
     </main>
-  );
+  )
 }
 
-// Generar páginas estáticas para posts existentes
+// Generar rutas estáticas
 export async function generateStaticParams() {
   try {
-    const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
-    const res = await fetch(`${baseUrl}/api/public/blog?limit=100`);
+    const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000'
+    const response = await fetch(`${baseUrl}/api/public/blog`)
+    const data = await response.json()
     
-    if (!res.ok) {
-      return [];
-    }
-    
-    const data = await res.json();
-    
-    return data.posts.map((post: any) => ({
+    return data.posts?.map((post: any) => ({
       slug: post.slug,
-    }));
+    })) || []
   } catch (error) {
-    console.error('Error generating static params:', error);
-    return [];
+    console.error('Error generating static params:', error)
+    return []
   }
 }
