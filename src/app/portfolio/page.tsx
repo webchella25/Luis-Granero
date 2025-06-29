@@ -1,4 +1,4 @@
-// src/app/portfolio/page.tsx - Versión corregida
+// src/app/portfolio/page.tsx - Versión corregida para Next.js 15
 import Header from '../../components/layout/Header';
 import Footer from '../../components/layout/Footer';
 import PortfolioHero from '../../components/portfolio/PortfolioHero';
@@ -44,18 +44,14 @@ async function getPortfolioSettings() {
   }
 }
 
-// Definir PageProps correctamente según Next.js 14
-interface PageProps {
-  params?: { [key: string]: string | string[] }
-  searchParams?: { [key: string]: string | string[] | undefined }
+// ✅ Interface corregida para Next.js 15
+interface PortfolioPageProps {
+  params: Promise<{ [key: string]: string | string[] }>
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }
 
-// Corregir la interfaz para que extienda PageProps
-interface PortfolioPageProps extends PageProps {
-  // Puedes añadir propiedades específicas aquí si es necesario
-}
-
-export async function generateMetadata(props: PortfolioPageProps) {
+export async function generateMetadata({ searchParams }: PortfolioPageProps) {
+  const resolvedSearchParams = await searchParams;
   const projects = await getPortfolioData();
   
   return {
@@ -85,7 +81,10 @@ export async function generateMetadata(props: PortfolioPageProps) {
   };
 }
 
-export default async function PortfolioPage(props: PortfolioPageProps) {
+export default async function PortfolioPage({ searchParams }: PortfolioPageProps) {
+  // ✅ Await searchParams
+  const resolvedSearchParams = await searchParams;
+  
   const [projects, portfolioSettings] = await Promise.all([
     getPortfolioData(),
     getPortfolioSettings()

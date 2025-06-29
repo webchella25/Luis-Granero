@@ -1,4 +1,4 @@
-// src/app/blog/page.tsx - Versión corregida
+// src/app/blog/page.tsx - Versión corregida para Next.js 15
 import Header from '../../components/layout/Header';
 import Footer from '../../components/layout/Footer';
 import BlogHero from '../../components/blog/BlogHero';
@@ -55,8 +55,9 @@ async function getFeaturedPost() {
   }
 }
 
-// Cambiar interface para searchParams
+// ✅ Interface corregida para Next.js 15
 interface BlogPageProps {
+  params: Promise<{ [key: string]: string | string[] }>
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }
 
