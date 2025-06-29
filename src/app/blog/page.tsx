@@ -1,4 +1,4 @@
-// src/app/blog/page.tsx - Versión corregida para Next.js 15
+// src/app/blog/page.tsx - Versión corregida
 import Header from '../../components/layout/Header';
 import Footer from '../../components/layout/Footer';
 import BlogHero from '../../components/blog/BlogHero';
@@ -7,14 +7,19 @@ import BlogGrid from '../../components/blog/BlogGrid';
 import BlogCategories from '../../components/blog/BlogCategories';
 import NewsletterSignup from '../../components/blog/NewsletterSignup';
 
-// Función para obtener datos del blog
-async function getBlogData(searchParams = {}) {
+// ✅ Función corregida con tipos explícitos
+async function getBlogData(searchParams: Record<string, any> = {}) {
   try {
     const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
     const params = new URLSearchParams();
     
-    if (searchParams.category) params.append('category', searchParams.category);
-    if (searchParams.page) params.append('page', searchParams.page.toString());
+    // ✅ Verificar que las propiedades existan antes de acceder
+    if (searchParams?.category && typeof searchParams.category === 'string') {
+      params.append('category', searchParams.category);
+    }
+    if (searchParams?.page) {
+      params.append('page', searchParams.page.toString());
+    }
     
     const res = await fetch(`${baseUrl}/api/public/blog?${params}`, {
       cache: 'no-store',
@@ -68,6 +73,19 @@ export async function generateMetadata({ searchParams }: BlogPageProps) {
   return {
     title: `Blog - Luis Granero | ${blogData.total} Artículos de Desarrollo Web`,
     description: 'Artículos técnicos, tutoriales de React/Next.js, mejores prácticas de desarrollo web y tendencias tecnológicas.',
+    keywords: [
+      'blog desarrollo web',
+      'tutoriales react',
+      'next.js guías',
+      'javascript avanzado',
+      'performance web',
+      'seo técnico'
+    ],
+    openGraph: {
+      title: 'Blog de Desarrollo Web - Luis Granero',
+      description: `${blogData.total} artículos técnicos sobre React, Next.js y desarrollo web moderno`,
+      type: 'website'
+    }
   };
 }
 
@@ -89,7 +107,7 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
         posts={blogData.posts} 
         categories={blogData.categories}
         pagination={blogData.pagination}
-        currentCategory={resolvedSearchParams.category as string}
+        currentCategory={resolvedSearchParams?.category as string}
       />
       <BlogCategories categories={blogData.categories} />
       <NewsletterSignup />
