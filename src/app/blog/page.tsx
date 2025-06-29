@@ -109,7 +109,7 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
         pagination={blogData.pagination}
         currentCategory={resolvedSearchParams?.category as string}
       />
-      <BlogCategories categories={blogData.categories} />
+      <BlogCategories />
       <NewsletterSignup />
       <Footer />
     </main>

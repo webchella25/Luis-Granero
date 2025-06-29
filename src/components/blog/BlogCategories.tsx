@@ -1,5 +1,36 @@
-function BlogCategories() {
-  const categories = [
+// src/components/blog/BlogCategories.tsx
+'use client';
+
+interface CategoryData {
+  name: string;
+  description: string;
+  icon: string;
+  color: string;
+  posts: number;
+  trending: boolean;
+  topics: string[];
+}
+
+interface LearningPath {
+  title: string;
+  description: string;
+  duration: string;
+  articles: number;
+  difficulty: string;
+  topics: string[];
+}
+
+interface Props {
+  categories?: string[];
+  data?: {
+    categories?: CategoryData[];
+    learningPaths?: LearningPath[];
+  };
+}
+
+export default function BlogCategories({ categories = [], data }: Props) {
+  // Datos por defecto
+  const defaultCategories: CategoryData[] = [
     {
       name: "React & Hooks",
       description: "Tutoriales avanzados sobre React 18+, custom hooks, patterns y optimizaciones",
@@ -56,7 +87,7 @@ function BlogCategories() {
     }
   ];
 
-  const learningPaths = [
+  const defaultLearningPaths: LearningPath[] = [
     {
       title: "React Developer Path",
       description: "De principiante a experto en React",
@@ -83,9 +114,14 @@ function BlogCategories() {
     }
   ];
 
+  // Usar datos del prop o fallback
+  const displayCategories = data?.categories || defaultCategories;
+  const learningPaths = data?.learningPaths || defaultLearningPaths;
+
   return (
     <section className="py-20 bg-gray-950">
       <div className="container mx-auto px-4">
+        
         {/* Categories section */}
         <div className="mb-20">
           <div className="text-center mb-12">
@@ -98,7 +134,7 @@ function BlogCategories() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {categories.map((category, index) => (
+            {displayCategories.map((category, index) => (
               <div
                 key={index}
                 className="group bg-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-xl p-6 hover:border-cyan-500/50 transition-all duration-300 hover:transform hover:scale-105 cursor-pointer"
@@ -114,7 +150,7 @@ function BlogCategories() {
                       <div className="flex items-center space-x-2">
                         <span className="text-sm text-gray-400">{category.posts} artículos</span>
                         {category.trending && (
-                          <span className="text-xs bg-red-500/20 text-red-400 px-2 py-1 rounded-full border border-red-500/30">
+                          <span className="bg-red-500/20 text-red-400 text-xs px-2 py-1 rounded-full border border-red-500/30">
                             🔥 Trending
                           </span>
                         )}
@@ -124,18 +160,20 @@ function BlogCategories() {
                 </div>
 
                 {/* Description */}
-                <p className="text-gray-300 text-sm leading-relaxed mb-4">
+                <p className="text-gray-400 text-sm leading-relaxed mb-4">
                   {category.description}
                 </p>
 
                 {/* Topics */}
-                <div className="mb-4">
-                  <div className="text-xs font-semibold text-cyan-400 mb-2">Temas incluidos:</div>
-                  <div className="flex flex-wrap gap-1">
+                <div className="space-y-2">
+                  <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                    Temas principales
+                  </div>
+                  <div className="flex flex-wrap gap-2">
                     {category.topics.map((topic, topicIndex) => (
                       <span
                         key={topicIndex}
-                        className="px-2 py-1 text-xs bg-gray-800 text-gray-300 rounded border border-gray-700"
+                        className="text-xs bg-gray-800 text-gray-300 px-2 py-1 rounded border border-gray-700"
                       >
                         {topic}
                       </span>
@@ -143,72 +181,87 @@ function BlogCategories() {
                   </div>
                 </div>
 
-                {/* CTA */}
-                <button className={`w-full py-2 px-4 bg-gradient-to-r ${category.color} text-white rounded-lg opacity-90 hover:opacity-100 transition-opacity duration-300`}>
-                  Explorar categoría
-                </button>
+                {/* Action */}
+                <div className="mt-6">
+                  <button className="w-full py-2 px-4 border border-gray-600 text-gray-300 hover:border-cyan-500 hover:text-cyan-400 rounded-lg transition-colors text-sm font-medium">
+                    Explorar {category.name}
+                  </button>
+                </div>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Learning paths section */}
+        {/* Learning Paths section */}
         <div>
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold gradient-text mb-6">
+            <h2 className="text-4xl md:text-5xl font-bold gradient-text mb-6">
               Rutas de Aprendizaje
             </h2>
-            <p className="text-lg text-gray-400 max-w-3xl mx-auto">
+            <p className="text-xl text-gray-400 max-w-3xl mx-auto">
               Secuencias estructuradas de artículos para un aprendizaje progresivo
             </p>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {learningPaths.map((path, index) => (
               <div
                 key={index}
-                className="bg-gray-900/30 backdrop-blur-sm border border-gray-800 rounded-xl p-6 hover:border-cyan-500/30 transition-all duration-300"
+                className="group bg-gradient-to-br from-gray-900/50 to-gray-800/50 backdrop-blur-sm border border-gray-800 rounded-xl p-6 hover:border-cyan-500/50 transition-all duration-300 hover:transform hover:scale-105"
               >
+                
+                {/* Header */}
                 <div className="text-center mb-6">
-                  <h3 className="text-xl font-bold text-white mb-2">{path.title}</h3>
-                  <p className="text-gray-400 text-sm mb-4">{path.description}</p>
-                  
-                  <div className="grid grid-cols-2 gap-4 mb-4">
-                    <div className="bg-gray-800/50 rounded-lg p-3">
-                      <div className="text-lg font-bold gradient-text">{path.duration}</div>
-                      <div className="text-xs text-gray-400">Duración</div>
-                    </div>
-                    <div className="bg-gray-800/50 rounded-lg p-3">
-                      <div className="text-lg font-bold gradient-text">{path.articles}</div>
-                      <div className="text-xs text-gray-400">Artículos</div>
-                    </div>
+                  <div className="text-4xl mb-4">🎯</div>
+                  <h3 className="text-xl font-bold text-white mb-2">
+                    {path.title}
+                  </h3>
+                  <p className="text-gray-400 text-sm">
+                    {path.description}
+                  </p>
+                </div>
+
+                {/* Stats */}
+                <div className="grid grid-cols-3 gap-4 mb-6">
+                  <div className="text-center">
+                    <div className="text-lg font-bold text-cyan-400">{path.duration}</div>
+                    <div className="text-xs text-gray-500">Duración</div>
                   </div>
-                  
-                  <div className="text-sm text-cyan-400 mb-4">
-                    Nivel: {path.difficulty}
+                  <div className="text-center">
+                    <div className="text-lg font-bold text-green-400">{path.articles}</div>
+                    <div className="text-xs text-gray-500">Artículos</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-lg font-bold text-purple-400">{path.difficulty.split(' → ')[0]}</div>
+                    <div className="text-xs text-gray-500">Nivel</div>
                   </div>
                 </div>
 
-                <div className="space-y-2 mb-6">
-                  <div className="text-xs font-semibold text-white">Temas cubiertos:</div>
-                  {path.topics.map((topic, topicIndex) => (
-                    <div key={topicIndex} className="flex items-center space-x-2">
-                      <span className="text-green-400 text-xs">✓</span>
-                      <span className="text-gray-300 text-xs">{topic}</span>
-                    </div>
-                  ))}
+                {/* Topics */}
+                <div className="mb-6">
+                  <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
+                    Aprenderás
+                  </div>
+                  <div className="space-y-2">
+                    {path.topics.map((topic, topicIndex) => (
+                      <div key={topicIndex} className="flex items-center space-x-2">
+                        <span className="text-green-400 text-xs">✓</span>
+                        <span className="text-gray-300 text-sm">{topic}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
 
-                <button className="w-full py-3 px-4 bg-gradient-to-r from-cyan-400 to-green-400 text-black font-bold rounded-lg hover:shadow-xl transition-all duration-300">
+                {/* Action */}
+                <button className="w-full py-3 px-4 bg-gradient-to-r from-cyan-400 to-green-400 text-black font-semibold rounded-lg hover:shadow-xl hover:shadow-cyan-400/25 transition-all duration-300">
                   Comenzar ruta
                 </button>
               </div>
             ))}
           </div>
         </div>
+
       </div>
     </section>
   );
 }
-
-export default BlogCategories;
