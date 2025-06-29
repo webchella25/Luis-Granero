@@ -14,26 +14,31 @@ interface Props {
 export default function Values({ data }: Props) {
   const defaultValues: Value[] = [
     {
-      title: "Calidad",
-      description: "Código limpio, escalable y mantenible en cada proyecto",
+      title: "Calidad ante todo",
+      description: "Cada línea de código está pensada para ser mantenible, escalable y eficiente.",
       icon: "💎"
     },
     {
-      title: "Transparencia",
-      description: "Comunicación clara y honesta en todo el proceso",
-      icon: "🔍"
+      title: "Comunicación transparente",
+      description: "Mantengo informado al cliente en cada etapa del proyecto con actualizaciones regulares.",
+      icon: "💬"
     },
     {
-      title: "Resultados",
-      description: "Enfoque en objetivos medibles y ROI real",
+      title: "Enfoque en resultados",
+      description: "No solo desarrollo sitios web, creo soluciones que impactan positivamente en tu negocio.",
       icon: "🎯"
+    },
+    {
+      title: "Aprendizaje continuo",
+      description: "Me mantengo actualizado con las últimas tecnologías y mejores prácticas del sector.",
+      icon: "📚"
     }
   ];
 
   const values = (data && data.length > 0) ? data : defaultValues;
 
   return (
-    <section className="py-20 bg-black">
+    <section className="py-20 bg-gray-950">
       <div className="container mx-auto px-4">
         <div className="max-w-6xl mx-auto">
           
@@ -42,24 +47,24 @@ export default function Values({ data }: Props) {
               Mis Valores
             </h2>
             <p className="text-xl text-gray-400">
-              Los principios que guían mi trabajo profesional
+              Los principios que guían mi trabajo diario
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {values.map((value, index) => (
               <div
                 key={index}
-                className="group bg-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-xl p-8 text-center hover:border-cyan-500/50 transition-all duration-300 hover:transform hover:scale-105"
+                className="bg-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-xl p-6 text-center hover:border-cyan-500/50 transition-all duration-300 hover:transform hover:scale-105"
               >
                 
-                <div className="text-5xl mb-6">{value.icon}</div>
-                
-                <h3 className="text-xl font-bold text-white mb-4">
+                <div className="text-4xl mb-4">{value.icon}</div>
+
+                <h3 className="text-lg font-bold text-white mb-3">
                   {value.title}
                 </h3>
-                
-                <p className="text-gray-400 leading-relaxed">
+
+                <p className="text-gray-400 text-sm leading-relaxed">
                   {value.description}
                 </p>
 
