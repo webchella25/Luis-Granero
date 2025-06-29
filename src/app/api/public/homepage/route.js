@@ -1,4 +1,4 @@
-// src/app/api/public/homepage/route.js
+// src/app/api/public/homepage/route.js - SOLO PARA API
 import { NextResponse } from 'next/server'
 import dbConnect from '@/lib/mongodb'
 import Page from '@/models/Page'
@@ -13,9 +13,29 @@ export async function GET() {
     }).select('content updatedAt')
     
     if (!homepage) {
-      // Datos por defecto
-      const { homepageSchema } = await import('@/lib/pageData')
-      return NextResponse.json({ content: homepageSchema })
+      // Datos por defecto si no existe en BD
+      return NextResponse.json({ 
+        content: {
+          hero: {
+            title: "Luis Granero - Desarrollador Web Freelance",
+            subtitle: "Especializado en React, Next.js y soluciones personalizadas",
+            description: "Transformo ideas en aplicaciones web modernas y exitosas",
+            ctaText: "Ver mi trabajo",
+            ctaLink: "/portfolio"
+          },
+          services: [
+            {
+              id: 1,
+              icon: "⚛️",
+              title: "Desarrollo React & Next.js",
+              description: "Aplicaciones web modernas y optimizadas",
+              features: ["SSR/SSG", "Performance", "SEO"],
+              technologies: ["React", "Next.js", "TypeScript"],
+              color: "from-cyan-400 to-blue-500"
+            }
+          ]
+        }
+      })
     }
     
     return NextResponse.json(homepage, {
@@ -26,24 +46,13 @@ export async function GET() {
     
   } catch (error) {
     console.error('Error fetching homepage:', error)
-    const { homepageSchema } = await import('@/lib/pageData')
-    return NextResponse.json({ content: homepageSchema })
+    return NextResponse.json({ 
+      content: {
+        hero: {
+          title: "Luis Granero",
+          subtitle: "Desarrollador Web Freelance"
+        }
+      }
+    })
   }
-}
-export default async function AboutPage() {
-  const aboutData = await getAboutData();
-  const content = aboutData?.content;
-
-  return (
-    <main className="min-h-screen bg-black">
-      <Header />
-      <AboutHero data={content?.hero} />
-      <AboutStory data={content?.story} />
-      <ExperienceTimeline data={content?.experience} />
-      <SkillsDetail data={content?.skills} />
-      <Methodology data={content?.methodology} />
-      <Values data={content?.values} />
-      <Footer />
-    </main>
-  );
 }
