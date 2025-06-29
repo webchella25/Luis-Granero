@@ -13,23 +13,28 @@ export async function GET() {
     }).select('content seo updatedAt')
     
     if (!aboutPage) {
-      // Fallback a datos por defecto
+      // Devolver datos por defecto en lugar de error
       return NextResponse.json({
         content: {
           hero: {
-            title: "Sobre Luis Granero",
-            subtitle: "Mi historia como desarrollador",
-            description: "Soy un desarrollador web con más de 10 años de experiencia, especializado en crear soluciones digitales que transforman ideas en realidad.",
-            image: "/images/about/luis-granero.jpg"
+            title: "Luis Granero",
+            subtitle: "Desarrollador Web Full Stack Freelance",
+            description: "Especializado en React, Next.js y soluciones web personalizadas. Transformo ideas en aplicaciones modernas y exitosas.",
+            stats: [
+              { label: "Años de experiencia", value: "10+" },
+              { label: "Proyectos completados", value: "50+" },
+              { label: "Satisfacción del cliente", value: "98%" },
+              { label: "Tecnologías dominadas", value: "20+" }
+            ]
           },
           story: {
             title: "Mi Trayectoria",
-            content: "Comencé mi carrera en el desarrollo web hace más de una década, cuando WordPress dominaba el panorama. Sin embargo, con el tiempo sentí la necesidad de ir más allá, alejándome de las soluciones genéricas y centrándome en el desarrollo personalizado y de alto rendimiento. Hoy me posiciono como un desarrollador técnico que construye soluciones a medida para startups, empresas tecnológicas y negocios que necesitan algo más que una web bonita: necesitan resultados.",
+            content: "Comencé mi carrera en el desarrollo web hace más de una década, especializándome primero en WordPress y evolucionando hacia las tecnologías más modernas como React y Next.js. Mi enfoque siempre ha sido crear soluciones que no solo funcionen, sino que aporten valor real al negocio de mis clientes.",
             highlights: [
               "10+ años de experiencia en desarrollo web",
               "Especialista en React y Next.js",
               "Enfoque en soluciones personalizadas",
-              "Resultados medibles y performance óptima"
+              "Migración exitosa a stack moderno"
             ]
           },
           experience: [
@@ -38,40 +43,36 @@ export async function GET() {
               position: "Desarrollador Web Full Stack",
               period: "2020 - Presente",
               description: "Desarrollo de aplicaciones web personalizadas para startups y empresas, especializado en React, Next.js y soluciones de e-commerce.",
-              technologies: ["React", "Next.js", "Node.js", "MongoDB"],
+              technologies: ["React", "Next.js", "Node.js", "MongoDB", "TypeScript"],
               achievements: ["50+ proyectos completados", "98% satisfacción del cliente"]
             }
           ],
           skills: {
-            technical: ["React", "Next.js", "TypeScript", "Node.js", "MongoDB", "PostgreSQL", "Tailwind CSS", "Git"],
-            soft: ["Comunicación efectiva", "Resolución de problemas", "Gestión de proyectos", "Trabajo en equipo"],
-            tools: ["VS Code", "Git", "Docker", "Vercel", "Figma", "Postman"]
+            technical: ["React", "Next.js", "TypeScript", "Node.js", "MongoDB"],
+            soft: ["Comunicación efectiva", "Resolución de problemas", "Trabajo en equipo"],
+            tools: ["VS Code", "Git", "Docker", "Vercel", "Figma"]
           },
           methodology: {
-            title: "Mi Metodología de Trabajo",
-            description: "Trabajo con metodología ágil, priorizando la comunicación transparente y la entrega de valor en cada iteración.",
+            title: "Mi Metodología",
+            description: "Un proceso estructurado que garantiza resultados excepcionales",
             steps: [
-              "Análisis y planificación detallada",
-              "Desarrollo iterativo con feedback constante",
-              "Testing y optimización continua",
-              "Entrega y soporte post-lanzamiento"
+              {
+                title: "Análisis y Planificación",
+                description: "Entiendo tus necesidades, objetivos y audiencia para crear una estrategia sólida.",
+                icon: "🎯"
+              },
+              {
+                title: "Desarrollo Ágil",
+                description: "Implemento la solución usando las mejores prácticas y tecnologías modernas.",
+                icon: "⚡"
+              }
             ]
           },
           values: [
             {
-              title: "Calidad",
-              description: "Código limpio, escalable y mantenible en cada proyecto",
+              title: "Calidad ante todo",
+              description: "Cada línea de código está pensada para ser mantenible, escalable y eficiente.",
               icon: "💎"
-            },
-            {
-              title: "Transparencia",
-              description: "Comunicación clara y honesta en todo el proceso",
-              icon: "🔍"
-            },
-            {
-              title: "Resultados",
-              description: "Enfoque en objetivos medibles y ROI real",
-              icon: "🎯"
             }
           ]
         },
@@ -90,9 +91,16 @@ export async function GET() {
     
   } catch (error) {
     console.error('Error fetching about page:', error)
-    return NextResponse.json(
-      { error: 'Error interno del servidor' }, 
-      { status: 500 }
-    )
+    
+    // En caso de error, devolver datos básicos en lugar de fallar
+    return NextResponse.json({
+      content: {
+        hero: {
+          title: "Luis Granero",
+          subtitle: "Desarrollador Web Full Stack",
+          description: "Especializado en desarrollo web moderno"
+        }
+      }
+    })
   }
 }

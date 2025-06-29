@@ -1,61 +1,49 @@
-// src/app/api/public/homepage/route.js - Actualizado
-import { NextResponse } from 'next/server';
-import dbConnect from '@/lib/mongodb';
-import Page from '@/models/Page';
+// src/app/api/public/homepage/route.js
+import { NextResponse } from 'next/server'
+import dbConnect from '@/lib/mongodb'
+import Page from '@/models/Page'
 
 export async function GET() {
   try {
-    await dbConnect();
+    await dbConnect()
     
-    // Buscar homepage publicada
     const homepage = await Page.findOne({ 
       slug: 'homepage', 
       isPublished: true 
-    }).select('content seo updatedAt');
-
-    // Buscar servicios también
-    const servicesPage = await Page.findOne({ 
-      slug: 'services', 
-      isPublished: true 
-    }).select('content updatedAt');
+    }).select('content updatedAt')
     
     if (!homepage) {
-      // Fallback a datos por defecto
-      const { homepageSchema } = await import('@/lib/pageData');
-      return NextResponse.json({
-        content: homepageSchema,
-        services: servicesPage?.content?.services || homepageSchema.services,
-        seo: {
-          metaTitle: 'Luis Granero - Desarrollador Web Freelance',
-          metaDescription: 'Especializado en React, Next.js y soluciones personalizadas'
-        }
-      });
+      // Datos por defecto
+      const { homepageSchema } = await import('@/lib/pageData')
+      return NextResponse.json({ content: homepageSchema })
     }
     
-    // Combinar datos de homepage + servicios
-    const responseData = {
-      ...homepage.toObject(),
-      services: servicesPage?.content?.services || []
-    };
-    
-    return NextResponse.json(responseData, {
+    return NextResponse.json(homepage, {
       headers: {
-        'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400',
+        'Cache-Control': 'public, s-maxage=1800, stale-while-revalidate=3600',
       },
-    });
+    })
     
   } catch (error) {
-    console.error('Error fetching homepage:', error);
-    
-    // En caso de error, devolver datos por defecto
-    const { homepageSchema } = await import('@/lib/pageData');
-    return NextResponse.json({
-      content: homepageSchema,
-      services: homepageSchema.services,
-      seo: {
-        metaTitle: 'Luis Granero - Desarrollador Web Freelance',
-        metaDescription: 'Especializado en React, Next.js y soluciones personalizadas'
-      }
-    });
+    console.error('Error fetching homepage:', error)
+    const { homepageSchema } = await import('@/lib/pageData')
+    return NextResponse.json({ content: homepageSchema })
   }
+}
+export default async function AboutPage() {
+  const aboutData = await getAboutData();
+  const content = aboutData?.content;
+
+  return (
+    <main className="min-h-screen bg-black">
+      <Header />
+      <AboutHero data={content?.hero} />
+      <AboutStory data={content?.story} />
+      <ExperienceTimeline data={content?.experience} />
+      <SkillsDetail data={content?.skills} />
+      <Methodology data={content?.methodology} />
+      <Values data={content?.values} />
+      <Footer />
+    </main>
+  );
 }

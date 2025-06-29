@@ -7,14 +7,11 @@ export async function GET() {
   try {
     await dbConnect()
     
-    // Obtener todos los proyectos publicados
-    const projects = await Project.find({ 
-      isPublished: true 
-    })
-    .select('title description technologies category status metrics features images slug year isFeatured createdAt')
-    .sort({ createdAt: -1 })
-    .lean()
-    
+    const projects = await Project.find({ isPublished: true })
+      .select('title description technologies category status metrics features images slug year')
+      .sort({ createdAt: -1 })
+      .lean()
+
     return NextResponse.json(projects, {
       headers: {
         'Cache-Control': 'public, s-maxage=1800, stale-while-revalidate=3600',
@@ -23,11 +20,6 @@ export async function GET() {
     
   } catch (error) {
     console.error('Error fetching projects:', error)
-    return NextResponse.json([], { 
-      status: 200,
-      headers: {
-        'Cache-Control': 'public, s-maxage=300',
-      }
-    })
+    return NextResponse.json([])
   }
 }
