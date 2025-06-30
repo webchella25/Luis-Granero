@@ -1,20 +1,23 @@
-// src/app/page.tsx - Actualizado para usar servicios del admin
+// src/app/page.js
 import { Suspense } from 'react';
-import Header from '../components/layout/Header';
-import Footer from '../components/layout/Footer';
-import HeroSection from '../components/home/HeroSection';
-import ServicesPreview from '../components/home/ServicesPreview';
-import TechStack from '../components/home/TechStack';
-import ProjectsPreview from '../components/home/ProjectsPreview';
-import ContactCTA from '../components/home/ContactCTA';
-import Loading, { SectionLoading } from '../components/ui/Loading';
+import Header from '@/components/layout/Header';
+import Footer from '@/components/layout/Footer';
+import HeroSection from '@/components/hero/HeroSection';
+import ServicesGrid from '@/components/services/ServicesGrid';
+import TechStack from '@/components/home/TechStack';
+import ProjectsPreview from '@/components/home/ProjectsPreview';
+import TestimonialsSection from '@/components/testimonials/TestimonialsSection';
+import ProcessSection from '@/components/services/ProcessSection';
+import ContactCTA from '@/components/home/ContactCTA';
+import FAQSection from '@/components/services/FAQSection';
+import Loading, { SectionLoading } from '@/components/ui/Loading';
 
-// Función para obtener datos de homepage
+// Función para obtener datos de homepage desde MongoDB
 async function getHomepageData() {
   try {
     const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
-    const res = await fetch(`${baseUrl}/api/public/homepage`, {
-      cache: 'no-store',
+    const res = await fetch(`${baseUrl}/api/homepage`, {
+      next: { revalidate: 3600 }, // Revalidar cada hora
     });
     
     if (!res.ok) {
@@ -23,17 +26,19 @@ async function getHomepageData() {
     
     return res.json();
   } catch (error) {
-    console.error('Error:', error);
-    return null;
+    console.error('Error loading homepage data:', error);
+    // Fallback a datos por defecto
+    const { homepageSchema } = await import('@/lib/pageData');
+    return homepageSchema;
   }
 }
 
-// NUEVA: Función para obtener servicios del admin
+// Función para obtener servicios desde MongoDB
 async function getServicesData() {
   try {
     const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
-    const res = await fetch(`${baseUrl}/api/public/services`, {
-      cache: 'no-store',
+    const res = await fetch(`${baseUrl}/api/services`, {
+      next: { revalidate: 3600 },
     });
     
     if (!res.ok) {
@@ -48,60 +53,193 @@ async function getServicesData() {
   }
 }
 
+// Función para obtener proyectos destacados
 async function getFeaturedProjects() {
   try {
     const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
-    const res = await fetch(`${baseUrl}/api/public/projects/featured`, {
-      cache: 'no-store',
+    const res = await fetch(`${baseUrl}/api/projects?featured=true&limit=3`, {
+      next: { revalidate: 1800 }, // Revalidar cada 30 minutos
     });
     
-    return res.ok ? res.json() : [];
+    if (!res.ok) {
+      throw new Error('Error fetching featured projects');
+    }
+    
+    const data = await res.json();
+    return data.projects || [];
   } catch (error) {
-    console.error('Error:', error);
+    console.error('Error fetching featured projects:', error);
     return [];
   }
 }
 
-export default async function Home() {
-  let homepageData = null;
-  let servicesData = [];
-  let featuredProjects = [];
-
+// Función para obtener testimonios destacados
+async function getFeaturedTestimonials() {
   try {
-    [homepageData, servicesData, featuredProjects] = await Promise.all([
-      getHomepageData(),
-      getServicesData(), // ← NUEVA llamada para servicios
-      getFeaturedProjects()
-    ]);
+    const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+    const res = await fetch(`${baseUrl}/api/testimonials?featured=true&limit=4`, {
+      next: { revalidate: 3600 },
+    });
+    
+    if (!res.ok) {
+      throw new Error('Error fetching testimonials');
+    }
+    
+    const data = await res.json();
+    return data.testimonials || [];
   } catch (error) {
-    console.error('Error loading data:', error);
+    console.error('Error fetching testimonials:', error);
+    return [];
   }
+}
+
+// Componente de loading para secciones
+function SectionSkeleton() {
+  return (
+    <div className="py-20 bg-gray-900">
+      <div className="container mx-auto px-4">
+        <div className="animate-pulse">
+          <div className="h-8 bg-gray-700 rounded w-64 mx-auto mb-4"></div>
+          <div className="h-4 bg-gray-700 rounded w-96 mx-auto mb-12"></div>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="h-64 bg-gray-800 rounded-lg"></div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Componente principal de la HomePage
+export default async function HomePage() {
+  // Obtener todos los datos en paralelo
+  const [homepageData, servicesData, projectsData, testimonialsData] = await Promise.all([
+    getHomepageData(),
+    getServicesData(),
+    getFeaturedProjects(),
+    getFeaturedTestimonials()
+  ]);
 
   return (
     <main className="min-h-screen bg-black">
       <Header />
       
-      <Suspense fallback={<SectionLoading className="min-h-screen" />}>
-        <HeroSection data={homepageData?.content?.hero} />
+      {/* Hero Section */}
+      <Suspense fallback={<SectionSkeleton />}>
+        <HeroSection data={homepageData.hero} />
       </Suspense>
-      
-      <Suspense fallback={<SectionLoading />}>
-        <ServicesPreview data={servicesData} />
+
+      {/* Services Grid */}
+      <Suspense fallback={<SectionSkeleton />}>
+        <ServicesGrid services={servicesData} />
       </Suspense>
-      
-      <Suspense fallback={<SectionLoading />}>
-        <TechStack data={homepageData?.content?.techStack} />
+
+      {/* Tech Stack */}
+      <Suspense fallback={<SectionSkeleton />}>
+        <TechStack techStack={homepageData.techStack} />
       </Suspense>
-      
-      <Suspense fallback={<SectionLoading />}>
-        <ProjectsPreview projects={featuredProjects} />
+
+      {/* Featured Projects */}
+      <Suspense fallback={<SectionSkeleton />}>
+        <ProjectsPreview projects={projectsData} />
       </Suspense>
-      
-      <Suspense fallback={<SectionLoading />}>
-        <ContactCTA data={homepageData?.content?.cta} />
+
+      {/* Testimonials */}
+      <Suspense fallback={<SectionSkeleton />}>
+        <TestimonialsSection testimonials={testimonialsData} />
       </Suspense>
-      
+
+      {/* Process Section */}
+      <Suspense fallback={<SectionSkeleton />}>
+        <ProcessSection />
+      </Suspense>
+
+      {/* FAQ Section */}
+      <Suspense fallback={<SectionSkeleton />}>
+        <FAQSection />
+      </Suspense>
+
+      {/* Contact CTA */}
+      <Suspense fallback={<SectionSkeleton />}>
+        <ContactCTA />
+      </Suspense>
+
       <Footer />
     </main>
   );
 }
+
+// Metadata dinámica basada en datos de MongoDB
+export async function generateMetadata() {
+  try {
+    const homepageData = await getHomepageData();
+    
+    return {
+      title: `${homepageData.hero?.title || 'Luis Granero'} - ${homepageData.hero?.subtitle || 'Desarrollador Full Stack'}`,
+      description: homepageData.hero?.description || 'Transformo ideas en aplicaciones web modernas y soluciones personalizadas. Especializado en React, Next.js y arquitecturas escalables.',
+      keywords: ['desarrollo web', 'react', 'next.js', 'freelance', 'aplicaciones web', 'e-commerce'],
+      authors: [{ name: 'Luis Granero' }],
+      creator: 'Luis Granero',
+      publisher: 'Luis Granero',
+      openGraph: {
+        title: `${homepageData.hero?.title} - ${homepageData.hero?.subtitle}`,
+        description: homepageData.hero?.description,
+        url: 'https://luisgranero.com',
+        siteName: 'Luis Granero - Desarrollador Web',
+        images: [
+          {
+            url: '/images/og-image.jpg',
+            width: 1200,
+            height: 630,
+            alt: 'Luis Granero - Desarrollador Full Stack',
+          },
+        ],
+        locale: 'es_ES',
+        type: 'website',
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title: `${homepageData.hero?.title} - ${homepageData.hero?.subtitle}`,
+        description: homepageData.hero?.description,
+        images: ['/images/og-image.jpg'],
+      },
+      robots: {
+        index: true,
+        follow: true,
+        googleBot: {
+          index: true,
+          follow: true,
+          'max-video-preview': -1,
+          'max-image-preview': 'large',
+          'max-snippet': -1,
+        },
+      },
+      verification: {
+        google: 'tu-codigo-de-verificacion-google',
+      },
+      alternates: {
+        canonical: 'https://luisgranero.com',
+      },
+    };
+  } catch (error) {
+    console.error('Error generating metadata:', error);
+    
+    // Metadata por defecto si hay error
+    return {
+      title: 'Luis Granero - Desarrollador Full Stack',
+      description: 'Desarrollo web moderno con React, Next.js y tecnologías de vanguardia. Especializado en aplicaciones web personalizadas y e-commerce.',
+      keywords: ['desarrollo web', 'react', 'next.js', 'freelance'],
+    };
+  }
+}
+
+// Configuración de revalidación para ISR
+export const revalidate = 3600; // Revalidar cada hora
+
+// Configuración de runtime (opcional)
+export const runtime = 'nodejs';
+
+// Configuración de segmentos dinámicos (opcional)
+export const dynamic = 'force-static';
