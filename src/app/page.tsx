@@ -1,4 +1,4 @@
-// src/app/page.js
+// src/app/page.tsx
 import { Suspense } from 'react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
@@ -10,7 +10,6 @@ import TestimonialsSection from '@/components/testimonials/TestimonialsSection';
 import ProcessSection from '@/components/services/ProcessSection';
 import ContactCTA from '@/components/home/ContactCTA';
 import FAQSection from '@/components/services/FAQSection';
-import Loading, { SectionLoading } from '@/components/ui/Loading';
 
 // Función para obtener datos de homepage desde MongoDB
 async function getHomepageData() {
@@ -28,8 +27,24 @@ async function getHomepageData() {
   } catch (error) {
     console.error('Error loading homepage data:', error);
     // Fallback a datos por defecto
-    const { homepageSchema } = await import('@/lib/pageData');
-    return homepageSchema;
+    return {
+      hero: {
+        title: "Luis Granero",
+        subtitle: "Desarrollador Full Stack",
+        description: "Transformo ideas en aplicaciones web modernas y soluciones personalizadas.",
+        ctaText: "Ver mis proyectos",
+        ctaLink: "/portfolio",
+        stats: [
+          { label: "Proyectos", value: "50+" },
+          { label: "Años", value: "10+" },
+          { label: "Clientes", value: "35+" },
+          { label: "Tecnologías", value: "15+" }
+        ]
+      },
+      services: [],
+      techStack: [],
+      testimonials: []
+    };
   }
 }
 
@@ -124,16 +139,15 @@ export default async function HomePage() {
 
   return (
     <main className="min-h-screen bg-black">
-      <Header />
       
       {/* Hero Section */}
       <Suspense fallback={<SectionSkeleton />}>
-        <HeroSection data={homepageData.hero} />
+        <HeroSection />
       </Suspense>
 
       {/* Services Grid */}
       <Suspense fallback={<SectionSkeleton />}>
-        <ServicesGrid services={servicesData} />
+        <ServicesGrid />
       </Suspense>
 
       {/* Tech Stack */}
@@ -166,7 +180,6 @@ export default async function HomePage() {
         <ContactCTA />
       </Suspense>
 
-      <Footer />
     </main>
   );
 }
