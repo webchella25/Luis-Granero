@@ -1,25 +1,23 @@
 // src/middleware.js
-import { withAuth } from 'next-auth/middleware'
+import { withAuth } from 'next-auth/middleware';
 
 export default withAuth(
   function middleware(req) {
-    // Solo aplicar middleware a rutas que NO sean login
-    return
+    // Middleware logic aquí si necesitas
   },
   {
     callbacks: {
       authorized: ({ token, req }) => {
-        // Si está en la página de login, permitir acceso sin token
-        if (req.nextUrl.pathname === '/admin/login') {
-          return true
+        // Solo proteger rutas /admin excepto /admin/login
+        if (req.nextUrl.pathname.startsWith('/admin') && !req.nextUrl.pathname.startsWith('/admin/login')) {
+          return !!token;
         }
-        // Para otras rutas admin, requerir token
-        return !!token
-      }
+        return true;
+      },
     },
   }
-)
+);
 
 export const config = {
   matcher: ['/admin/:path*']
-}
+};
