@@ -31,7 +31,7 @@ function SectionSkeleton() {
 // Componente principal de la HomePage
 export default function HomePage() {
   return (
-    <main className="min-h-screen bg-black">
+    <main className="min-h-screen bg-black pt-16"> {/* pt-16 para el header fijo */}
       
       {/* Hero Section */}
       <Suspense fallback={<SectionSkeleton />}>
