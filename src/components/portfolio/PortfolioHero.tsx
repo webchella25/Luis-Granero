@@ -1,175 +1,224 @@
-// src/components/portfolio/PortfolioHero.tsx - Versión completamente dinámica
+// src/components/portfolio/PortfolioHero.tsx
 'use client';
 
-interface PortfolioStats {
-  totalProjects?: number;
-  featuredProjects?: number;
-  technologies?: number;
-  yearsExperience?: number;
-  clientSatisfaction?: string;
-  avgROI?: string;
-  avgLoadTime?: string;
-}
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
 
-interface PortfolioData {
-  hero?: {
-    title?: string;
-    subtitle?: string;
-    description?: string;
-  };
-  stats?: PortfolioStats;
-  categories?: Array<{
-    name: string;
-    count: string;
-    color: string;
-  }>;
-  valuePropositions?: Array<{
-    icon: string;
-    title: string;
-    description: string;
-  }>;
-}
+export default function PortfolioHero() {
+  const [isVisible, setIsVisible] = useState(false);
+  const [currentTech, setCurrentTech] = useState(0);
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
 
-interface Props {
-  data?: PortfolioData;
-  projectCount?: number;
-}
-
-export default function PortfolioHero({ data, projectCount = 0 }: Props) {
-  // Datos por defecto con valores dinámicos
-  const heroContent = {
-    title: data?.hero?.title || "Portfolio",
-    subtitle: data?.hero?.subtitle || "Casos de éxito que demuestran mi experiencia en desarrollo web moderno",
-    description: data?.hero?.description || "Cada proyecto incluye código, métricas reales y tecnologías utilizadas."
-  };
-
-  const stats = [
-    { 
-      number: `${projectCount || data?.stats?.totalProjects || 50}+`, 
-      label: "Proyectos completados", 
-      icon: "🚀" 
-    },
-    { 
-      number: data?.stats?.clientSatisfaction || "98%", 
-      label: "Satisfacción cliente", 
-      icon: "⭐" 
-    },
-    { 
-      number: data?.stats?.avgROI || "300%", 
-      label: "ROI promedio", 
-      icon: "📈" 
-    },
-    { 
-      number: data?.stats?.avgLoadTime || "1.2s", 
-      label: "Tiempo de carga medio", 
-      icon: "⚡" 
-    }
+  // Tecnologías rotativas
+  const technologies = [
+    { name: "React", color: "from-blue-400 to-cyan-400", icon: "⚛️" },
+    { name: "Next.js", color: "from-gray-400 to-gray-600", icon: "▲" },
+    { name: "TypeScript", color: "from-blue-600 to-indigo-600", icon: "🔷" },
+    { name: "Node.js", color: "from-green-500 to-emerald-500", icon: "🟢" },
+    { name: "MongoDB", color: "from-green-600 to-green-800", icon: "🍃" }
   ];
 
-  const categories = data?.categories || [
-    { name: "E-commerce", count: "15+", color: "from-green-400 to-emerald-500" },
-    { name: "Aplicaciones Web", count: "20+", color: "from-cyan-400 to-blue-500" },
-    { name: "Dashboards", count: "12+", color: "from-purple-400 to-pink-500" },
-    { name: "Landing Pages", count: "18+", color: "from-orange-400 to-red-500" }
+  // Stats del portfolio
+  const portfolioStats = [
+    { label: "Proyectos", value: "25+", icon: "💼", color: "cyan" },
+    { label: "Clientes", value: "35+", icon: "🤝", color: "green" },
+    { label: "Performance", value: "98/100", icon: "⚡", color: "yellow" },
+    { label: "Satisfacción", value: "100%", icon: "⭐", color: "purple" }
   ];
 
-  const valuePropositions = data?.valuePropositions || [
-    {
-      icon: "🎯",
-      title: "Enfoque en conversiones",
-      description: "Cada proyecto está optimizado para maximizar ROI y conversiones"
-    },
-    {
-      icon: "⚡",
-      title: "Performance excepcional",
-      description: "Velocidad de carga sub-2 segundos y puntuaciones Lighthouse 90+"
-    }
-  ];
+  useEffect(() => {
+    setIsVisible(true);
 
-  const features = [
-    "Stack tecnológico utilizado",
-    "Métricas y resultados reales", 
-    "Screenshots del proyecto",
-    "Fragmentos de código relevantes"
-  ];
+    // Rotación de tecnologías cada 2 segundos
+    const interval = setInterval(() => {
+      setCurrentTech((prev) => (prev + 1) % technologies.length);
+    }, 2000);
+
+    // Mouse tracking para efectos parallax
+    const handleMouseMove = (e) => {
+      setMousePosition({
+        x: (e.clientX / window.innerWidth) * 100,
+        y: (e.clientY / window.innerHeight) * 100
+      });
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('mousemove', handleMouseMove);
+    };
+  }, []);
+
+  const currentTechnology = technologies[currentTech];
 
   return (
-    <section className="pt-24 pb-16 bg-gradient-to-br from-black via-gray-900 to-black relative overflow-hidden">
-      {/* Background effects */}
-      <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 via-transparent to-green-500/5"></div>
-      <div className="absolute top-20 left-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl"></div>
-      <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-green-500/10 rounded-full blur-3xl"></div>
+    <section className="py-20 bg-gradient-to-br from-black via-gray-950 to-gray-900 relative overflow-hidden min-h-[80vh] flex items-center">
+      
+      {/* EFECTOS DE FONDO DINÁMICOS */}
+      <div className="absolute inset-0">
+        {/* Gradiente animado que sigue el mouse */}
+        <div 
+          className="absolute inset-0 opacity-30 transition-all duration-1000"
+          style={{
+            background: `radial-gradient(circle at ${mousePosition.x}% ${mousePosition.y}%, rgba(6, 182, 212, 0.1) 0%, transparent 50%)`
+          }}
+        />
+        
+        {/* Efectos de luz específicos de portfolio */}
+        <div className="absolute top-1/4 left-1/4 w-72 h-72 bg-purple-500/10 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-1/4 right-1/4 w-72 h-72 bg-cyan-500/10 rounded-full blur-3xl animate-pulse delay-1000" />
+        <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-green-500/5 rounded-full blur-3xl animate-pulse delay-2000" />
+        
+        {/* Grid de código flotante */}
+        <div className="absolute inset-0 opacity-5">
+          <div className="grid grid-cols-8 gap-4 h-full font-mono text-xs text-cyan-400">
+            {[...Array(64)].map((_, i) => (
+              <div 
+                key={i}
+                className="animate-pulse"
+                style={{ animationDelay: `${i * 100}ms` }}
+              >
+                {Math.random() > 0.5 ? '{' : '}'}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
 
       <div className="container mx-auto px-4 relative z-10">
-        <div className="max-w-6xl mx-auto">
+        <div className={`text-center transition-all duration-1000 ${
+          isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-20'
+        }`}>
           
-          {/* Header dinámico */}
-          <div className="text-center mb-16">
-            <h1 className="text-5xl md:text-7xl font-bold gradient-text mb-8">
-              {heroContent.title}
-            </h1>
-            <p className="text-xl md:text-2xl text-gray-300 leading-relaxed max-w-4xl mx-auto">
-              {heroContent.subtitle}. {heroContent.description}
-            </p>
+          {/* BREADCRUMB ESTILO CÓDIGO */}
+          <div className="flex items-center justify-center space-x-2 text-cyan-400 mb-8 font-mono text-lg">
+            <span className="animate-pulse">const</span>
+            <span className="text-purple-400">portfolio</span>
+            <span className="text-gray-400">=</span>
+            <span className="text-green-400">[</span>
+            <span className="text-yellow-400">"proyectos_épicos"</span>
+            <span className="text-green-400">];</span>
           </div>
 
-          {/* Categories dinámicas */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-16">
-            {categories.map((category, index) => (
-              <div
-                key={index}
-                className="bg-gray-900/30 backdrop-blur-sm border border-gray-800 rounded-xl p-6 text-center hover:border-cyan-500/30 transition-all duration-300 hover:transform hover:scale-105"
-              >
-                <div className={`text-2xl font-bold bg-gradient-to-r ${category.color} bg-clip-text text-transparent mb-2`}>
-                  {category.count}
-                </div>
-                <div className="text-gray-300 text-sm">{category.name}</div>
-              </div>
-            ))}
-          </div>
-
-          {/* Value proposition dinámico */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center mb-16">
-            <div className="space-y-6">
-              <h2 className="text-3xl md:text-4xl font-bold text-white">
-                Proyectos que generan resultados
-              </h2>
-              <div className="space-y-4">
-                {valuePropositions.map((vp, index) => (
-                  <div key={index} className="flex items-start space-x-3">
-                    <span className="text-xl mt-1">{vp.icon}</span>
-                    <div>
-                      <h3 className="font-semibold text-white">{vp.title}</h3>
-                      <p className="text-gray-400">{vp.description}</p>
-                    </div>
-                  </div>
-                ))}
-                
-                {/* Features fijas */}
-                {features.map((feature, index) => (
-                  <div key={index} className="flex items-center space-x-3">
-                    <span className="text-green-400">✓</span>
-                    <span className="text-gray-300">{feature}</span>
-                  </div>
-                ))}
-              </div>
+          {/* TÍTULO PRINCIPAL CON EFECTOS */}
+          <h1 className="mb-8">
+            <div className="text-6xl md:text-8xl font-black mb-4">
+              <span className="bg-gradient-to-r from-purple-400 via-cyan-400 to-green-400 bg-clip-text text-transparent animate-gradient-x">
+                Portfolio
+              </span>
             </div>
+            
+            {/* SUBTÍTULO CON TECNOLOGÍA ROTATIVA */}
+            <div className="text-2xl md:text-4xl font-bold">
+              <span className="text-gray-300">Creado con </span>
+              <span 
+                className={`bg-gradient-to-r ${currentTechnology.color} bg-clip-text text-transparent font-mono animate-pulse`}
+              >
+                {currentTechnology.icon} {currentTechnology.name}
+              </span>
+              <span className="animate-blink text-cyan-400 ml-2">|</span>
+            </div>
+          </h1>
+
+          {/* DESCRIPCIÓN CON HIGHLIGHTS */}
+          <p className="text-xl md:text-2xl text-gray-300 max-w-4xl mx-auto leading-relaxed mb-12">
+            <span className="text-purple-400 font-semibold">Proyectos reales</span> que{' '}
+            <span className="text-cyan-400 font-semibold">transforman negocios</span>.
+            <br />
+            Cada línea de código cuenta una{' '}
+            <span className="text-green-400 font-semibold bg-gray-900/50 px-2 py-1 rounded font-mono">historia de éxito</span>.
+          </p>
+
+          {/* STATS DEL PORTFOLIO CON ANIMACIONES */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto mb-12">
+            {portfolioStats.map((stat, index) => {
+              const colorClasses = {
+                cyan: "from-cyan-400 to-cyan-600 border-cyan-500/30 hover:border-cyan-500/60",
+                green: "from-green-400 to-green-600 border-green-500/30 hover:border-green-500/60",
+                yellow: "from-yellow-400 to-yellow-600 border-yellow-500/30 hover:border-yellow-500/60",
+                purple: "from-purple-400 to-purple-600 border-purple-500/30 hover:border-purple-500/60"
+              };
+
+              return (
+                <div
+                  key={index}
+                  className={`group bg-gray-900/40 backdrop-blur-sm border rounded-2xl p-6 transition-all duration-300 transform hover:scale-110 hover:-translate-y-2 animate-fade-in-up ${colorClasses[stat.color]}`}
+                  style={{ animationDelay: `${index * 200}ms` }}
+                >
+                  <div className="text-3xl mb-3 group-hover:scale-125 transition-transform duration-300">
+                    {stat.icon}
+                  </div>
+                  <div className={`text-3xl md:text-4xl font-black bg-gradient-to-r ${colorClasses[stat.color].split(' ')[0]} ${colorClasses[stat.color].split(' ')[1]} bg-clip-text text-transparent mb-2 group-hover:animate-pulse`}>
+                    {stat.value}
+                  </div>
+                  <div className="text-gray-400 text-sm md:text-base uppercase tracking-wider font-semibold">
+                    {stat.label}
+                  </div>
+                  
+                  {/* Barra de progreso con color único */}
+                  <div className="mt-4 w-full bg-gray-800 rounded-full h-1.5 overflow-hidden">
+                    <div 
+                      className={`h-full bg-gradient-to-r ${colorClasses[stat.color].split(' ')[0]} ${colorClasses[stat.color].split(' ')[1]} rounded-full animate-progress-bar`}
+                      style={{ animationDelay: `${index * 300 + 500}ms` }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
           </div>
 
-          {/* Stats dinámicas */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {stats.map((stat, index) => (
-              <div
-                key={index}
-                className="bg-gray-900/30 backdrop-blur-sm border border-gray-800 rounded-xl p-6 text-center hover:border-cyan-500/30 transition-all duration-300"
-              >
-                <div className="text-3xl mb-2">{stat.icon}</div>
-                <div className="text-2xl md:text-3xl font-bold gradient-text mb-1">
-                  {stat.number}
+          {/* BOTONES DE ACCIÓN ÚNICOS */}
+          <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
+            <Link
+              href="#projects"
+              className="group relative px-10 py-5 bg-gradient-to-r from-purple-600/20 to-cyan-600/20 border-2 border-purple-500/30 text-purple-400 font-bold text-xl rounded-2xl hover:from-purple-600/40 hover:to-cyan-600/40 hover:border-purple-500/60 transition-all duration-300 transform hover:scale-110 hover:-translate-y-2"
+            >
+              <span className="relative z-10 flex items-center">
+                <span className="mr-3 text-2xl group-hover:rotate-12 transition-transform">🎨</span>
+                Ver proyectos
+                <span className="ml-3 group-hover:translate-x-2 transition-transform text-2xl">→</span>
+              </span>
+              <div className="absolute inset-0 bg-gradient-to-r from-cyan-600/20 to-purple-600/20 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            </Link>
+            
+            <Link
+              href="/contacto"
+              className="group px-10 py-5 border-2 border-cyan-400/50 text-cyan-400 hover:bg-cyan-400/10 hover:border-cyan-400 font-bold text-xl rounded-2xl transition-all duration-300 transform hover:scale-110 hover:-translate-y-2"
+            >
+              <span className="flex items-center">
+                <span className="mr-3 text-2xl group-hover:scale-125 transition-transform">💼</span>
+                Trabajemos juntos
+              </span>
+            </Link>
+          </div>
+
+          {/* TECNOLOGÍAS DISPONIBLES */}
+          <div className="mt-16">
+            <div className="text-gray-400 text-sm mb-4 font-mono">Tecnologías utilizadas:</div>
+            <div className="flex justify-center items-center space-x-8 flex-wrap gap-y-4">
+              {technologies.map((tech, index) => (
+                <div
+                  key={index}
+                  className={`group flex items-center space-x-2 px-4 py-2 rounded-lg border transition-all duration-300 hover:scale-110 ${
+                    index === currentTech 
+                      ? `border-cyan-500/60 bg-gray-900/60` 
+                      : 'border-gray-700/50 hover:border-gray-600'
+                  }`}
+                >
+                  <span className="text-xl group-hover:scale-125 transition-transform">
+                    {tech.icon}
+                  </span>
+                  <span className={`font-semibold ${
+                    index === currentTech 
+                      ? `bg-gradient-to-r ${tech.color} bg-clip-text text-transparent` 
+                      : 'text-gray-400 group-hover:text-gray-300'
+                  }`}>
+                    {tech.name}
+                  </span>
                 </div>
-                <div className="text-gray-400 text-sm">{stat.label}</div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       </div>
