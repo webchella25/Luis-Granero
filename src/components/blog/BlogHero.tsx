@@ -4,11 +4,14 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 
-export default function BlogHero() {
+interface BlogHeroProps {
+  totalPosts?: number;
+}
+
+export default function BlogHero({ totalPosts = 0 }: BlogHeroProps) {
   const [isVisible, setIsVisible] = useState(false);
   const [currentTopic, setCurrentTopic] = useState(0);
   const [typingText, setTypingText] = useState('');
-  const [isTyping, setIsTyping] = useState(true);
 
   // Temas de programación rotativos
   const programmingTopics = [
@@ -44,9 +47,9 @@ export default function BlogHero() {
     }
   ];
 
-  // Stats del blog
+  // Stats del blog (usando totalPosts dinámico)
   const blogStats = [
-    { label: "Artículos", value: "50+", icon: "📖", color: "cyan" },
+    { label: "Artículos", value: totalPosts > 0 ? `${totalPosts}+` : "50+", icon: "📖", color: "cyan" },
     { label: "Lectores", value: "10K+", icon: "👥", color: "green" },
     { label: "Tutoriales", value: "25+", icon: "🎓", color: "purple" },
     { label: "Código", value: "1000+", color: "yellow", icon: "💻" }
