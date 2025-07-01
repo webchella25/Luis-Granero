@@ -23,6 +23,10 @@ function ContactCTA() {
     fetchContactInfo();
   }, []);
 
+  const handleEmailContact = () => {
+    window.location.href = `mailto:${contactInfo.contact_email || 'contacto@luisgranero.com'}`;
+  };
+
   return (
     <section className="py-20 bg-black relative overflow-hidden">
       <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 via-transparent to-green-500/5"></div>
@@ -40,6 +44,7 @@ function ContactCTA() {
             Hablemos y transformemos tu idea en una aplicación web exitosa
           </p>
 
+          {/* Botones principales - Solo Link */}
           <div className="flex flex-col sm:flex-row gap-6 justify-center mb-16">
             <Link
               href="/contacto"
@@ -57,6 +62,7 @@ function ContactCTA() {
             </Link>
           </div>
 
+          {/* Info rápida */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="bg-gray-900/30 backdrop-blur-sm border border-gray-800 rounded-xl p-6 hover:border-cyan-500/30 transition-all duration-300">
               <div className="text-3xl mb-4">⚡</div>
@@ -83,15 +89,16 @@ function ContactCTA() {
             </div>
           </div>
 
+          {/* Contact info - Con button en lugar de <a> */}
           {!loading && contactInfo.contact_email && (
             <div className="mt-12 text-center">
               <p className="text-gray-400 mb-2">O escríbeme directamente:</p>
-              
-                href={`mailto:${contactInfo.contact_email}`}
-                className="text-cyan-400 hover:text-cyan-300 font-medium text-lg transition-colors"
+              <button
+                onClick={handleEmailContact}
+                className="text-cyan-400 hover:text-cyan-300 font-medium text-lg transition-colors cursor-pointer"
               >
                 {contactInfo.contact_email}
-              </a>
+              </button>
             </div>
           )}
         </div>
