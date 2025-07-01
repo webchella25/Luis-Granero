@@ -1,110 +1,134 @@
+// src/components/services/ServicesHero.jsx
+'use client';
+
+import { useState, useEffect } from 'react';
+
 function ServicesHero() {
-  const stats = [
-    { number: "100%", label: "Código personalizado", icon: "💻" },
-    { number: "90+", label: "Performance score", icon: "⚡" },
-    { number: "24h", label: "Tiempo de respuesta", icon: "🕐" },
-    { number: "∞", label: "Soporte incluido", icon: "🛠️" }
+  const [isVisible, setIsVisible] = useState(false);
+  const [activeService, setActiveService] = useState(0);
+
+  // Servicios rotativos para el subtítulo
+  const rotatingServices = [
+    "Desarrollo Web Moderno",
+    "E-commerce Personalizado", 
+    "Aplicaciones React",
+    "APIs y Backend",
+    "Optimización SEO"
   ];
 
+  useEffect(() => {
+    setIsVisible(true);
+
+    // Rotación de servicios cada 2.5 segundos
+    const interval = setInterval(() => {
+      setActiveService((prev) => (prev + 1) % rotatingServices.length);
+    }, 2500);
+
+    return () => clearInterval(interval);
+  }, []);
+
   return (
-    <section className="pt-24 pb-16 bg-gradient-to-br from-black via-gray-900 to-black relative overflow-hidden">
-      {/* Background effects */}
-      <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 via-transparent to-green-500/5"></div>
-      <div className="absolute top-20 left-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl"></div>
-      <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-green-500/10 rounded-full blur-3xl"></div>
+    <section className="py-20 bg-gradient-to-b from-black via-gray-950 to-gray-900 relative overflow-hidden">
+      
+      {/* EFECTOS DE FONDO SUTILES */}
+      <div className="absolute inset-0">
+        {/* Gradiente base con movimiento */}
+        <div className="absolute inset-0 bg-gradient-to-br from-gray-900/50 via-transparent to-black/50" />
+        
+        {/* Efectos de luz sutiles */}
+        <div className="absolute top-1/4 -left-32 w-64 h-64 bg-cyan-500/10 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-1/4 -right-32 w-64 h-64 bg-green-500/10 rounded-full blur-3xl animate-pulse delay-1000" />
+        
+        {/* Líneas de código flotantes */}
+        <div className="absolute top-0 left-0 w-full h-full opacity-5">
+          <div className="font-mono text-cyan-400 text-xs leading-8 animate-float">
+            {`const services = ["React", "Next.js", "Node.js"];`}
+          </div>
+        </div>
+      </div>
 
       <div className="container mx-auto px-4 relative z-10">
-        <div className="max-w-6xl mx-auto">
-          {/* Header */}
-          <div className="text-center mb-16">
-            <h1 className="text-5xl md:text-7xl font-bold gradient-text mb-8">
-              Servicios de Desarrollo
-            </h1>
-            <p className="text-xl md:text-2xl text-gray-300 leading-relaxed max-w-4xl mx-auto">
-              Soluciones web personalizadas que impulsan tu negocio. 
-              Sin plantillas genéricas, solo código a medida que genera resultados.
-            </p>
+        <div className={`text-center transition-all duration-1000 ${
+          isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
+        }`}>
+          
+          {/* BREADCRUMB VISUAL */}
+          <div className="flex items-center justify-center space-x-2 text-cyan-400 mb-8 font-mono">
+            <span className="animate-pulse">{'<'}</span>
+            <span className="text-gray-400">luis-granero</span>
+            <span className="text-gray-600">/</span>
+            <span className="text-cyan-400 font-semibold">servicios</span>
+            <span className="animate-pulse">{'/>'}</span>
           </div>
 
-          {/* Value proposition */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center mb-16">
-            <div className="space-y-6">
-              <h2 className="text-3xl md:text-4xl font-bold text-white">
-                ¿Por qué elegir desarrollo personalizado?
-              </h2>
-              <div className="space-y-4">
-                <div className="flex items-start space-x-3">
-                  <span className="text-green-400 text-xl mt-1">✓</span>
-                  <div>
-                    <h3 className="font-semibold text-white">Performance Superior</h3>
-                    <p className="text-gray-400">Código optimizado desde cero, sin bloatware de plantillas</p>
-                  </div>
-                </div>
-                <div className="flex items-start space-x-3">
-                  <span className="text-green-400 text-xl mt-1">✓</span>
-                  <div>
-                    <h3 className="font-semibold text-white">Escalabilidad Garantizada</h3>
-                    <p className="text-gray-400">Arquitectura pensada para crecer con tu negocio</p>
-                  </div>
-                </div>
-                <div className="flex items-start space-x-3">
-                  <span className="text-green-400 text-xl mt-1">✓</span>
-                  <div>
-                    <h3 className="font-semibold text-white">SEO Integrado</h3>
-                    <p className="text-gray-400">Optimización técnica desde el primer día</p>
-                  </div>
-                </div>
-                <div className="flex items-start space-x-3">
-                  <span className="text-green-400 text-xl mt-1">✓</span>
-                  <div>
-                    <h3 className="font-semibold text-white">Soporte Técnico</h3>
-                    <p className="text-gray-400">Mantenimiento y actualizaciones incluidas</p>
-                  </div>
-                </div>
-              </div>
+          {/* TÍTULO PRINCIPAL CON EFECTO */}
+          <h1 className="mb-6">
+            <div className="text-5xl md:text-7xl font-black mb-4">
+              <span className="bg-gradient-to-r from-cyan-400 via-green-400 to-purple-400 bg-clip-text text-transparent">
+                Servicios de
+              </span>
+              <br />
+              <span className="text-white relative">
+                Desarrollo
+                {/* Underline animado */}
+                <div className="absolute -bottom-2 left-0 w-full h-1 bg-gradient-to-r from-cyan-400 to-green-400 animate-pulse" />
+              </span>
             </div>
+          </h1>
 
-            <div className="bg-gradient-to-br from-gray-900/50 to-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-2xl p-8">
-              <h3 className="text-2xl font-bold gradient-text mb-6 text-center">
-                Stack Tecnológico
-              </h3>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-3">
-                  <h4 className="font-semibold text-cyan-400">Frontend</h4>
-                  <div className="space-y-1 text-sm text-gray-300">
-                    <div>• React 18+</div>
-                    <div>• Next.js 14</div>
-                    <div>• TypeScript</div>
-                    <div>• Tailwind CSS</div>
-                  </div>
-                </div>
-                <div className="space-y-3">
-                  <h4 className="font-semibold text-green-400">Backend</h4>
-                  <div className="space-y-1 text-sm text-gray-300">
-                    <div>• Node.js</div>
-                    <div>• Express</div>
-                    <div>• MongoDB</div>
-                    <div>• APIs REST</div>
-                  </div>
-                </div>
-              </div>
-            </div>
+          {/* SUBTÍTULO ROTATIVO */}
+          <div className="text-xl md:text-2xl mb-8">
+            <span className="text-gray-300">Especializado en </span>
+            <span className="text-green-400 font-bold animate-pulse">
+              {rotatingServices[activeService]}
+            </span>
+            <span className="animate-blink text-green-400 ml-1">_</span>
           </div>
 
-          {/* Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {stats.map((stat, index) => (
+          {/* DESCRIPCIÓN CON HIGHLIGHTS */}
+          <p className="text-lg md:text-xl text-gray-300 max-w-4xl mx-auto leading-relaxed mb-12">
+            <span className="text-cyan-400 font-semibold">Soluciones web personalizadas</span> que{' '}
+            <span className="text-green-400 font-semibold">impulsan tu negocio</span>.
+            <br />
+            Sin plantillas genéricas, solo{' '}
+            <span className="text-purple-400 font-semibold bg-gray-900/50 px-2 py-1 rounded">código a medida</span> que{' '}
+            <span className="text-yellow-400 font-semibold">genera resultados</span>.
+          </p>
+
+          {/* STATS RÁPIDAS CON ICONOS */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-3xl mx-auto">
+            {[
+              { icon: "⚡", label: "Performance", value: "99/100" },
+              { icon: "🚀", label: "Deploy", value: "< 2 días" },
+              { icon: "🔧", label: "Mantenimiento", value: "Incluido" },
+              { icon: "💡", label: "Consultoría", value: "Gratuita" }
+            ].map((stat, index) => (
               <div
                 key={index}
-                className="bg-gray-900/30 backdrop-blur-sm border border-gray-800 rounded-xl p-6 text-center hover:border-cyan-500/30 transition-all duration-300"
+                className={`group bg-gray-900/30 backdrop-blur-sm border border-gray-800 rounded-xl p-4 hover:border-cyan-500/50 transition-all duration-300 transform hover:scale-105 animate-fade-in-up`}
+                style={{ animationDelay: `${index * 150}ms` }}
               >
-                <div className="text-3xl mb-2">{stat.icon}</div>
-                <div className="text-2xl md:text-3xl font-bold gradient-text mb-1">
-                  {stat.number}
+                <div className="text-2xl mb-2 group-hover:scale-110 transition-transform">
+                  {stat.icon}
                 </div>
-                <div className="text-gray-400 text-sm">{stat.label}</div>
+                <div className="text-cyan-400 font-bold text-lg mb-1">
+                  {stat.value}
+                </div>
+                <div className="text-gray-400 text-sm font-medium">
+                  {stat.label}
+                </div>
               </div>
             ))}
+          </div>
+
+          {/* CTA SUTIL PERO EFECTIVO */}
+          <div className="mt-12">
+            <button className="group relative px-8 py-4 bg-gradient-to-r from-cyan-600/20 to-green-600/20 border border-cyan-500/30 text-cyan-400 font-semibold rounded-xl hover:from-cyan-600/40 hover:to-green-600/40 hover:border-cyan-500/60 transition-all duration-300 transform hover:scale-105">
+              <span className="flex items-center">
+                Explorar servicios
+                <span className="ml-2 group-hover:translate-x-1 transition-transform">→</span>
+              </span>
+            </button>
           </div>
         </div>
       </div>
