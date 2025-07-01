@@ -15,7 +15,7 @@
 
 @layer components {
   .gradient-text {
-    background: linear-gradient(to right, #06b6d4, #3b82f6, #8b5cf6);
+    background: linear-gradient(to right, #00FFFF, #00FF88);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -28,5 +28,191 @@
     margin-right: auto;
     padding-left: 1rem;
     padding-right: 1rem;
+  }
+
+  .btn-primary {
+    background: linear-gradient(to right, #00FFFF, #00FF88);
+    color: #000000;
+    padding: 0.75rem 1.5rem;
+    border-radius: 9999px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    transform: scale(1);
+  }
+
+  .btn-primary:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 25px rgba(0, 255, 255, 0.3);
+  }
+
+  .btn-secondary {
+    border: 2px solid #00FFFF;
+    color: #00FFFF;
+    padding: 0.75rem 1.5rem;
+    border-radius: 9999px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    background: transparent;
+  }
+
+  .btn-secondary:hover {
+    background: #00FFFF;
+    color: #000000;
+    transform: scale(1.05);
+  }
+
+  .card {
+    background: rgba(17, 24, 39, 0.5);
+    backdrop-filter: blur(10px);
+    border: 1px solid #374151;
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+  }
+
+  .card:hover {
+    border-color: rgba(0, 255, 255, 0.5);
+    transform: translateY(-4px);
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}
+
+/* Colores específicos del proyecto Luis Granero */
+:root {
+  --cyan-luis: #00FFFF;
+  --green-luis: #00FF88;
+  --dark-bg: #000000;
+  --dark-card: #111827;
+  --dark-border: #374151;
+}
+
+/* Efectos de partículas y fondo */
+.stars {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  background-image: 
+    radial-gradient(2px 2px at 20px 30px, #eee, transparent),
+    radial-gradient(2px 2px at 40px 70px, rgba(255,255,255,.5), transparent),
+    radial-gradient(1px 1px at 90px 40px, #fff, transparent),
+    radial-gradient(1px 1px at 130px 80px, rgba(255,255,255,.5), transparent),
+    radial-gradient(2px 2px at 160px 30px, #fff, transparent);
+  background-repeat: repeat;
+  background-size: 200px 100px;
+  opacity: 0.3;
+  z-index: -1;
+}
+
+.twinkling {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  background-image: 
+    radial-gradient(1px 1px at 50px 50px, rgba(0,255,255,0.5), transparent),
+    radial-gradient(1px 1px at 150px 150px, rgba(0,255,255,0.3), transparent),
+    radial-gradient(1px 1px at 250px 100px, rgba(0,255,136,0.2), transparent);
+  background-repeat: repeat;
+  background-size: 300px 200px;
+  animation: twinkling 5s linear infinite;
+  opacity: 0.6;
+  z-index: -1;
+}
+
+@keyframes twinkling {
+  0% { transform: translateY(0px); }
+  100% { transform: translateY(-200px); }
+}
+
+/* Animaciones personalizadas */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.animate-fadeInUp {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+.animate-pulse-slow {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Scrollbar personalizado con colores Luis Granero */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #1f2937;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(to bottom, #00FFFF, #00FF88);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(to bottom, #00FF88, #00FFFF);
+}
+
+/* Focus states con colores originales */
+.focus-visible:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px #00FFFF, 0 0 0 4px rgba(0, 255, 255, 0.2);
+}
+
+/* Loading con colores correctos */
+.skeleton {
+  background: linear-gradient(90deg, #374151 25%, #00FFFF 50%, #374151 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
   }
 }
