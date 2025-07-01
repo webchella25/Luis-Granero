@@ -1,13 +1,9 @@
 // src/app/page.tsx
 import { Suspense } from 'react';
 import HeroSection from '@/components/hero/HeroSection';
-import ServicesGrid from '@/components/services/ServicesGrid';
-import TechStack from '@/components/home/TechStack';
-import ProjectsPreview from '@/components/home/ProjectsPreview';
-import TestimonialsSection from '@/components/testimonials/TestimonialsSection';
-import ProcessSection from '@/components/services/ProcessSection';
+import ServicesPreview from '@/components/home/ServicesPreview';
+import TechStackStats from '@/components/home/TechStackStats';
 import ContactCTA from '@/components/home/ContactCTA';
-import FAQSection from '@/components/services/FAQSection';
 
 // Componente de loading para secciones
 function SectionSkeleton() {
@@ -18,7 +14,7 @@ function SectionSkeleton() {
           <div className="h-8 bg-gray-700 rounded w-64 mx-auto mb-4"></div>
           <div className="h-4 bg-gray-700 rounded w-96 mx-auto mb-12"></div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {[...Array(6)].map((_, i) => (
+            {[...Array(3)].map((_, i) => (
               <div key={i} className="h-64 bg-gray-800 rounded-lg"></div>
             ))}
           </div>
@@ -28,47 +24,27 @@ function SectionSkeleton() {
   );
 }
 
-// Componente principal de la HomePage
+// Componente principal de la HomePage SIMPLIFICADO
 export default function HomePage() {
   return (
     <main className="min-h-screen bg-black pt-16"> {/* pt-16 para el header fijo */}
       
-      {/* Hero Section */}
+      {/* Hero Section - Más minimalista */}
       <Suspense fallback={<SectionSkeleton />}>
         <HeroSection />
       </Suspense>
 
-      {/* Services Grid */}
+      {/* Services Preview - Solo 3 servicios principales */}
       <Suspense fallback={<SectionSkeleton />}>
-        <ServicesGrid />
+        <ServicesPreview />
       </Suspense>
 
-      {/* Tech Stack */}
+      {/* Tech Stack + Stats - Combinados */}
       <Suspense fallback={<SectionSkeleton />}>
-        <TechStack />
+        <TechStackStats />
       </Suspense>
 
-      {/* Featured Projects */}
-      <Suspense fallback={<SectionSkeleton />}>
-        <ProjectsPreview />
-      </Suspense>
-
-      {/* Testimonials */}
-      <Suspense fallback={<SectionSkeleton />}>
-        <TestimonialsSection />
-      </Suspense>
-
-      {/* Process Section */}
-      <Suspense fallback={<SectionSkeleton />}>
-        <ProcessSection />
-      </Suspense>
-
-      {/* FAQ Section */}
-      <Suspense fallback={<SectionSkeleton />}>
-        <FAQSection />
-      </Suspense>
-
-      {/* Contact CTA */}
+      {/* Contact CTA - Más directo */}
       <Suspense fallback={<SectionSkeleton />}>
         <ContactCTA />
       </Suspense>

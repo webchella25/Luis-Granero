@@ -1,80 +1,28 @@
-// src/components/home/ContactCTA.tsx
+// src/components/home/ContactCTA.jsx
 'use client';
 
 import Link from 'next/link';
-import { PhoneIcon, EnvelopeIcon, CalculatorIcon } from '@heroicons/react/24/outline';
+import { useState, useEffect } from 'react';
 
-interface ContactOption {
-  icon: string;
-  title: string;
-  description: string;
-  action: string;
-  link: string;
-  highlight?: boolean;
-}
+export default function ContactCTA() {
+  const [contactInfo, setContactInfo] = useState({});
+  const [loading, setLoading] = useState(true);
 
-interface CTAData {
-  title?: string;
-  description?: string;
-  options?: ContactOption[];
-  mainCTA?: {
-    text: string;
-    link: string;
-  };
-  features?: string[];
-}
-
-interface Props {
-  data?: CTAData;
-}
-
-export default function ContactCTA({ data }: Props) {
-  // Datos por defecto
-  const defaultData: CTAData = {
-    title: "Hablemos de tu proyecto",
-    description: "¿Tienes una idea increíble? ¿Necesitas modernizar tu web actual? ¿Buscas un desarrollador que entienda tu negocio?",
-    options: [
-      {
-        icon: "💬",
-        title: "Consulta Gratuita",
-        description: "30 minutos para analizar tu proyecto sin compromiso",
-        action: "Agendar llamada",
-        link: "/contacto",
-        highlight: true
-      },
-      {
-        icon: "💻", 
-        title: "Presupuesto Express",
-        description: "Calculadora automática para proyectos estándar",
-        action: "Calcular precio",
-        link: "/contacto#calculadora"
-      },
-      {
-        icon: "📧",
-        title: "Contacto Directo", 
-        description: "Escríbeme directamente con los detalles de tu proyecto",
-        action: "Enviar mensaje",
-        link: "/contacto#formulario"
+  useEffect(() => {
+    async function fetchContactInfo() {
+      try {
+        const response = await fetch('/api/homepage');
+        const data = await response.json();
+        setContactInfo(data.config || {});
+      } catch (error) {
+        console.error('Error fetching contact info:', error);
+      } finally {
+        setLoading(false);
       }
-    ],
-    mainCTA: {
-      text: "Empezar mi proyecto ahora",
-      link: "/contacto"
-    },
-    features: [
-      "Respuesta en 24h",
-      "Sin compromiso", 
-      "Consulta gratuita"
-    ]
-  };
+    }
 
-  const contactData = {
-    title: data?.title || defaultData.title,
-    description: data?.description || defaultData.description,
-    options: data?.options || defaultData.options,
-    mainCTA: data?.mainCTA || defaultData.mainCTA,
-    features: data?.features || defaultData.features
-  };
+    fetchContactInfo();
+  }, []);
 
   return (
     <section className="py-20 bg-black relative overflow-hidden">
@@ -85,82 +33,73 @@ export default function ContactCTA({ data }: Props) {
 
       <div className="container mx-auto px-4 relative z-10">
         <div className="max-w-4xl mx-auto text-center">
-          {/* Header */}
+          
+          {/* Título principal */}
           <h2 className="text-4xl md:text-6xl font-bold gradient-text mb-8">
-            {contactData.title}
+            ¿Tienes un proyecto en mente?
           </h2>
           
           <p className="text-xl md:text-2xl text-gray-300 mb-12 leading-relaxed">
-            {contactData.description}
+            Hablemos y transformemos tu idea en una aplicación web exitosa
           </p>
 
-          {/* Contact options */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
-            {contactData.options?.map((option, index) => (
-              <Link
-                key={index}
-                href={option.link}
-                className={`group bg-gray-900/30 backdrop-blur-sm border rounded-xl p-6 transition-all duration-300 hover:transform hover:scale-105 block ${
-                  option.highlight 
-                    ? 'border-cyan-500/50 shadow-lg shadow-cyan-500/20' 
-                    : 'border-gray-800 hover:border-cyan-500/50'
-                }`}
-              >
-                <div className="text-4xl mb-4">{option.icon}</div>
-                <h3 className="text-xl font-bold text-white mb-2">{option.title}</h3>
-                <p className="text-gray-400 mb-4">
-                  {option.description}
-                </p>
-                <span className={`inline-block w-full py-2 px-4 font-semibold rounded-lg transition-colors ${
-                  option.highlight
-                    ? 'bg-gradient-to-r from-cyan-400 to-green-400 text-black'
-                    : 'bg-gray-800 text-cyan-400 group-hover:bg-gray-700'
-                }`}>
-                  {option.action} →
-                </span>
-              </Link>
-            ))}
-          </div>
-
-          {/* Main CTA */}
-          <div className="space-y-6">
+          {/* Botones principales - Con Link de Next.js */}
+          <div className="flex flex-col sm:flex-row gap-6 justify-center mb-16">
             <Link
-              href={contactData.mainCTA?.link || '/contacto'}
-              className="inline-block px-12 py-4 bg-gradient-to-r from-cyan-400 to-green-400 text-black font-bold rounded-lg text-lg hover:shadow-2xl hover:shadow-cyan-400/25 transition-all duration-300 transform hover:scale-105"
+              href="/contacto"
+              className="group px-8 py-4 bg-gradient-to-r from-cyan-400 to-green-400 text-black font-bold rounded-lg hover:shadow-xl hover:shadow-cyan-400/25 transition-all duration-300 transform hover:scale-105 text-lg"
             >
-              {contactData.mainCTA?.text}
+              Empezar proyecto
+              <span className="ml-2 group-hover:translate-x-1 transition-transform inline-block">→</span>
             </Link>
             
-            {/* Features */}
-            <div className="flex flex-col sm:flex-row items-center justify-center space-y-2 sm:space-y-0 sm:space-x-8 text-gray-400">
-              {contactData.features?.map((feature, index) => (
-                <div key={index} className="flex items-center space-x-2">
-                  <span className="text-green-400">✓</span>
-                  <span>{feature}</span>
-                </div>
-              ))}
+            <Link
+              href="/contacto#calculator"
+              className="px-8 py-4 border-2 border-cyan-400 text-cyan-400 hover:bg-cyan-400 hover:text-black font-bold rounded-lg transition-all duration-300 transform hover:scale-105 text-lg"
+            >
+              Calcular presupuesto
+            </Link>
+          </div>
+
+          {/* Info rápida */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="bg-gray-900/30 backdrop-blur-sm border border-gray-800 rounded-xl p-6 hover:border-cyan-500/30 transition-all duration-300">
+              <div className="text-3xl mb-4">⚡</div>
+              <h3 className="text-lg font-bold text-white mb-2">Respuesta rápida</h3>
+              <p className="text-gray-400">
+                {contactInfo.response_time || 'Respuesta en 24 horas'}
+              </p>
+            </div>
+
+            <div className="bg-gray-900/30 backdrop-blur-sm border border-gray-800 rounded-xl p-6 hover:border-green-500/30 transition-all duration-300">
+              <div className="text-3xl mb-4">💬</div>
+              <h3 className="text-lg font-bold text-white mb-2">Consulta gratuita</h3>
+              <p className="text-gray-400">
+                30 minutos para analizar tu proyecto
+              </p>
+            </div>
+
+            <div className="bg-gray-900/30 backdrop-blur-sm border border-gray-800 rounded-xl p-6 hover:border-purple-500/30 transition-all duration-300">
+              <div className="text-3xl mb-4">🚀</div>
+              <h3 className="text-lg font-bold text-white mb-2">Inicio inmediato</h3>
+              <p className="text-gray-400">
+                {contactInfo.availability || 'Disponible para nuevos proyectos'}
+              </p>
             </div>
           </div>
 
-          {/* Quick stats */}
-          <div className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-8">
-            <div className="text-center">
-              <div className="text-3xl font-bold gradient-text mb-2">98%</div>
-              <div className="text-gray-400 text-sm">Clientes satisfechos</div>
+          {/* Contact info - Con <a> normal para mailto */}
+          {!loading && contactInfo.contact_email && (
+            <div className="mt-12 text-center">
+              <p className="text-gray-400 mb-2">O escríbeme directamente:</p>
+              
+                href={`mailto:${contactInfo.contact_email}`}
+                className="text-cyan-400 hover:text-cyan-300 font-medium text-lg transition-colors"
+              >
+                {contactInfo.contact_email}
+              </a>
             </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold gradient-text mb-2">24h</div>
-              <div className="text-gray-400 text-sm">Tiempo respuesta</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold gradient-text mb-2">50+</div>
-              <div className="text-gray-400 text-sm">Proyectos</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold gradient-text mb-2">100%</div>
-              <div className="text-gray-400 text-sm">A tiempo</div>
-            </div>
-          </div>
+          )}
         </div>
       </div>
     </section>
