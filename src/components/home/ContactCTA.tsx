@@ -4,22 +4,12 @@
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 
-interface ContactInfo {
-  contact_email?: string;
-  response_time?: string;
-  availability?: string;
-}
-
-interface Props {
-  data?: any;
-}
-
-export default function ContactCTA({ data }: Props) {
-  const [contactInfo, setContactInfo] = useState<ContactInfo>({});
+export default function ContactCTA() {
+  const [contactInfo, setContactInfo] = useState<any>({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function fetchContactInfo() {
+    const fetchContactInfo = async () => {
       try {
         const response = await fetch('/api/homepage');
         const data = await response.json();
@@ -29,22 +19,19 @@ export default function ContactCTA({ data }: Props) {
       } finally {
         setLoading(false);
       }
-    }
+    };
 
     fetchContactInfo();
   }, []);
 
   return (
     <section className="py-20 bg-black relative overflow-hidden">
-      {/* Background effects */}
       <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 via-transparent to-green-500/5"></div>
       <div className="absolute top-0 left-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl"></div>
       <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-green-500/10 rounded-full blur-3xl"></div>
 
       <div className="container mx-auto px-4 relative z-10">
         <div className="max-w-4xl mx-auto text-center">
-          
-          {/* Título principal */}
           <h2 className="text-4xl md:text-6xl font-bold gradient-text mb-8">
             ¿Tienes un proyecto en mente?
           </h2>
@@ -53,7 +40,6 @@ export default function ContactCTA({ data }: Props) {
             Hablemos y transformemos tu idea en una aplicación web exitosa
           </p>
 
-          {/* Botones principales */}
           <div className="flex flex-col sm:flex-row gap-6 justify-center mb-16">
             <Link
               href="/contacto"
@@ -71,7 +57,6 @@ export default function ContactCTA({ data }: Props) {
             </Link>
           </div>
 
-          {/* Info rápida */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="bg-gray-900/30 backdrop-blur-sm border border-gray-800 rounded-xl p-6 hover:border-cyan-500/30 transition-all duration-300">
               <div className="text-3xl mb-4">⚡</div>
@@ -98,7 +83,6 @@ export default function ContactCTA({ data }: Props) {
             </div>
           </div>
 
-          {/* Contact info */}
           {!loading && contactInfo.contact_email && (
             <div className="mt-12 text-center">
               <p className="text-gray-400 mb-2">O escríbeme directamente:</p>
