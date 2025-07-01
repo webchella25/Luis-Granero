@@ -1,11 +1,21 @@
-// src/components/home/ContactCTA.jsx
+// src/components/home/ContactCTA.tsx
 'use client';
 
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 
-export default function ContactCTA() {
-  const [contactInfo, setContactInfo] = useState({});
+interface ContactInfo {
+  contact_email?: string;
+  response_time?: string;
+  availability?: string;
+}
+
+interface Props {
+  data?: any;
+}
+
+export default function ContactCTA({ data }: Props) {
+  const [contactInfo, setContactInfo] = useState<ContactInfo>({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -43,7 +53,7 @@ export default function ContactCTA() {
             Hablemos y transformemos tu idea en una aplicación web exitosa
           </p>
 
-          {/* Botones principales - Con Link de Next.js */}
+          {/* Botones principales */}
           <div className="flex flex-col sm:flex-row gap-6 justify-center mb-16">
             <Link
               href="/contacto"
@@ -88,7 +98,7 @@ export default function ContactCTA() {
             </div>
           </div>
 
-          {/* Contact info - Con <a> normal para mailto */}
+          {/* Contact info */}
           {!loading && contactInfo.contact_email && (
             <div className="mt-12 text-center">
               <p className="text-gray-400 mb-2">O escríbeme directamente:</p>
