@@ -4,11 +4,13 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 
-export default function AboutHero() {
+interface AboutHeroProps {
+  data?: any;
+}
+
+export default function AboutHero({ data }: AboutHeroProps) {
   const [isVisible, setIsVisible] = useState(false);
   const [currentRole, setCurrentRole] = useState(0);
-  const [aboutData, setAboutData] = useState({});
-  const [loading, setLoading] = useState(true);
 
   // Roles/identidades profesionales
   const professionalRoles = [
@@ -78,20 +80,6 @@ export default function AboutHero() {
   ];
 
   useEffect(() => {
-    // Fetch about data from MongoDB
-    async function fetchAboutData() {
-      try {
-        const response = await fetch('/api/public/about');
-        const data = await response.json();
-        setAboutData(data.content || {});
-      } catch (error) {
-        console.error('Error fetching about data:', error);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchAboutData();
     setIsVisible(true);
 
     // Rotación de roles cada 3 segundos
@@ -104,13 +92,13 @@ export default function AboutHero() {
 
   const currentProfessionalRole = professionalRoles[currentRole];
 
-  // Datos por defecto
+  // Datos por defecto o desde props
   const heroContent = {
-    title: aboutData.hero?.title || "Luis Granero",
-    subtitle: aboutData.hero?.subtitle || "La persona detrás del código",
-    description: aboutData.hero?.description || "Más de 10 años transformando ideas en aplicaciones web exitosas. Mi pasión es crear soluciones que realmente importen, con código limpio y metodologías que garantizan resultados.",
-    location: aboutData.hero?.location || "España 🇪🇸",
-    experience: aboutData.hero?.experience || "10+ años"
+    title: data?.title || "Luis Granero",
+    subtitle: data?.subtitle || "La persona detrás del código",
+    description: data?.description || "Más de 10 años transformando ideas en aplicaciones web exitosas. Mi pasión es crear soluciones que realmente importen, con código limpio y metodologías que garantizan resultados.",
+    location: data?.location || "España 🇪🇸",
+    experience: data?.experience || "10+ años"
   };
 
   return (
@@ -300,7 +288,7 @@ export default function AboutHero() {
                 {professionalRoles.map((role, index) => (
                   <div
                     key={index}
-                    className={`group flex items-center space-x-4 p-4 rounded-xl border transition-all duration-300 ${
+                    className={`group flex items-center space-x-4 p-4 rounded-xl border transition-all duration-300 relative ${
                       index === currentRole
                         ? 'border-cyan-500/60 bg-gray-900/60 scale-105'
                         : 'border-gray-700/50 hover:border-gray-600 hover:scale-102'
