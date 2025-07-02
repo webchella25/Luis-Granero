@@ -8,6 +8,16 @@ interface BlogHeroProps {
   totalPosts?: number;
 }
 
+// Tipos para los colores
+type ColorType = 'cyan' | 'green' | 'purple' | 'yellow';
+
+interface BlogStat {
+  label: string;
+  value: string;
+  icon: string;
+  color: ColorType;
+}
+
 export default function BlogHero({ totalPosts = 0 }: BlogHeroProps) {
   const [isVisible, setIsVisible] = useState(false);
   const [currentTopic, setCurrentTopic] = useState(0);
@@ -47,8 +57,8 @@ export default function BlogHero({ totalPosts = 0 }: BlogHeroProps) {
     }
   ];
 
-  // Stats del blog (usando totalPosts dinámico)
-  const blogStats = [
+  // Stats del blog (con tipado correcto)
+  const blogStats: BlogStat[] = [
     { label: "Artículos", value: totalPosts > 0 ? `${totalPosts}+` : "50+", icon: "📖", color: "cyan" },
     { label: "Lectores", value: "10K+", icon: "👥", color: "green" },
     { label: "Tutoriales", value: "25+", icon: "🎓", color: "purple" },
@@ -190,7 +200,7 @@ export default function BlogHero({ totalPosts = 0 }: BlogHeroProps) {
           {/* STATS DEL BLOG CON CÓDIGO */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto mb-12">
             {blogStats.map((stat, index) => {
-              const colorClasses = {
+              const colorClasses: Record<ColorType, string> = {
                 cyan: "from-cyan-400 to-cyan-600 border-cyan-500/30 hover:border-cyan-500/60",
                 green: "from-green-400 to-green-600 border-green-500/30 hover:border-green-500/60",
                 purple: "from-purple-400 to-purple-600 border-purple-500/30 hover:border-purple-500/60",
