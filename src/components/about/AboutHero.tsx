@@ -8,6 +8,16 @@ interface AboutHeroProps {
   data?: any;
 }
 
+// Tipos para los colores
+type ColorType = 'cyan' | 'green' | 'purple' | 'yellow';
+
+interface CoreValue {
+  value: string;
+  description: string;
+  icon: string;
+  color: ColorType;
+}
+
 export default function AboutHero({ data }: AboutHeroProps) {
   const [isVisible, setIsVisible] = useState(false);
   const [currentRole, setCurrentRole] = useState(0);
@@ -51,8 +61,8 @@ export default function AboutHero({ data }: AboutHeroProps) {
     }
   ];
 
-  // Valores personales/profesionales
-  const coreValues = [
+  // Valores personales/profesionales (con tipado correcto)
+  const coreValues: CoreValue[] = [
     {
       value: "Calidad",
       description: "Código limpio y mantenible",
@@ -246,7 +256,7 @@ export default function AboutHero({ data }: AboutHeroProps) {
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {coreValues.map((item, index) => {
-                  const colorClasses = {
+                  const colorClasses: Record<ColorType, string> = {
                     cyan: "from-cyan-400 to-cyan-600 border-cyan-500/30",
                     green: "from-green-400 to-green-600 border-green-500/30", 
                     purple: "from-purple-400 to-purple-600 border-purple-500/30",
