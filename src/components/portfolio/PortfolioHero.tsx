@@ -4,7 +4,12 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 
-export default function PortfolioHero() {
+interface PortfolioHeroProps {
+  data?: any;
+  projectCount?: number;
+}
+
+export default function PortfolioHero({ data, projectCount = 0 }: PortfolioHeroProps) {
   const [isVisible, setIsVisible] = useState(false);
   const [currentTech, setCurrentTech] = useState(0);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
@@ -18,9 +23,14 @@ export default function PortfolioHero() {
     { name: "MongoDB", color: "from-green-600 to-green-800", icon: "🍃" }
   ];
 
-  // Stats del portfolio
+  // Stats del portfolio (usando datos dinámicos)
   const portfolioStats = [
-    { label: "Proyectos", value: "25+", icon: "💼", color: "cyan" },
+    { 
+      label: "Proyectos", 
+      value: projectCount > 0 ? `${projectCount}+` : "25+", 
+      icon: "💼", 
+      color: "cyan" 
+    },
     { label: "Clientes", value: "35+", icon: "🤝", color: "green" },
     { label: "Performance", value: "98/100", icon: "⚡", color: "yellow" },
     { label: "Satisfacción", value: "100%", icon: "⭐", color: "purple" }
@@ -35,7 +45,7 @@ export default function PortfolioHero() {
     }, 2000);
 
     // Mouse tracking para efectos parallax
-    const handleMouseMove = (e) => {
+    const handleMouseMove = (e: MouseEvent) => {
       setMousePosition({
         x: (e.clientX / window.innerWidth) * 100,
         y: (e.clientY / window.innerHeight) * 100
@@ -51,6 +61,13 @@ export default function PortfolioHero() {
   }, []);
 
   const currentTechnology = technologies[currentTech];
+
+  // Contenido por defecto o desde data
+  const heroContent = {
+    title: data?.hero?.title || "Portfolio",
+    subtitle: data?.hero?.subtitle || "Proyectos que transforman negocios",
+    description: data?.hero?.description || "Proyectos reales que transforman negocios. Cada línea de código cuenta una historia de éxito."
+  };
 
   return (
     <section className="py-20 bg-gradient-to-br from-black via-gray-950 to-gray-900 relative overflow-hidden min-h-[80vh] flex items-center">
@@ -105,7 +122,7 @@ export default function PortfolioHero() {
           <h1 className="mb-8">
             <div className="text-6xl md:text-8xl font-black mb-4">
               <span className="bg-gradient-to-r from-purple-400 via-cyan-400 to-green-400 bg-clip-text text-transparent animate-gradient-x">
-                Portfolio
+                {heroContent.title}
               </span>
             </div>
             
