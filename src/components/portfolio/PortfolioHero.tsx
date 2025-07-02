@@ -9,6 +9,16 @@ interface PortfolioHeroProps {
   projectCount?: number;
 }
 
+// Tipos para los colores
+type ColorType = 'cyan' | 'green' | 'yellow' | 'purple';
+
+interface PortfolioStat {
+  label: string;
+  value: string;
+  icon: string;
+  color: ColorType;
+}
+
 export default function PortfolioHero({ data, projectCount = 0 }: PortfolioHeroProps) {
   const [isVisible, setIsVisible] = useState(false);
   const [currentTech, setCurrentTech] = useState(0);
@@ -23,8 +33,8 @@ export default function PortfolioHero({ data, projectCount = 0 }: PortfolioHeroP
     { name: "MongoDB", color: "from-green-600 to-green-800", icon: "🍃" }
   ];
 
-  // Stats del portfolio (usando datos dinámicos)
-  const portfolioStats = [
+  // Stats del portfolio (con tipado correcto)
+  const portfolioStats: PortfolioStat[] = [
     { 
       label: "Proyectos", 
       value: projectCount > 0 ? `${projectCount}+` : "25+", 
@@ -150,7 +160,7 @@ export default function PortfolioHero({ data, projectCount = 0 }: PortfolioHeroP
           {/* STATS DEL PORTFOLIO CON ANIMACIONES */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto mb-12">
             {portfolioStats.map((stat, index) => {
-              const colorClasses = {
+              const colorClasses: Record<ColorType, string> = {
                 cyan: "from-cyan-400 to-cyan-600 border-cyan-500/30 hover:border-cyan-500/60",
                 green: "from-green-400 to-green-600 border-green-500/30 hover:border-green-500/60",
                 yellow: "from-yellow-400 to-yellow-600 border-yellow-500/30 hover:border-yellow-500/60",
