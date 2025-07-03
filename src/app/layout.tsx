@@ -1,15 +1,11 @@
-// src/app/layout.tsx
+// src/app/layout.tsx - MODIFICADO para excluir admin
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
 import SessionWrapper from '@/components/providers/SessionWrapper'
-import Header from '@/components/layout/Header'
-import Footer from '@/components/layout/Footer'
+import ConditionalLayout from '@/components/layout/ConditionalLayout'
 
-const inter = Inter({ 
-  subsets: ['latin'],
-  display: 'swap', // Mejora la carga de fuentes
-})
+const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
   title: 'Luis Granero - Desarrollador Full Stack',
@@ -22,21 +18,12 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="es" className="scroll-smooth">
-      <head>
-        {/* Preload critical resources */}
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
-      </head>
-      <body className={`${inter.className} bg-black text-white antialiased`}>
+    <html lang="es">
+      <body className={inter.className}>
         <SessionWrapper>
-          <div className="min-h-screen flex flex-col">
-            <Header />
-            <main className="flex-1">
-              {children}
-            </main>
-            <Footer />
-          </div>
+          <ConditionalLayout>
+            {children}
+          </ConditionalLayout>
         </SessionWrapper>
       </body>
     </html>
