@@ -1,54 +1,66 @@
-// src/app/admin/layout.js - SIMPLIFICADO
+// src/app/admin/layout.js - NUEVO LAYOUT PROFESIONAL
 'use client'
 import { useSession } from 'next-auth/react'
-import { usePathname } from 'next/navigation'
-import { signOut } from 'next-auth/react'
+import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
+import AdminSidebar from '@/components/admin/AdminSidebar'
+import AdminHeader from '@/components/admin/AdminHeader'
+import AdminLoadingScreen from '@/components/admin/AdminLoadingScreen'
+import { Toaster } from 'react-hot-toast'
 
 export default function AdminLayout({ children }) {
   const { data: session, status } = useSession()
-  const pathname = usePathname()
+  const router = useRouter()
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
-  // Si es login page, no usar admin layout
-  if (pathname === '/admin/login') {
-    return <div className="min-h-screen bg-gray-900">{children}</div>
-  }
+  useEffect(() => {
+    if (status === 'loading') return
+    if (!session) {
+      router.push('/admin/login')
+      return
+    }
+  }, [session, status, router])
 
-  // Loading state
   if (status === 'loading') {
-    return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <div className="text-white">🔍 Cargando...</div>
-      </div>
-    )
+    return <AdminLoadingScreen />
   }
 
-  // Si no hay sesión, el middleware se encargará del redirect
   if (!session) {
-    return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <div className="text-white">🔄 Verificando acceso...</div>
-      </div>
-    )
+    return null
   }
 
-  // Layout normal para admin autenticado
   return (
-    <div className="min-h-screen bg-gray-900">
-      <div className="bg-gray-800 text-white p-4">
-        <div className="flex justify-between items-center">
-          <h1 className="text-xl">🎛️ Admin Panel</h1>
-          <div className="flex items-center space-x-4">
-            <span>{session.user?.email}</span>
-            <button
-              onClick={() => signOut({ callbackUrl: '/admin/login' })}
-              className="bg-red-600 px-3 py-1 rounded text-sm"
-            >
-              Salir
-            </button>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      {/* Sidebar */}
+      <AdminSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      
+      {/* Main Content */}
+      <div className="lg:pl-64">
+        {/* Header */}
+        <AdminHeader 
+          onMenuClick={() => setSidebarOpen(!sidebarOpen)}
+          user={session.user}
+        />
+        
+        {/* Page Content */}
+        <main className="py-6">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            {children}
           </div>
-        </div>
+        </main>
       </div>
-      <div className="p-8">{children}</div>
+      
+      {/* Notifications */}
+      <Toaster 
+        position="top-right"
+        toastOptions={{
+          duration: 4000,
+          style: {
+            background: '#1F2937',
+            color: '#fff',
+          },
+        }}
+      />
     </div>
   )
 }

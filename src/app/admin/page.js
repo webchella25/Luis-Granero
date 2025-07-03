@@ -1,9 +1,12 @@
-// src/app/admin/page.js
+// src/app/admin/page.js - DASHBOARD MEJORADO
 'use client'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import DashboardCard from '@/components/admin/DashboardCard'
+import RecentActivity from '@/components/admin/RecentActivity'
+import QuickStats from '@/components/admin/QuickStats'
 
 export default function AdminDashboard() {
   const { data: session, status } = useSession()
@@ -11,8 +14,10 @@ export default function AdminDashboard() {
   const [stats, setStats] = useState({
     projects: 0,
     posts: 0,
-    messages: 0
+    messages: 0,
+    views: 0
   })
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     if (status === 'loading') return
@@ -21,7 +26,6 @@ export default function AdminDashboard() {
       return
     }
     
-    // Cargar estadísticas
     fetchStats()
   }, [session, status, router])
 
@@ -32,123 +36,129 @@ export default function AdminDashboard() {
       setStats(data)
     } catch (error) {
       console.error('Error loading stats:', error)
+    } finally {
+      setLoading(false)
     }
   }
 
-  if (status === 'loading') {
-    return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <div className="text-white">Cargando...</div>
-      </div>
-    )
+  if (status === 'loading' || loading) {
+    return <div className="flex justify-center items-center h-64">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-500"></div>
+    </div>
   }
 
-  if (!session) {
-    return null
-  }
-
-  const dashboardCards = [
-    {
-      title: 'Proyectos',
-      value: stats.projects,
-      icon: '🚀',
-      color: 'bg-cyan-600',
-      link: '/admin/portfolio'
-    },
-    {
-      title: 'Artículos',
-      value: stats.posts,
-      icon: '📝',
-      color: 'bg-green-600',
-      link: '/admin/blog'
-    },
-    {
-      title: 'Mensajes',
-      value: stats.messages,
-      icon: '💬',
-      color: 'bg-purple-600',
-      link: '/admin/messages'
-    },
-    {
-      title: 'Visitas',
-      value: '2.4k',
-      icon: '📊',
-      color: 'bg-blue-600',
-      link: '/admin/analytics'
-    }
-  ]
+  if (!session) return null
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-white">Dashboard</h1>
-        <div className="text-gray-400">
-          Bienvenido, {session.user.name}
-        </div>
+      {/* Welcome Section */}
+      <div className="bg-gradient-to-r from-cyan-600 to-blue-600 rounded-lg p-6 text-white">
+        <h1 className="text-2xl font-bold mb-2">
+          ¡Bienvenido, {session.user?.name || 'Luis'}! 👋
+        </h1>
+        <p className="text-cyan-100">
+          Aquí tienes un resumen de tu sitio web y las métricas más importantes
+        </p>
       </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {dashboardCards.map((card, index) => (
-          <Link
-            key={index}
-            href={card.link}
-            className={`${card.color} rounded-lg p-6 text-white hover:opacity-90 transition-opacity`}
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium opacity-90">{card.title}</p>
-                <p className="text-2xl font-bold">{card.value}</p>
-              </div>
-              <div className="text-2xl">{card.icon}</div>
-            </div>
-          </Link>
-        ))}
+        <DashboardCard
+          title="Proyectos"
+          value={stats.projects}
+          icon="🚀"
+          color="bg-gradient-to-r from-cyan-500 to-blue-500"
+          link="/admin/portfolio"
+          change="+2 este mes"
+        />
+        <DashboardCard
+          title="Artículos"
+          value={stats.posts}
+          icon="📝"
+          color="bg-gradient-to-r from-green-500 to-emerald-500"
+          link="/admin/blog"
+          change="+1 esta semana"
+        />
+        <DashboardCard
+          title="Mensajes"
+          value={stats.messages}
+          icon="💬"
+          color="bg-gradient-to-r from-purple-500 to-pink-500"
+          link="/admin/messages"
+          change="+5 hoy"
+        />
+        <DashboardCard
+          title="Visitas"
+          value={stats.views}
+          icon="📊"
+          color="bg-gradient-to-r from-orange-500 to-red-500"
+          link="/admin/analytics"
+          change="+12% vs mes anterior"
+        />
       </div>
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-gray-800 rounded-lg p-6">
-          <h3 className="text-lg font-medium text-white mb-4">Acciones Rápidas</h3>
-          <div className="space-y-3">
-            <Link
-              href="/admin/portfolio/new"
-              className="block w-full bg-cyan-600 hover:bg-cyan-700 text-white px-4 py-3 rounded-md text-center font-medium"
-            >
-              + Nuevo Proyecto
-            </Link>
-            <Link
-              href="/admin/blog/new"
-              className="block w-full bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded-md text-center font-medium"
-            >
-              + Nuevo Artículo
-            </Link>
-            <Link
-              href="/admin/content/homepage"
-              className="block w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-md text-center font-medium"
-            >
-              ✏️ Editar Homepage
-            </Link>
-          </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+          <QuickStats />
         </div>
+        <div>
+          <RecentActivity />
+        </div>
+      </div>
 
-        <div className="bg-gray-800 rounded-lg p-6">
-          <h3 className="text-lg font-medium text-white mb-4">Actividad Reciente</h3>
-          <div className="space-y-3 text-gray-400">
-            <div className="flex items-center justify-between py-2 border-b border-gray-700">
-              <span>Homepage actualizada</span>
-              <span className="text-sm">Hace 2 horas</span>
-            </div>
-            <div className="flex items-center justify-between py-2 border-b border-gray-700">
-              <span>Nuevo proyecto agregado</span>
-              <span className="text-sm">Ayer</span>
-            </div>
-            <div className="flex items-center justify-between py-2">
-              <span>Artículo publicado</span>
-              <span className="text-sm">Hace 3 días</span>
+      {/* Action Buttons */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Link
+          href="/admin/portfolio/new"
+          className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-cyan-500 transition-colors group"
+        >
+          <div className="flex items-center">
+            <span className="text-2xl mr-4">🚀</span>
+            <div>
+              <h3 className="font-semibold text-gray-900 dark:text-gray-100 group-hover:text-cyan-600">
+                Nuevo Proyecto
+              </h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Añade un nuevo proyecto al portfolio
+              </p>
             </div>
           </div>
-        </div>
+        </Link>
+        
+        <Link
+          href="/admin/blog/new"
+          className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-green-500 transition-colors group"
+        >
+          <div className="flex items-center">
+            <span className="text-2xl mr-4">📝</span>
+            <div>
+              <h3 className="font-semibold text-gray-900 dark:text-gray-100 group-hover:text-green-600">
+                Nuevo Artículo
+              </h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Escribe un nuevo artículo técnico
+              </p>
+            </div>
+          </div>
+        </Link>
+        
+        <Link
+          href="/admin/homepage"
+          className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-purple-500 transition-colors group"
+        >
+          <div className="flex items-center">
+            <span className="text-2xl mr-4">🏠</span>
+            <div>
+              <h3 className="font-semibold text-gray-900 dark:text-gray-100 group-hover:text-purple-600">
+                Editar Homepage
+              </h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Personaliza la página principal
+              </p>
+            </div>
+          </div>
+        </Link>
       </div>
     </div>
   )
