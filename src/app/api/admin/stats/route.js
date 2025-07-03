@@ -1,70 +1,31 @@
 // src/app/api/admin/stats/route.js
-import connectDB from '@/lib/mongodb';
-import Contact from '@/models/Contact';
-import BlogPost from '@/models/BlogPost';
-import Project from '@/models/Project';
-import Analytics from '@/models/Analytics';
+import { NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
+import dbConnect from '@/lib/mongodb'
+import Project from '@/models/Project'
+import Post from '@/models/Post'
 
 export async function GET() {
   try {
-    await connectDB();
+    const session = await getServerSession()
     
-    // Estadísticas generales
-    const [
-      totalContacts,
-      newContacts,
-      totalPosts,
-      publishedPosts,
-      totalProjects,
-      featuredProjects,
-      recentAnalytics
-    ] = await Promise.all([
-      Contact.countDocuments(),
-      Contact.countDocuments({ 
-        createdAt: { $gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } 
-      }),
-      BlogPost.countDocuments(),
-      BlogPost.countDocuments({ status: 'published' }),
-      Project.countDocuments({ isActive: true }),
-      Project.countDocuments({ isFeatured: true, isActive: true }),
-      Analytics.findOne().sort({ date: -1 }).lean()
-    ]);
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    await dbConnect()
     
-    // Estadísticas de contactos por estado
-    const contactsByStatus = await Contact.aggregate([
-      { $group: { _id: '$status', count: { $sum: 1 } } }
-    ]);
+    const [projects, posts] = await Promise.all([
+      Project.countDocuments(),
+      Post.countDocuments()
+    ])
     
-    // Posts más populares
-    const popularPosts = await BlogPost.find({ status: 'published' })
-      .sort({ 'stats.views': -1 })
-      .limit(5)
-      .select('title slug stats.views')
-      .lean();
-    
-    // Proyectos más visitados
-    const popularProjects = await Project.find({ isActive: true })
-      .sort({ 'stats.views': -1 })
-      .limit(5)
-      .select('title slug stats.views stats.likes')
-      .lean();
-    
-    return Response.json({
-      overview: {
-        totalContacts,
-        newContacts,
-        totalPosts,
-        publishedPosts,
-        totalProjects,
-        featuredProjects
-      },
-      contactsByStatus,
-      popularPosts,
-      popularProjects,
-      traffic: recentAnalytics?.traffic || {}
-    });
-    
+    return NextResponse.json({
+      projects,
+      posts,
+      messages: 0 // Por ahora 0, luego implementar
+    })
   } catch (error) {
-    return Response.json({ error: 'Error interno del servidor' }, { status: 500 });
+    return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }
