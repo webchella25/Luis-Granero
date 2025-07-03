@@ -1,41 +1,24 @@
-// middleware.js (EN LA RAÍZ, no en src/)
-import { withAuth } from 'next-auth/middleware';
+// middleware.js (EN LA RAÍZ)
+import { NextResponse } from 'next/server'
 
-export default withAuth(
-  function middleware(req) {
-    // Debug para ver qué está pasando
-    console.log('🔍 Middleware executing for:', req.nextUrl.pathname);
-    console.log('🔍 Has token:', !!req.nextauth?.token);
-  },
-  {
-    callbacks: {
-      authorized: ({ token, req }) => {
-        const path = req.nextUrl.pathname;
-        
-        // Permitir login
-        if (path.startsWith('/admin/login')) {
-          console.log('✅ Allowing access to login page');
-          return true;
-        }
-        
-        // Permitir páginas de debug
-        if (path.includes('/admin/status') || path.includes('/admin/debug')) {
-          console.log('✅ Allowing access to debug page');
-          return true;
-        }
-        
-        // Proteger otras rutas admin
-        if (path.startsWith('/admin')) {
-          console.log('🔐 Protecting admin route, token exists:', !!token);
-          return !!token;
-        }
-        
-        return true;
-      },
-    },
+export function middleware(request) {
+  const { pathname } = request.nextUrl
+  
+  console.log(`🔍 Middleware: ${pathname}`)
+  
+  // Debug temporal - respuesta personalizada para verificar que funciona
+  if (pathname.startsWith('/admin')) {
+    console.log('🔍 Admin route detected')
+    
+    if (pathname === '/admin' || pathname === '/admin/') {
+      console.log('🔄 Redirecting /admin to /admin/login')
+      return NextResponse.redirect(new URL('/admin/login', request.url))
+    }
   }
-);
+  
+  return NextResponse.next()
+}
 
 export const config = {
   matcher: ['/admin/:path*']
-};
+}
