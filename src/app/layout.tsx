@@ -6,7 +6,10 @@ import SessionWrapper from '@/components/providers/SessionWrapper'
 import Header from '@/components/layout/Header'
 import Footer from '@/components/layout/Footer'
 
-const inter = Inter({ subsets: ['latin'] })
+const inter = Inter({ 
+  subsets: ['latin'],
+  display: 'swap', // Mejora la carga de fuentes
+})
 
 export const metadata: Metadata = {
   title: 'Luis Granero - Desarrollador Full Stack',
@@ -19,12 +22,21 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="es">
-      <body className={inter.className}>
+    <html lang="es" className="scroll-smooth">
+      <head>
+        {/* Preload critical resources */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+      </head>
+      <body className={`${inter.className} bg-black text-white antialiased`}>
         <SessionWrapper>
-          <Header />
-          {children}
-          <Footer />
+          <div className="min-h-screen flex flex-col">
+            <Header />
+            <main className="flex-1">
+              {children}
+            </main>
+            <Footer />
+          </div>
         </SessionWrapper>
       </body>
     </html>
