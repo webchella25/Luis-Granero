@@ -1,10 +1,9 @@
-// src/app/admin/portfolio/page.js
+// src/app/admin/portfolio/page.js - Gestión de Portfolio
 'use client'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { PlusIcon, PencilIcon, TrashIcon, EyeIcon } from '@heroicons/react/24/outline'
 
-export default function PortfolioManager() {
+export default function AdminPortfolio() {
   const [projects, setProjects] = useState([])
   const [loading, setLoading] = useState(true)
 
@@ -14,9 +13,11 @@ export default function PortfolioManager() {
 
   const fetchProjects = async () => {
     try {
-      const response = await fetch('/api/admin/portfolio')
-      const data = await response.json()
-      setProjects(data.projects || [])
+      const response = await fetch('/api/admin/projects')
+      if (response.ok) {
+        const data = await response.json()
+        setProjects(data)
+      }
     } catch (error) {
       console.error('Error fetching projects:', error)
     } finally {
@@ -24,157 +25,151 @@ export default function PortfolioManager() {
     }
   }
 
-  const deleteProject = async (id) => {
-    if (!confirm('¿Estás seguro de eliminar este proyecto?')) return
-
-    try {
-      await fetch(`/api/admin/portfolio/${id}`, { method: 'DELETE' })
-      setProjects(projects.filter(p => p._id !== id))
-    } catch (error) {
-      console.error('Error deleting project:', error)
-    }
-  }
-
-  const toggleFeatured = async (id, featured) => {
-    try {
-      await fetch(`/api/admin/portfolio/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ featured: !featured })
-      })
-      fetchProjects()
-    } catch (error) {
-      console.error('Error updating project:', error)
-    }
-  }
-
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="text-white">Cargando proyectos...</div>
-      </div>
-    )
-  }
-
   return (
-    <div>
-      <div className="mb-8 flex justify-between items-center">
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-white">Gestión de Portfolio</h1>
-          <p className="text-gray-400">Administra tus proyectos y casos de estudio</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+            Gestión de Portfolio
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400">
+            Administra tus proyectos y casos de éxito
+          </p>
         </div>
         <Link
           href="/admin/portfolio/new"
-          className="bg-cyan-600 hover:bg-cyan-700 text-white px-4 py-2 rounded-md flex items-center space-x-2"
+          className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white px-4 py-2 rounded-lg hover:from-cyan-600 hover:to-blue-600 transition-all"
         >
-          <PlusIcon className="w-4 h-4" />
-          <span>Nuevo Proyecto</span>
+          + Nuevo Proyecto
         </Link>
       </div>
 
-      {projects.length === 0 ? (
-        <div className="text-center py-12">
-          <div className="text-gray-400 mb-4">No tienes proyectos aún</div>
-          <Link
-            href="/admin/portfolio/new"
-            className="bg-cyan-600 hover:bg-cyan-700 text-white px-6 py-3 rounded-md"
-          >
-            Crear tu primer proyecto
-          </Link>
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
+          <div className="flex items-center">
+            <span className="text-2xl mr-3">🚀</span>
+            <div>
+              <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                {projects.length}
+              </p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Total proyectos</p>
+            </div>
+          </div>
         </div>
-      ) : (
-        <div className="bg-gray-800 shadow overflow-hidden sm:rounded-md">
-          <ul className="divide-y divide-gray-700">
-            {projects.map((project) => (
-              <li key={project._id} className="px-6 py-4">
+        
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
+          <div className="flex items-center">
+            <span className="text-2xl mr-3">⭐</span>
+            <div>
+              <p className="text-2xl font-bold text-green-600">
+                {projects.filter(p => p.isFeatured).length}
+              </p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Destacados</p>
+            </div>
+          </div>
+        </div>
+        
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
+          <div className="flex items-center">
+            <span className="text-2xl mr-3">🔄</span>
+            <div>
+              <p className="text-2xl font-bold text-blue-600">
+                {projects.filter(p => p.status === 'En desarrollo').length}
+              </p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">En desarrollo</p>
+            </div>
+          </div>
+        </div>
+        
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
+          <div className="flex items-center">
+            <span className="text-2xl mr-3">👁️</span>
+            <div>
+              <p className="text-2xl font-bold text-purple-600">
+                {projects.reduce((sum, p) => sum + (p.stats?.views || 0), 0)}
+              </p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Total vistas</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Projects Table */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+        <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+            Proyectos Recientes
+          </h2>
+        </div>
+        
+        {loading ? (
+          <div className="p-6">
+            <div className="animate-pulse space-y-4">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="flex items-center space-x-4">
+                  <div className="w-12 h-12 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                  <div className="flex-1">
+                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/3"></div>
+                    <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2 mt-2"></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : projects.length > 0 ? (
+          <div className="divide-y divide-gray-200 dark:divide-gray-700">
+            {projects.map(project => (
+              <div key={project._id} className="p-6 hover:bg-gray-50 dark:hover:bg-gray-700/50">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-4">
-                    <div className="flex-shrink-0">
-                      {project.images?.[0] ? (
-                        <img 
-                          src={project.images[0]} 
-                          alt={project.title}
-                          className="w-16 h-16 object-cover rounded-lg"
-                        />
-                      ) : (
-                        <div className="w-16 h-16 bg-gray-600 rounded-lg flex items-center justify-center">
-                          <span className="text-2xl">📁</span>
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center space-x-2">
-                        <h3 className="text-lg font-medium text-white truncate">
-                          {project.title}
-                        </h3>
-                        {project.featured && (
-                          <span className="bg-yellow-100 text-yellow-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
-                            Destacado
-                          </span>
-                        )}
-                        <span className={`text-xs font-medium px-2.5 py-0.5 rounded-full ${
-                          project.isPublished 
-                            ? 'bg-green-100 text-green-800' 
-                            : 'bg-red-100 text-red-800'
-                        }`}>
-                          {project.isPublished ? 'Publicado' : 'Borrador'}
-                        </span>
-                      </div>
-                      <p className="text-gray-400 text-sm mt-1">
-                        {project.description?.substring(0, 100)}...
+                    <span className="text-2xl">{project.image || '🚀'}</span>
+                    <div>
+                      <h3 className="font-semibold text-gray-900 dark:text-gray-100">
+                        {project.title}
+                      </h3>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        {project.category} • {project.year}
                       </p>
-                      <div className="flex items-center space-x-4 mt-2">
-                        <span className="text-xs text-gray-500">
-                          Categoría: {project.category}
-                        </span>
-                        <span className="text-xs text-gray-500">
-                          Tecnologías: {project.technologies?.join(', ')}
-                        </span>
-                      </div>
                     </div>
                   </div>
                   
-                  <div className="flex items-center space-x-2">
-                    <button
-                      onClick={() => toggleFeatured(project._id, project.featured)}
-                      className={`p-2 rounded-md ${
-                        project.featured
-                          ? 'text-yellow-400 hover:text-yellow-300'
-                          : 'text-gray-400 hover:text-yellow-400'
-                      }`}
-                      title={project.featured ? 'Quitar de destacados' : 'Marcar como destacado'}
-                    >
-                      ⭐
-                    </button>
+                  <div className="flex items-center space-x-4">
+                    <span className={`px-2 py-1 text-xs rounded-full ${
+                      project.status === 'En producción' 
+                        ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                        : 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+                    }`}>
+                      {project.status}
+                    </span>
+                    
                     <Link
-                      href={`/portfolio/${project.slug}`}
-                      className="p-2 text-gray-400 hover:text-cyan-400 rounded-md"
-                      title="Ver proyecto"
-                      target="_blank"
+                      href={`/admin/portfolio/${project.slug}/edit`}
+                      className="text-cyan-600 hover:text-cyan-700 dark:text-cyan-400"
                     >
-                      <EyeIcon className="w-4 h-4" />
+                      Editar
                     </Link>
-                    <Link
-                      href={`/admin/portfolio/${project._id}`}
-                      className="p-2 text-gray-400 hover:text-cyan-400 rounded-md"
-                      title="Editar"
-                    >
-                      <PencilIcon className="w-4 h-4" />
-                    </Link>
-                    <button
-                      onClick={() => deleteProject(project._id)}
-                      className="p-2 text-gray-400 hover:text-red-400 rounded-md"
-                      title="Eliminar"
-                    >
-                      <TrashIcon className="w-4 h-4" />
-                    </button>
                   </div>
                 </div>
-              </li>
+              </div>
             ))}
-          </ul>
-        </div>
-      )}
+          </div>
+        ) : (
+          <div className="p-6 text-center">
+            <span className="text-4xl mb-4 block">📂</span>
+            <p className="text-gray-600 dark:text-gray-400 mb-4">
+              No hay proyectos aún
+            </p>
+            <Link
+              href="/admin/portfolio/new"
+              className="text-cyan-600 hover:text-cyan-700 dark:text-cyan-400"
+            >
+              Crear tu primer proyecto
+            </Link>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
