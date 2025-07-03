@@ -1,19 +1,14 @@
-// middleware.js (EN LA RAÍZ)
+// middleware.js (en la raíz del proyecto)
 import { NextResponse } from 'next/server'
 
 export function middleware(request) {
   const { pathname } = request.nextUrl
   
-  console.log(`🔍 Middleware: ${pathname}`)
-  
-  // Debug temporal - respuesta personalizada para verificar que funciona
-  if (pathname.startsWith('/admin')) {
-    console.log('🔍 Admin route detected')
-    
-    if (pathname === '/admin' || pathname === '/admin/') {
-      console.log('🔄 Redirecting /admin to /admin/login')
-      return NextResponse.redirect(new URL('/admin/login', request.url))
-    }
+  // Solo interceptar rutas admin que NO sean login
+  if (pathname.startsWith('/admin') && !pathname.startsWith('/admin/login')) {
+    console.log('🔍 Protecting admin route:', pathname)
+    // El middleware redirecciona automáticamente a login si no hay token
+    return NextResponse.redirect(new URL('/admin/login', request.url))
   }
   
   return NextResponse.next()
