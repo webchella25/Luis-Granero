@@ -1,6 +1,7 @@
-// src/components/admin/editors/CTAEditor.js
+// src/components/admin/editors/CTAEditor.js - VERSIÓN CORREGIDA CON LINK
 'use client'
 import { useState } from 'react'
+import Link from 'next/link'
 
 export default function CTAEditor({ data, onChange }) {
   const [cta, setCta] = useState(data || {
@@ -406,19 +407,19 @@ export default function CTAEditor({ data, onChange }) {
 
               {/* Buttons */}
               <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
-                
+                <Link
                   href={cta.primaryButton.link}
                   className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white px-8 py-3 rounded-lg font-semibold hover:from-cyan-600 hover:to-blue-600 transition-all"
                 >
                   {cta.primaryButton.text}
-                </a>
+                </Link>
                 
-                
+                <Link
                   href={cta.secondaryButton.link}
                   className="border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-gray-900 transition-all"
                 >
                   {cta.secondaryButton.text}
-                </a>
+                </Link>
               </div>
 
               {/* Contact Info */}
