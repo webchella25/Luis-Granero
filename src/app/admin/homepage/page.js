@@ -1,6 +1,7 @@
 // src/app/admin/homepage/page.js - EDITOR PRINCIPAL
 'use client'
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import HeroEditor from '@/components/admin/editors/HeroEditor'
 import ServicesEditor from '@/components/admin/editors/ServicesEditor'
 import AboutEditor from '@/components/admin/editors/AboutEditor'
@@ -249,17 +250,17 @@ export default function HomepageEditor() {
       </div>
 
       {/* Preview Button */}
-      <div className="flex justify-center">
-        
-          href="/"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center px-6 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-        >
-          <span className="mr-2">👁️</span>
-          Vista Previa de la Homepage
-        </a>
-      </div>
+<div className="flex justify-center">
+  <Link
+    href="/"
+    target="_blank"
+    rel="noopener noreferrer"
+    className="inline-flex items-center px-6 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+  >
+    <span className="mr-2">👁️</span>
+    Vista Previa de la Homepage
+  </Link>
+</div>
     </div>
   )
 }
