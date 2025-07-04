@@ -2,123 +2,154 @@
 'use client'
 import { useState } from 'react'
 
-export default function HeroEditor({ data, onUpdate }) {
-  const [hero, setHero] = useState(data.hero)
+export default function HeroEditor({ data, onChange }) {
+  const [hero, setHero] = useState(data || {
+    title: "",
+    subtitle: "",
+    description: "",
+    ctaText: "",
+    ctaLink: "",
+    backgroundVideo: "",
+    image: ""
+  })
 
   const handleChange = (field, value) => {
     const updatedHero = { ...hero, [field]: value }
     setHero(updatedHero)
-    onUpdate('hero', updatedHero)
+    onChange(updatedHero)
   }
 
   return (
     <div className="space-y-6">
-      <div>
-        <h3 className="text-lg font-medium text-white mb-4">Hero Section</h3>
-        <p className="text-gray-400 mb-6">Edita el contenido principal de la página de inicio</p>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+            Hero Section
+          </h3>
+          <p className="text-gray-600 dark:text-gray-400">
+            La primera impresión de tu sitio web
+          </p>
+        </div>
+        <div className="text-2xl">🎯</div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Left Column - Form */}
+        {/* Formulario */}
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Título Principal
             </label>
             <input
               type="text"
               value={hero.title}
               onChange={(e) => handleChange('title', e.target.value)}
-              className="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white focus:ring-cyan-500 focus:border-cyan-500"
-              placeholder="Tu título principal"
+              className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+              placeholder="Tu nombre"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Subtítulo
             </label>
             <input
               type="text"
               value={hero.subtitle}
               onChange={(e) => handleChange('subtitle', e.target.value)}
-              className="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white focus:ring-cyan-500 focus:border-cyan-500"
-              placeholder="Tu subtítulo"
+              className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+              placeholder="Tu especialidad"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Descripción
             </label>
             <textarea
               rows={4}
               value={hero.description}
               onChange={(e) => handleChange('description', e.target.value)}
-              className="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white focus:ring-cyan-500 focus:border-cyan-500"
+              className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
               placeholder="Describe lo que haces..."
             />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Texto del Botón
               </label>
               <input
                 type="text"
                 value={hero.ctaText}
                 onChange={(e) => handleChange('ctaText', e.target.value)}
-                className="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white focus:ring-cyan-500 focus:border-cyan-500"
+                className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+                placeholder="Ver proyectos"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Enlace del Botón
               </label>
               <input
                 type="text"
                 value={hero.ctaLink}
                 onChange={(e) => handleChange('ctaLink', e.target.value)}
-                className="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white focus:ring-cyan-500 focus:border-cyan-500"
+                className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+                placeholder="/portfolio"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Imagen de Fondo (URL)
+            </label>
+            <input
+              type="url"
+              value={hero.image}
+              onChange={(e) => handleChange('image', e.target.value)}
+              className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+              placeholder="https://ejemplo.com/imagen.jpg"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Video de Fondo (URL)
             </label>
             <input
-              type="text"
+              type="url"
               value={hero.backgroundVideo}
               onChange={(e) => handleChange('backgroundVideo', e.target.value)}
-              className="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white focus:ring-cyan-500 focus:border-cyan-500"
-              placeholder="/videos/hero-video.mp4"
+              className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+              placeholder="https://ejemplo.com/video.mp4"
             />
           </div>
         </div>
 
-        {/* Right Column - Preview */}
-        <div className="bg-gray-900 rounded-lg p-6 border border-gray-700">
-          <h4 className="text-sm font-medium text-gray-300 mb-4">Vista Previa</h4>
+        {/* Vista Previa */}
+        <div className="bg-gradient-to-br from-gray-900 to-black rounded-lg p-8 text-white relative overflow-hidden">
+          <div className="relative z-10">
+            <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
+              {hero.title || "Tu Nombre"}
+            </h1>
+            <h2 className="text-xl text-gray-300 mb-6">
+              {hero.subtitle || "Tu Especialidad"}
+            </h2>
+            <p className="text-gray-400 mb-8 leading-relaxed">
+              {hero.description || "Describe lo que haces y por qué eres especial..."}
+            </p>
+            <button className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white px-6 py-3 rounded-lg hover:from-cyan-600 hover:to-blue-600 transition-all">
+              {hero.ctaText || "Call to Action"}
+            </button>
+          </div>
           
-          <div className="space-y-4">
-            <h1 className="text-2xl font-bold text-white">{hero.title}</h1>
-            <h2 className="text-lg text-cyan-400">{hero.subtitle}</h2>
-            <p className="text-gray-300 text-sm">{hero.description}</p>
-            
-            <div className="pt-4">
-              <button className="bg-cyan-600 text-white px-4 py-2 rounded-md text-sm">
-                {hero.ctaText}
-              </button>
-            </div>
-            
-            {hero.backgroundVideo && (
-              <div className="mt-4 p-2 bg-gray-800 rounded text-xs text-gray-400">
-                📹 Video: {hero.backgroundVideo}
-              </div>
-            )}
+          {/* Efectos de fondo */}
+          <div className="absolute inset-0 opacity-20">
+            <div className="absolute top-10 left-10 w-20 h-20 bg-cyan-400 rounded-full blur-xl"></div>
+            <div className="absolute bottom-10 right-10 w-32 h-32 bg-blue-500 rounded-full blur-xl"></div>
           </div>
         </div>
       </div>
