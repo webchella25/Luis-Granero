@@ -393,4 +393,14 @@ export default function EditProject() {
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600 dark:text-gray-400">Vistas:</span>
-                <span className="text-gray
+                <span className="text-gray-900 dark:text-gray-100">
+                  {project.stats?.views || 0}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
