@@ -145,11 +145,11 @@ export default function AdminPortfolio() {
                     </span>
                     
                     <Link
-                      href={`/admin/portfolio/${project.slug}/edit`}
-                      className="text-cyan-600 hover:text-cyan-700 dark:text-cyan-400"
-                    >
-                      Editar
-                    </Link>
+  href={`/admin/portfolio/${project.slug}/edit`}
+  className="text-cyan-600 hover:text-cyan-700 dark:text-cyan-400"
+>
+  Editar
+</Link>
                   </div>
                 </div>
               </div>
