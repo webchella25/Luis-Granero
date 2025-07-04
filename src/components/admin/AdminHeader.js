@@ -1,4 +1,4 @@
-// src/components/admin/AdminHeader.js
+// src/components/admin/AdminHeader.js - VERSIÓN CORREGIDA
 'use client'
 import { useState } from 'react'
 import Link from 'next/link'
@@ -13,13 +13,13 @@ export default function AdminHeader({ onMenuClick, user }) {
   ]
 
   return (
-    <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+    <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-30">
       <div className="px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Mobile menu button */}
           <button
             onClick={onMenuClick}
-            className="lg:hidden p-2 rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700"
+            className="lg:hidden p-2 rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
           >
             <span className="text-xl">☰</span>
           </button>
@@ -30,7 +30,7 @@ export default function AdminHeader({ onMenuClick, user }) {
               <input
                 type="text"
                 placeholder="Buscar..."
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-colors"
               />
               <span className="absolute left-3 top-2.5 text-gray-400">🔍</span>
             </div>
@@ -42,31 +42,39 @@ export default function AdminHeader({ onMenuClick, user }) {
             <div className="relative">
               <button
                 onClick={() => setShowQuickActions(!showQuickActions)}
-                className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+                className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
               >
                 <span className="text-xl">⚡</span>
               </button>
               
               {showQuickActions && (
-                <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50">
-                  {quickActions.map((action) => (
-                    <Link
-                      key={action.name}
-                      href={action.href}
-                      target={action.target}
-                      className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 first:rounded-t-lg last:rounded-b-lg"
-                      onClick={() => setShowQuickActions(false)}
-                    >
-                      <span className="mr-3">{action.icon}</span>
-                      {action.name}
-                    </Link>
-                  ))}
-                </div>
+                <>
+                  {/* Backdrop */}
+                  <div 
+                    className="fixed inset-0 z-10"
+                    onClick={() => setShowQuickActions(false)}
+                  />
+                  {/* Dropdown */}
+                  <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-20">
+                    {quickActions.map((action) => (
+                      <Link
+                        key={action.name}
+                        href={action.href}
+                        target={action.target}
+                        className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 first:rounded-t-lg last:rounded-b-lg transition-colors"
+                        onClick={() => setShowQuickActions(false)}
+                      >
+                        <span className="mr-3">{action.icon}</span>
+                        {action.name}
+                      </Link>
+                    ))}
+                  </div>
+                </>
               )}
             </div>
             
             {/* Notifications */}
-            <button className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg relative">
+            <button className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg relative transition-colors">
               <span className="text-xl">🔔</span>
               <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
             </button>
