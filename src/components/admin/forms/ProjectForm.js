@@ -8,12 +8,15 @@ const categories = [
   { value: 'ecommerce', label: 'E-commerce' },
   { value: 'landing', label: 'Landing Page' },
   { value: 'dashboard', label: 'Dashboard' },
-  { value: 'api', label: 'API/Backend' }
+  { value: 'api', label: 'API/Backend' },
+  { value: 'mobile', label: 'App Mobile' },
+  { value: 'saas', label: 'SaaS' }
 ]
 
 const commonTechnologies = [
   'React', 'Next.js', 'TypeScript', 'JavaScript', 'Node.js', 'Express',
-  'MongoDB', 'PostgreSQL', 'Tailwind CSS', 'SCSS', 'Python', 'Django'
+  'MongoDB', 'PostgreSQL', 'Tailwind CSS', 'SCSS', 'Python', 'Django',
+  'Vue.js', 'Angular', 'Firebase', 'Supabase', 'Vercel', 'Docker'
 ]
 
 export default function ProjectForm({ 
@@ -38,12 +41,18 @@ export default function ProjectForm({
     metrics: {
       performanceImprovement: '',
       loadTimeReduction: '',
-      conversionIncrease: ''
+      conversionIncrease: '',
+      userSatisfaction: '',
+      completionTime: '',
+      budget: ''
     },
+    year: new Date().getFullYear(),
+    status: 'En producción',
     ...initialData
   })
 
   const [selectedTech, setSelectedTech] = useState('')
+  const [errors, setErrors] = useState({})
 
   const handleChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }))
@@ -52,9 +61,16 @@ export default function ProjectForm({
     if (field === 'title') {
       const slug = value
         .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/(^-|-$)/g, '')
       setFormData(prev => ({ ...prev, slug }))
+    }
+
+    // Clear error when user starts typing
+    if (errors[field]) {
+      setErrors(prev => ({ ...prev, [field]: '' }))
     }
   }
 
@@ -96,19 +112,69 @@ export default function ProjectForm({
   }
 
   const removeImage = (index) => {
-    setFormData(prev => ({
-      ...prev,
-      images: prev.images.filter((_, i) => i !== index)
-    }))
+    if (formData.images.length > 1) {
+      setFormData(prev => ({
+        ...prev,
+        images: prev.images.filter((_, i) => i !== index)
+      }))
+    }
   }
 
-  const handleSubmit = (e) => {
+  const validateForm = () => {
+    const newErrors = {}
+
+    if (!formData.title.trim()) {
+      newErrors.title = 'El título es requerido'
+    }
+
+    if (!formData.slug.trim()) {
+      newErrors.slug = 'El slug es requerido'
+    }
+
+    if (!formData.description.trim()) {
+      newErrors.description = 'La descripción es requerida'
+    }
+
+    if (!formData.content.trim()) {
+      newErrors.content = 'El contenido es requerido'
+    }
+
+    if (formData.technologies.length === 0) {
+      newErrors.technologies = 'Al menos una tecnología es requerida'
+    }
+
+    if (!formData.category) {
+      newErrors.category = 'La categoría es requerida'
+    }
+
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    onSubmit(formData)
+    
+    if (!validateForm()) {
+      return
+    }
+
+    // Clean up empty images
+    const cleanImages = formData.images.filter(img => img.trim() !== '')
+    
+    const submitData = {
+      ...formData,
+      images: cleanImages,
+      slug: formData.slug || formData.title.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+      createdAt: initialData.createdAt || new Date(),
+      updatedAt: new Date()
+    }
+
+    await onSubmit(submitData)
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
+      {/* Información básica */}
       <div className="bg-gray-800 rounded-lg p-6">
         <h3 className="text-lg font-medium text-white mb-4">Información Básica</h3>
         
@@ -122,22 +188,29 @@ export default function ProjectForm({
               required
               value={formData.title}
               onChange={(e) => handleChange('title', e.target.value)}
-              className="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white focus:ring-cyan-500 focus:border-cyan-500"
-              placeholder="Ej: E-commerce con React y Stripe"
+              className={`w-full bg-gray-700 border rounded-md px-3 py-2 text-white focus:ring-cyan-500 focus:border-cyan-500 ${
+                errors.title ? 'border-red-500' : 'border-gray-600'
+              }`}
+              placeholder="Ej: E-commerce Avanzado con React"
             />
+            {errors.title && <p className="text-red-400 text-sm mt-1">{errors.title}</p>}
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">
-              Slug (URL)
+              Slug (URL) *
             </label>
             <input
               type="text"
+              required
               value={formData.slug}
               onChange={(e) => handleChange('slug', e.target.value)}
-              className="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white focus:ring-cyan-500 focus:border-cyan-500"
-              placeholder="ecommerce-react-stripe"
+              className={`w-full bg-gray-700 border rounded-md px-3 py-2 text-white focus:ring-cyan-500 focus:border-cyan-500 ${
+                errors.slug ? 'border-red-500' : 'border-gray-600'
+              }`}
+              placeholder="ecommerce-avanzado-react"
             />
+            {errors.slug && <p className="text-red-400 text-sm mt-1">{errors.slug}</p>}
           </div>
 
           <div>
@@ -148,14 +221,15 @@ export default function ProjectForm({
               required
               value={formData.category}
               onChange={(e) => handleChange('category', e.target.value)}
-              className="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white focus:ring-cyan-500 focus:border-cyan-500"
+              className={`w-full bg-gray-700 border rounded-md px-3 py-2 text-white focus:ring-cyan-500 focus:border-cyan-500 ${
+                errors.category ? 'border-red-500' : 'border-gray-600'
+              }`}
             >
               {categories.map(cat => (
-                <option key={cat.value} value={cat.value}>
-                  {cat.label}
-                </option>
+                <option key={cat.value} value={cat.value}>{cat.label}</option>
               ))}
             </select>
+            {errors.category && <p className="text-red-400 text-sm mt-1">{errors.category}</p>}
           </div>
 
           <div>
@@ -170,6 +244,36 @@ export default function ProjectForm({
               placeholder="Nombre del cliente (opcional)"
             />
           </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Año
+            </label>
+            <input
+              type="number"
+              min="2020"
+              max="2030"
+              value={formData.year}
+              onChange={(e) => handleChange('year', parseInt(e.target.value))}
+              className="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white focus:ring-cyan-500 focus:border-cyan-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Estado
+            </label>
+            <select
+              value={formData.status}
+              onChange={(e) => handleChange('status', e.target.value)}
+              className="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white focus:ring-cyan-500 focus:border-cyan-500"
+            >
+              <option value="En producción">En producción</option>
+              <option value="En desarrollo">En desarrollo</option>
+              <option value="Completado">Completado</option>
+              <option value="Pausado">Pausado</option>
+            </select>
+          </div>
         </div>
 
         <div className="mt-6">
@@ -181,21 +285,46 @@ export default function ProjectForm({
             rows={3}
             value={formData.description}
             onChange={(e) => handleChange('description', e.target.value)}
-            className="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white focus:ring-cyan-500 focus:border-cyan-500"
+            className={`w-full bg-gray-700 border rounded-md px-3 py-2 text-white focus:ring-cyan-500 focus:border-cyan-500 ${
+              errors.description ? 'border-red-500' : 'border-gray-600'
+            }`}
             placeholder="Descripción breve del proyecto para listados..."
           />
+          {errors.description && <p className="text-red-400 text-sm mt-1">{errors.description}</p>}
+        </div>
+
+        <div className="mt-6 flex items-center space-x-4">
+          <label className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              checked={formData.featured}
+              onChange={(e) => handleChange('featured', e.target.checked)}
+              className="w-4 h-4 text-cyan-600 bg-gray-700 border-gray-600 rounded focus:ring-cyan-500"
+            />
+            <span className="text-sm text-gray-300">Proyecto destacado</span>
+          </label>
+
+          <label className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              checked={formData.isPublished}
+              onChange={(e) => handleChange('isPublished', e.target.checked)}
+              className="w-4 h-4 text-cyan-600 bg-gray-700 border-gray-600 rounded focus:ring-cyan-500"
+            />
+            <span className="text-sm text-gray-300">Publicado</span>
+          </label>
         </div>
       </div>
 
       {/* Tecnologías */}
       <div className="bg-gray-800 rounded-lg p-6">
-        <h3 className="text-lg font-medium text-white mb-4">Tecnologías</h3>
+        <h3 className="text-lg font-medium text-white mb-4">Tecnologías *</h3>
         
         <div className="flex items-center space-x-2 mb-4">
           <select
             value={selectedTech}
             onChange={(e) => setSelectedTech(e.target.value)}
-            className="bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white"
+            className="bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white flex-1"
           >
             <option value="">Seleccionar tecnología</option>
             {commonTechnologies.map(tech => (
@@ -205,13 +334,14 @@ export default function ProjectForm({
           <button
             type="button"
             onClick={addTechnology}
-            className="bg-cyan-600 hover:bg-cyan-700 text-white px-4 py-2 rounded-md"
+            disabled={!selectedTech}
+            className="bg-cyan-600 hover:bg-cyan-700 disabled:bg-gray-600 text-white px-4 py-2 rounded-md transition-colors"
           >
             Agregar
           </button>
         </div>
 
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 mb-4">
           {formData.technologies.map((tech, index) => (
             <span
               key={index}
@@ -221,13 +351,15 @@ export default function ProjectForm({
               <button
                 type="button"
                 onClick={() => removeTechnology(tech)}
-                className="text-cyan-200 hover:text-white"
+                className="text-cyan-200 hover:text-white ml-2"
               >
                 ×
               </button>
             </span>
           ))}
         </div>
+
+        {errors.technologies && <p className="text-red-400 text-sm">{errors.technologies}</p>}
       </div>
 
       {/* Enlaces */}
@@ -260,26 +392,6 @@ export default function ProjectForm({
               placeholder="https://github.com/usuario/proyecto"
             />
           </div>
-        </div>
-      </div>
-
-      {/* Contenido del proyecto con Monaco Editor */}
-      <div className="bg-gray-800 rounded-lg p-6">
-        <h3 className="text-lg font-medium text-white mb-4">Contenido del Proyecto</h3>
-        <div className="border border-gray-600 rounded-md overflow-hidden">
-          <Editor
-            height="400px"
-            defaultLanguage="markdown"
-            theme="vs-dark"
-            value={formData.content}
-            onChange={(value) => handleChange('content', value || '')}
-            options={{
-              minimap: { enabled: false },
-              fontSize: 14,
-              wordWrap: 'on',
-              lineNumbers: 'on'
-            }}
-          />
         </div>
       </div>
 
@@ -326,6 +438,45 @@ export default function ProjectForm({
               placeholder="Ej: +25% conversiones"
             />
           </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Satisfacción del Usuario
+            </label>
+            <input
+              type="text"
+              value={formData.metrics.userSatisfaction}
+              onChange={(e) => handleMetricChange('userSatisfaction', e.target.value)}
+              className="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white focus:ring-cyan-500 focus:border-cyan-500"
+              placeholder="Ej: 4.8/5 estrellas"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Tiempo de Desarrollo
+            </label>
+            <input
+              type="text"
+              value={formData.metrics.completionTime}
+              onChange={(e) => handleMetricChange('completionTime', e.target.value)}
+              className="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white focus:ring-cyan-500 focus:border-cyan-500"
+              placeholder="Ej: 6 semanas"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Presupuesto
+            </label>
+            <input
+              type="text"
+              value={formData.metrics.budget}
+              onChange={(e) => handleMetricChange('budget', e.target.value)}
+              className="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white focus:ring-cyan-500 focus:border-cyan-500"
+              placeholder="Ej: €5,000 - €10,000"
+            />
+          </div>
         </div>
       </div>
 
@@ -347,65 +498,75 @@ export default function ProjectForm({
                 <button
                   type="button"
                   onClick={() => removeImage(index)}
-                  className="text-red-400 hover:text-red-300 px-3 py-2"
+                  className="text-red-400 hover:text-red-300 px-2"
                 >
-                  Eliminar
+                  ×
                 </button>
               )}
             </div>
           ))}
-          
-          <button
-            type="button"
-            onClick={addImageField}
-            className="text-cyan-400 hover:text-cyan-300 text-sm"
-          >
-            + Agregar otra imagen
-          </button>
         </div>
+
+        <button
+          type="button"
+          onClick={addImageField}
+          className="mt-4 text-cyan-400 hover:text-cyan-300 text-sm"
+        >
+          + Agregar imagen
+        </button>
       </div>
 
-      {/* Configuración */}
+      {/* Contenido del proyecto con Monaco Editor */}
       <div className="bg-gray-800 rounded-lg p-6">
-        <h3 className="text-lg font-medium text-white mb-4">Configuración</h3>
-        
-        <div className="space-y-4">
-          <label className="flex items-center space-x-3">
-            <input
-              type="checkbox"
-              checked={formData.featured}
-              onChange={(e) => handleChange('featured', e.target.checked)}
-              className="form-checkbox h-4 w-4 text-cyan-600 focus:ring-cyan-500 border-gray-600 rounded"
-            />
-            <span className="text-gray-300">Proyecto destacado</span>
-          </label>
-
-          <label className="flex items-center space-x-3">
-            <input
-              type="checkbox"
-              checked={formData.isPublished}
-              onChange={(e) => handleChange('isPublished', e.target.checked)}
-              className="form-checkbox h-4 w-4 text-cyan-600 focus:ring-cyan-500 border-gray-600 rounded"
-            />
-            <span className="text-gray-300">Publicar proyecto</span>
-          </label>
+        <h3 className="text-lg font-medium text-white mb-4">Contenido del Proyecto *</h3>
+        <div className="border border-gray-600 rounded-md overflow-hidden">
+          <Editor
+            height="400px"
+            defaultLanguage="markdown"
+            theme="vs-dark"
+            value={formData.content}
+            onChange={(value) => handleChange('content', value || '')}
+            options={{
+              minimap: { enabled: false },
+              fontSize: 14,
+              wordWrap: 'on',
+              lineNumbers: 'on',
+              scrollBeyondLastLine: false,
+              automaticLayout: true
+            }}
+          />
         </div>
+        {errors.content && <p className="text-red-400 text-sm mt-2">{errors.content}</p>}
       </div>
 
-      {/* Botones */}
+      {/* Errores generales */}
+      {errors.submit && (
+        <div className="bg-red-500/10 border border-red-500 rounded-lg p-4">
+          <p className="text-red-400">{errors.submit}</p>
+        </div>
+      )}
+
+      {/* Botón de envío */}
       <div className="flex justify-end space-x-4">
         <button
           type="button"
-          className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-md"
+          onClick={() => window.history.back()}
+          className="px-6 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-md transition-colors"
         >
           Cancelar
         </button>
         <button
           type="submit"
           disabled={loading}
-          className="bg-cyan-600 hover:bg-cyan-700 disabled:bg-gray-600 text-white px-6 py-2 rounded-md"
+          className="px-6 py-2 bg-cyan-600 hover:bg-cyan-700 disabled:bg-gray-600 text-white rounded-md transition-colors flex items-center space-x-2"
         >
-          {loading ? 'Guardando...' : submitText}
+          {loading && (
+            <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+            </svg>
+          )}
+          <span>{loading ? 'Guardando...' : submitText}</span>
         </button>
       </div>
     </form>
