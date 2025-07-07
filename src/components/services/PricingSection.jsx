@@ -1,4 +1,4 @@
-// src/components/services/PricingSection.jsx
+// src/components/services/PricingSection.jsx (VERSIÓN CORREGIDA)
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -8,10 +8,63 @@ function PricingSection() {
   const [packages, setPackages] = useState([]);
   const [addons, setAddons] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Datos por defecto como fallback
-  const defaultPackages = [
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        console.log('🔍 Cargando paquetes desde API...');
+        
+        const response = await fetch('/api/public/packages', {
+          cache: 'no-store', // Forzar carga sin caché
+          headers: {
+            'Cache-Control': 'no-cache'
+          }
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          console.log('📦 Datos recibidos:', data);
+          
+          if (data.packages && data.packages.length > 0) {
+            setPackages(data.packages);
+            console.log('✅ Paquetes cargados:', data.packages.length);
+          } else {
+            console.log('⚠️ No hay paquetes en la API, usando fallback');
+            setPackages(getDefaultPackages());
+          }
+          
+          if (data.addons && data.addons.length > 0) {
+            setAddons(data.addons);
+            console.log('✅ Add-ons cargados:', data.addons.length);
+          } else {
+            console.log('⚠️ No hay add-ons en la API, usando fallback');
+            setAddons(getDefaultAddons());
+          }
+        } else {
+          console.error('❌ Error en la respuesta de la API:', response.status);
+          throw new Error(`HTTP ${response.status}`);
+        }
+      } catch (err) {
+        console.error('❌ Error loading packages:', err);
+        setError(err.message);
+        
+        // Fallback a datos por defecto
+        setPackages(getDefaultPackages());
+        setAddons(getDefaultAddons());
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  // Funciones para datos por defecto
+  const getDefaultPackages = () => [
     {
+      _id: 'default-starter',
       name: "Starter",
       description: "Perfecto para freelancers y pequeños negocios",
       price: "1,500€",
@@ -30,6 +83,7 @@ function PricingSection() {
       ideal: "Freelancers, consultores, pequeños servicios"
     },
     {
+      _id: 'default-business',
       name: "Business",
       description: "Para empresas que buscan una presencia web sólida",
       price: "3,500€",
@@ -50,6 +104,7 @@ function PricingSection() {
       ideal: "Empresas medianas, servicios profesionales"
     },
     {
+      _id: 'default-enterprise',
       name: "Enterprise",
       description: "Soluciones a medida para proyectos complejos",
       price: "Desde 8,000€",
@@ -72,7 +127,7 @@ function PricingSection() {
     }
   ];
 
-  const defaultAddons = [
+  const getDefaultAddons = () => [
     { name: "E-commerce básico", price: "+1,500€", description: "Tienda online con hasta 50 productos", category: "ecommerce" },
     { name: "E-commerce avanzado", price: "+3,000€", description: "Tienda completa con gestión avanzada", category: "ecommerce" },
     { name: "Aplicación móvil", price: "+2,500€", description: "PWA optimizada para móviles", category: "mobile" },
@@ -80,31 +135,6 @@ function PricingSection() {
     { name: "Multi-idioma", price: "+600€", description: "Soporte para múltiples idiomas", category: "features" },
     { name: "Soporte prioritario", price: "+200€/mes", description: "Soporte 24/7 con respuesta inmediata", category: "support" }
   ];
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const response = await fetch('/api/public/packages');
-        if (response.ok) {
-          const data = await response.json();
-          setPackages(data.packages && data.packages.length > 0 ? data.packages : defaultPackages);
-          setAddons(data.addons && data.addons.length > 0 ? data.addons : defaultAddons);
-        } else {
-          setPackages(defaultPackages);
-          setAddons(defaultAddons);
-        }
-      } catch (error) {
-        console.error('Error loading packages:', error);
-        setPackages(defaultPackages);
-        setAddons(defaultAddons);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, []);
 
   if (loading) {
     return (
@@ -128,6 +158,27 @@ function PricingSection() {
     );
   }
 
+  if (error) {
+    return (
+      <section className="py-20 bg-black">
+        <div className="container mx-auto px-4 text-center">
+          <div className="text-red-400 mb-4">
+            Error cargando paquetes: {error}
+          </div>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="bg-cyan-600 hover:bg-cyan-700 text-white px-4 py-2 rounded"
+          >
+            Reintentar
+          </button>
+          <p className="text-gray-500 text-sm mt-4">
+            Mostrando datos por defecto mientras tanto...
+          </p>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="py-20 bg-black">
       <div className="container mx-auto px-4">
@@ -139,6 +190,10 @@ function PricingSection() {
             Soluciones adaptadas a diferentes necesidades y presupuestos.
             Todos incluyen código personalizado y soporte técnico.
           </p>
+          {/* Debug info */}
+          <div className="text-xs text-gray-600 mt-2">
+            Paquetes cargados: {packages.length} | Add-ons: {addons.length}
+          </div>
         </div>
 
         {/* Packages */}
@@ -169,6 +224,10 @@ function PricingSection() {
                   <span className="text-4xl font-bold text-white">{pkg.price}</span>
                 </div>
                 <div className="text-gray-400 text-sm">{pkg.duration}</div>
+                {/* Debug info */}
+                <div className="text-xs text-gray-600 mt-1">
+                  ID: {pkg._id || 'N/A'}
+                </div>
               </div>
 
               <div className="space-y-4 mb-8">
