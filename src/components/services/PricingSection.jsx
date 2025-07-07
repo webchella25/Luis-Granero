@@ -1,5 +1,16 @@
+// src/components/services/PricingSection.jsx
+'use client';
+
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
+
 function PricingSection() {
-  const packages = [
+  const [packages, setPackages] = useState([]);
+  const [addons, setAddons] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Datos por defecto como fallback
+  const defaultPackages = [
     {
       name: "Starter",
       description: "Perfecto para freelancers y pequeños negocios",
@@ -61,14 +72,61 @@ function PricingSection() {
     }
   ];
 
-  const addons = [
-    { name: "E-commerce básico", price: "+1,500€", description: "Tienda online con hasta 50 productos" },
-    { name: "E-commerce avanzado", price: "+3,000€", description: "Tienda completa con gestión avanzada" },
-    { name: "Aplicación móvil", price: "+2,500€", description: "PWA optimizada para móviles" },
-    { name: "Integraciones API", price: "+800€", description: "Conexión con servicios externos" },
-    { name: "Multi-idioma", price: "+600€", description: "Soporte para múltiples idiomas" },
-    { name: "Soporte prioritario", price: "+200€/mes", description: "Soporte 24/7 con respuesta inmediata" }
+  const defaultAddons = [
+    { name: "E-commerce básico", price: "+1,500€", description: "Tienda online con hasta 50 productos", category: "ecommerce" },
+    { name: "E-commerce avanzado", price: "+3,000€", description: "Tienda completa con gestión avanzada", category: "ecommerce" },
+    { name: "Aplicación móvil", price: "+2,500€", description: "PWA optimizada para móviles", category: "mobile" },
+    { name: "Integraciones API", price: "+800€", description: "Conexión con servicios externos", category: "integrations" },
+    { name: "Multi-idioma", price: "+600€", description: "Soporte para múltiples idiomas", category: "features" },
+    { name: "Soporte prioritario", price: "+200€/mes", description: "Soporte 24/7 con respuesta inmediata", category: "support" }
   ];
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch('/api/public/packages');
+        if (response.ok) {
+          const data = await response.json();
+          setPackages(data.packages && data.packages.length > 0 ? data.packages : defaultPackages);
+          setAddons(data.addons && data.addons.length > 0 ? data.addons : defaultAddons);
+        } else {
+          setPackages(defaultPackages);
+          setAddons(defaultAddons);
+        }
+      } catch (error) {
+        console.error('Error loading packages:', error);
+        setPackages(defaultPackages);
+        setAddons(defaultAddons);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  if (loading) {
+    return (
+      <section className="py-20 bg-black">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16">
+            <div className="animate-pulse">
+              <div className="h-12 bg-gray-700 rounded w-96 mx-auto mb-6"></div>
+              <div className="h-6 bg-gray-700 rounded w-[600px] mx-auto"></div>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="animate-pulse">
+                <div className="h-[500px] bg-gray-800 rounded-lg"></div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="py-20 bg-black">
@@ -78,7 +136,7 @@ function PricingSection() {
             Paquetes de Desarrollo
           </h2>
           <p className="text-xl text-gray-400 max-w-3xl mx-auto">
-            Soluciones adaptadas a diferentes necesidades y presupuestos. 
+            Soluciones adaptadas a diferentes necesidades y presupuestos.
             Todos incluyen código personalizado y soporte técnico.
           </p>
         </div>
@@ -87,7 +145,7 @@ function PricingSection() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-16">
           {packages.map((pkg, index) => (
             <div
-              key={index}
+              key={pkg._id || index}
               className={`relative bg-gray-900/50 backdrop-blur-sm border rounded-2xl p-8 transition-all duration-300 hover:transform hover:scale-105 ${
                 pkg.popular 
                   ? 'border-green-500/50 shadow-lg shadow-green-500/20' 
@@ -141,39 +199,44 @@ function PricingSection() {
                 <p className="text-gray-400 text-sm">{pkg.ideal}</p>
               </div>
 
-              <button className={`w-full py-3 px-6 bg-gradient-to-r ${pkg.color} text-white font-bold rounded-lg hover:shadow-xl transition-all duration-300`}>
+              <Link
+                href="/contacto"
+                className={`block w-full py-3 px-6 bg-gradient-to-r ${pkg.color} text-white font-bold rounded-lg hover:shadow-xl transition-all duration-300 text-center`}
+              >
                 Empezar proyecto
-              </button>
+              </Link>
             </div>
           ))}
         </div>
 
         {/* Add-ons */}
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-12">
-            <h3 className="text-3xl font-bold gradient-text mb-4">
-              Servicios Adicionales
-            </h3>
-            <p className="text-gray-400">
-              Amplía tu proyecto con funcionalidades específicas
-            </p>
-          </div>
+        {addons.length > 0 && (
+          <div className="max-w-4xl mx-auto">
+            <div className="text-center mb-12">
+              <h3 className="text-3xl font-bold gradient-text mb-4">
+                Servicios Adicionales
+              </h3>
+              <p className="text-gray-400">
+                Amplía tu proyecto con funcionalidades específicas
+              </p>
+            </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {addons.map((addon, index) => (
-              <div
-                key={index}
-                className="bg-gray-900/30 backdrop-blur-sm border border-gray-800 rounded-xl p-6 hover:border-cyan-500/30 transition-all duration-300"
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <h4 className="font-semibold text-white">{addon.name}</h4>
-                  <span className="text-cyan-400 font-bold">{addon.price}</span>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {addons.map((addon, index) => (
+                <div
+                  key={addon._id || index}
+                  className="bg-gray-900/30 backdrop-blur-sm border border-gray-800 rounded-xl p-6 hover:border-cyan-500/30 transition-all duration-300"
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="font-semibold text-white">{addon.name}</h4>
+                    <span className="text-cyan-400 font-bold">{addon.price}</span>
+                  </div>
+                  <p className="text-gray-400 text-sm">{addon.description}</p>
                 </div>
-                <p className="text-gray-400 text-sm">{addon.description}</p>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* CTA */}
         <div className="text-center mt-16">
@@ -184,9 +247,12 @@ function PricingSection() {
             <p className="text-gray-400 mb-6">
               Cada proyecto es único. Cuéntame tu idea y crearemos una propuesta personalizada.
             </p>
-            <button className="px-8 py-4 bg-gradient-to-r from-cyan-400 to-green-400 text-black font-bold rounded-lg hover:shadow-xl hover:shadow-cyan-400/25 transition-all duration-300 transform hover:scale-105">
+            <Link
+              href="/contacto"
+              className="px-8 py-4 bg-gradient-to-r from-cyan-400 to-green-400 text-black font-bold rounded-lg hover:shadow-xl hover:shadow-cyan-400/25 transition-all duration-300 transform hover:scale-105 inline-block"
+            >
               Solicitar presupuesto personalizado
-            </button>
+            </Link>
           </div>
         </div>
       </div>

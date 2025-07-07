@@ -1,4 +1,4 @@
-// src/app/admin/content/page.js
+// src/app/admin/content/page.js (actualizado)
 'use client'
 import Link from 'next/link'
 
@@ -26,11 +26,25 @@ export default function ContentManagement() {
       color: 'bg-blue-600'
     },
     {
+      title: 'Paquetes',
+      description: 'Gestionar paquetes de desarrollo',
+      href: '/admin/content/packages',
+      icon: '📦',
+      color: 'bg-purple-600'
+    },
+    {
+      title: 'Add-ons',
+      description: 'Servicios adicionales y complementos',
+      href: '/admin/content/addons',
+      icon: '🔧',
+      color: 'bg-orange-600'
+    },
+    {
       title: 'Contacto',
       description: 'Página de contacto y formularios',
       href: '/admin/content/contact',
       icon: '📞',
-      color: 'bg-purple-600'
+      color: 'bg-pink-600'
     }
   ]
 
@@ -54,110 +68,64 @@ export default function ContentManagement() {
                   {section.icon}
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold text-white group-hover:text-cyan-400 transition-colors">
+                  <h3 className="text-lg font-bold text-white group-hover:text-cyan-400 transition-colors">
                     {section.title}
                   </h3>
+                  <p className="text-gray-400 text-sm">
+                    {section.description}
+                  </p>
                 </div>
               </div>
-              <p className="text-gray-400 group-hover:text-gray-300 transition-colors">
-                {section.description}
-              </p>
             </Link>
           ))}
         </div>
 
-        {/* Quick stats */}
-        <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-gray-800 rounded-lg p-6 text-center">
-            <div className="text-3xl font-bold text-cyan-400 mb-2">4</div>
-            <div className="text-gray-400">Páginas gestionables</div>
+        {/* Quick Stats */}
+        <div className="mt-12 grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+            <div className="text-cyan-400 text-2xl font-bold">8</div>
+            <div className="text-gray-400 text-sm">Servicios Activos</div>
           </div>
-          <div className="bg-gray-800 rounded-lg p-6 text-center">
-            <div className="text-3xl font-bold text-green-400 mb-2">100%</div>
-            <div className="text-gray-400">Personalizable</div>
+          <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+            <div className="text-green-400 text-2xl font-bold">3</div>
+            <div className="text-gray-400 text-sm">Paquetes</div>
           </div>
-          <div className="bg-gray-800 rounded-lg p-6 text-center">
-            <div className="text-3xl font-bold text-blue-400 mb-2">SEO</div>
-            <div className="text-gray-400">Optimizado</div>
+          <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+            <div className="text-purple-400 text-2xl font-bold">12</div>
+            <div className="text-gray-400 text-sm">Add-ons</div>
+          </div>
+          <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+            <div className="text-orange-400 text-2xl font-bold">96%</div>
+            <div className="text-gray-400 text-sm">Completado</div>
           </div>
         </div>
 
-        {/* Recent Updates */}
-        <div className="mt-8 bg-gray-800 rounded-lg p-6">
-          <h3 className="text-lg font-bold text-white mb-4">Actualizaciones Recientes</h3>
+        {/* Recent Activity */}
+        <div className="mt-8 bg-gray-800 rounded-lg p-6 border border-gray-700">
+          <h3 className="text-lg font-bold text-white mb-4">Actividad Reciente</h3>
           <div className="space-y-3">
             <div className="flex items-center justify-between py-2 border-b border-gray-700">
               <div className="flex items-center space-x-3">
                 <div className="w-2 h-2 bg-cyan-400 rounded-full"></div>
-                <span className="text-gray-300">Homepage actualizada</span>
+                <span className="text-gray-300">Servicios actualizados</span>
               </div>
-              <span className="text-sm text-gray-500">Hace 2 horas</span>
+              <span className="text-sm text-gray-500">Hace 5 min</span>
             </div>
             <div className="flex items-center justify-between py-2 border-b border-gray-700">
               <div className="flex items-center space-x-3">
                 <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                <span className="text-gray-300">Servicios modificados</span>
+                <span className="text-gray-300">Nuevo paquete añadido</span>
               </div>
-              <span className="text-sm text-gray-500">Ayer</span>
+              <span className="text-sm text-gray-500">Hace 2 horas</span>
             </div>
             <div className="flex items-center justify-between py-2">
               <div className="flex items-center space-x-3">
                 <div className="w-2 h-2 bg-purple-400 rounded-full"></div>
-                <span className="text-gray-300">Contacto configurado</span>
+                <span className="text-gray-300">Add-ons configurados</span>
               </div>
-              <span className="text-sm text-gray-500">Hace 3 días</span>
+              <span className="text-sm text-gray-500">Ayer</span>
             </div>
           </div>
-        </div>
-
-        {/* Quick Actions */}
-        <div className="mt-8 bg-gray-800 rounded-lg p-6">
-          <h3 className="text-lg font-bold text-white mb-4">Acciones Rápidas</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Link
-              href="/admin/content/homepage"
-              className="bg-cyan-600 hover:bg-cyan-700 text-white px-4 py-3 rounded-lg text-center font-medium transition-colors"
-            >
-              ✏️ Editar Hero
-            </Link>
-            <Link
-              href="/admin/content/services"
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg text-center font-medium transition-colors"
-            >
-              🛠️ Gestionar Servicios
-            </Link>
-            <Link
-              href="/admin/content/contact"
-              className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-3 rounded-lg text-center font-medium transition-colors"
-            >
-              📞 Config. Contacto
-            </Link>
-            <Link
-              href="/admin/content/about"
-              className="bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded-lg text-center font-medium transition-colors"
-            >
-              👨‍💻 Sobre Mí
-            </Link>
-          </div>
-        </div>
-
-        {/* Tips */}
-        <div className="mt-8 bg-gradient-to-r from-cyan-900/50 to-blue-900/50 border border-cyan-800 rounded-lg p-6">
-          <h3 className="text-lg font-bold text-cyan-400 mb-3">💡 Consejos</h3>
-          <ul className="space-y-2 text-gray-300">
-            <li className="flex items-start space-x-2">
-              <span className="text-cyan-400 mt-1">•</span>
-              <span>Actualiza regularmente el contenido para mejorar tu SEO</span>
-            </li>
-            <li className="flex items-start space-x-2">
-              <span className="text-cyan-400 mt-1">•</span>
-              <span>Mantén consistencia en el tono y estilo de tu marca personal</span>
-            </li>
-            <li className="flex items-start space-x-2">
-              <span className="text-cyan-400 mt-1">•</span>
-              <span>Revisa que todos los enlaces y formularios funcionen correctamente</span>
-            </li>
-          </ul>
         </div>
       </div>
     </div>
