@@ -1,11 +1,13 @@
 // src/components/home/ServicesPreview.tsx
 'use client';
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ArrowRightIcon } from '@heroicons/react/24/outline';
 
 interface Service {
   id?: number;
+  _id?: string;
   title: string;
   description: string;
   icon: string;
@@ -21,7 +23,10 @@ interface Props {
 }
 
 export default function ServicesPreview({ data }: Props) {
-  // Servicios por defecto SOLO si no hay datos del admin
+  const [services, setServices] = useState<Service[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Servicios por defecto como fallback
   const defaultServices: Service[] = [
     {
       id: 1,
@@ -52,8 +57,71 @@ export default function ServicesPreview({ data }: Props) {
     }
   ];
 
-  // Usar datos del admin SI existen, sino usar defaults
-  const services = (data && data.length > 0) ? data.slice(0, 6) : defaultServices;
+  useEffect(() => {
+    const fetchServices = async () => {
+      try {
+        // Intentar cargar desde API homepage primero
+        const response = await fetch('/api/homepage');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.services && data.services.length > 0) {
+            setServices(data.services.slice(0, 6));
+            setLoading(false);
+            return;
+          }
+        }
+
+        // Fallback: intentar desde API services
+        const servicesResponse = await fetch('/api/public/services');
+        if (servicesResponse.ok) {
+          const servicesData = await servicesResponse.json();
+          if (servicesData.services && servicesData.services.length > 0) {
+            setServices(servicesData.services.slice(0, 6));
+            setLoading(false);
+            return;
+          }
+        }
+
+        // Si no hay datos, usar por defecto
+        setServices(defaultServices);
+      } catch (error) {
+        console.error('Error loading services:', error);
+        setServices(defaultServices);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    // Si no se pasan datos como props, cargar desde API
+    if (!data || data.length === 0) {
+      fetchServices();
+    } else {
+      setServices(data.slice(0, 6));
+      setLoading(false);
+    }
+  }, [data]);
+
+  if (loading) {
+    return (
+      <section id="servicios" className="py-20 bg-gray-950">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16">
+            <div className="animate-pulse">
+              <div className="h-8 bg-gray-700 rounded w-64 mx-auto mb-4"></div>
+              <div className="h-4 bg-gray-700 rounded w-96 mx-auto"></div>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="animate-pulse">
+                <div className="h-64 bg-gray-800 rounded-lg"></div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section id="servicios" className="py-20 bg-gray-950">
@@ -71,7 +139,7 @@ export default function ServicesPreview({ data }: Props) {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
           {services.map((service, index) => (
             <div
-              key={service.id || index}
+              key={service.id || service._id || index}
               className="group bg-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-xl p-8 hover:border-cyan-500/50 transition-all duration-300 hover:transform hover:scale-105"
             >
               {/* Icon */}
@@ -120,28 +188,33 @@ export default function ServicesPreview({ data }: Props) {
                 </div>
               )}
 
-              {/* Precio si existe */}
-              {service.startingPrice && (
-                <div className="text-sm text-green-400 font-semibold mb-4">
-                  Desde {service.startingPrice}
+              {/* Precio y tiempo si existen */}
+              {(service.startingPrice || service.deliveryTime) && (
+                <div className="flex items-center justify-between text-sm mb-4">
+                  {service.startingPrice && (
+                    <span className="text-green-400 font-semibold">
+                      {service.startingPrice}
+                    </span>
+                  )}
+                  {service.deliveryTime && (
+                    <span className="text-gray-500">
+                      {service.deliveryTime}
+                    </span>
+                  )}
                 </div>
               )}
-              
-              {/* CTA Button */}
-              <button className={`w-full py-2 px-4 bg-gradient-to-r ${service.color || 'from-cyan-400 to-blue-500'} text-white font-semibold rounded-lg opacity-90 hover:opacity-100 transition-opacity duration-300`}>
-                Más información
-              </button>
             </div>
           ))}
         </div>
 
+        {/* Call to Action */}
         <div className="text-center">
           <Link
             href="/servicios"
-            className="inline-flex items-center space-x-2 px-8 py-4 bg-gradient-to-r from-cyan-400 to-green-400 text-black font-bold rounded-lg hover:shadow-xl hover:shadow-cyan-400/25 transition-all duration-300 transform hover:scale-105"
+            className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-semibold rounded-lg hover:from-cyan-600 hover:to-blue-600 transition-all duration-300 transform hover:scale-105 hover:shadow-lg hover:shadow-cyan-500/25"
           >
-            <span>Ver todos los servicios</span>
-            <ArrowRightIcon className="w-5 h-5" />
+            Ver todos los servicios
+            <ArrowRightIcon className="ml-2 w-5 h-5" />
           </Link>
         </div>
       </div>
