@@ -1,4 +1,4 @@
-// src/components/admin/editors/ServicesEditor.js (CORREGIDO CON MÁS DEBUG)
+// src/components/admin/editors/ServicesEditor.js (ARREGLO FINAL)
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -29,33 +29,33 @@ export default function ServicesEditor({ data = {}, onUpdate }) {
         const result = await response.json();
         console.log(`📦 Data received from admin services:`, result);
         
-        // DEBUG: Inspeccionar la estructura exacta
-        console.log('🔬 Debug - tipo de result:', typeof result);
-        console.log('🔬 Debug - result.services existe?', !!result.services);
-        console.log('🔬 Debug - result.services tipo:', typeof result.services);
-        console.log('🔬 Debug - result.services es array?', Array.isArray(result.services));
+        let services = [];
         
-        if (result.services) {
-          console.log('🔬 Debug - result.services length:', result.services.length);
-          console.log('🔬 Debug - primer servicio:', result.services[0]);
+        // ✅ CORRECCIÓN: Manejar diferentes estructuras de respuesta
+        if (Array.isArray(result)) {
+          // Si result es directamente un array
+          services = result;
+          console.log('✅ Direct array detected');
+        } else if (result.services && Array.isArray(result.services)) {
+          // Si result tiene propiedad services
+          services = result.services;
+          console.log('✅ Services property detected');
+        } else if (result.data && Array.isArray(result.data)) {
+          // Si result tiene propiedad data
+          services = result.data;
+          console.log('✅ Data property detected');
         }
         
-        let services = result.services || [];
+        console.log(`🔬 Services extracted:`, services);
+        console.log(`🔬 Services count:`, services.length);
         
-        // Verificar estructura de datos MÁS específicamente
-        if (Array.isArray(services) && services.length > 0) {
+        if (services.length > 0) {
           console.log(`✅ Found ${services.length} services from admin`);
-          console.log('📋 Services list:', services.map(s => ({
-            id: s._id || s.id,
-            title: s.title,
-            icon: s.icon,
-            hasTitle: !!s.title
-          })));
+          console.log('📋 First service:', services[0]);
           
           setAvailableServices(services);
         } else {
-          console.log('⚠️ No valid services in admin response, using fallback');
-          console.log('🔬 Debug - services variable:', services);
+          console.log('⚠️ No valid services found, using fallback');
           setAvailableServices(getFallbackServices());
         }
       } else {
@@ -105,34 +105,11 @@ export default function ServicesEditor({ data = {}, onUpdate }) {
       pricing: { startingPrice: '800€' },
       deliveryTime: '1-2 semanas',
       isActive: true
-    },
-    {
-      _id: 'fallback-4',
-      title: 'APIs y Backend',
-      subtitle: 'Node.js, Integración',
-      description: 'Desarrollo de APIs robustas y backends escalables.',
-      icon: '🔧',
-      color: 'from-orange-400 to-red-500',
-      pricing: { startingPrice: '1,800€' },
-      deliveryTime: '2-5 semanas',
-      isActive: true
-    },
-    {
-      _id: 'fallback-5',
-      title: 'Aplicaciones Web Complejas',
-      subtitle: 'SPA, PWA, Dashboards',
-      description: 'Herramientas web específicas para tu negocio.',
-      icon: '⚡',
-      color: 'from-purple-400 to-pink-500',
-      pricing: { startingPrice: '2,500€' },
-      deliveryTime: '3-6 semanas',
-      isActive: true
     }
   ];
 
   const toggleServiceSelection = (service) => {
     console.log('🖱️ Toggle service clicked:', service.title);
-    console.log('🔧 onUpdate function:', typeof onUpdate);
     
     try {
       const serviceId = service._id || service.id;
@@ -158,8 +135,6 @@ export default function ServicesEditor({ data = {}, onUpdate }) {
   };
 
   const updateSectionConfig = (field, value) => {
-    console.log('🔧 Updating section config:', field, value);
-    
     try {
       const updated = { ...sectionConfig, [field]: value };
       setSectionConfig(updated);
@@ -167,7 +142,7 @@ export default function ServicesEditor({ data = {}, onUpdate }) {
       if (typeof onUpdate === 'function') {
         onUpdate('servicesConfig', updated);
       } else {
-        console.warn('⚠️ onUpdate is not a function:', typeof onUpdate);
+        console.warn('⚠️ onUpdate is not a function');
       }
     } catch (err) {
       console.error('❌ Error in updateSectionConfig:', err);
@@ -175,14 +150,12 @@ export default function ServicesEditor({ data = {}, onUpdate }) {
   };
 
   const updateParent = (services) => {
-    console.log('📤 Updating parent with services:', services.length);
-    
     try {
       if (typeof onUpdate === 'function') {
         onUpdate('selectedServices', services);
         onUpdate('servicesConfig', sectionConfig);
       } else {
-        console.warn('⚠️ onUpdate is not a function:', typeof onUpdate);
+        console.warn('⚠️ onUpdate is not a function');
       }
     } catch (err) {
       console.error('❌ Error in updateParent:', err);
@@ -218,17 +191,14 @@ export default function ServicesEditor({ data = {}, onUpdate }) {
       {/* Debug info */}
       <div className="bg-gray-800 border border-gray-600 rounded p-3 text-xs">
         <div className="text-gray-400">
-          Debug: {availableServices.length} servicios cargados
+          ✅ Debug: {availableServices.length} servicios cargados
         </div>
         <div className="text-gray-500 mt-1">
-          onUpdate type: {typeof onUpdate}
-        </div>
-        <div className="text-gray-500 mt-1">
-          data received: {JSON.stringify(Object.keys(data))}
+          onUpdate: {typeof onUpdate} | Selected: {selectedServices.length}
         </div>
         {availableServices.length > 0 && (
           <div className="text-gray-500 mt-1">
-            Primer servicio: {availableServices[0]?.title || 'Sin título'}
+            Servicios: {availableServices.map(s => s.title).join(', ')}
           </div>
         )}
       </div>
@@ -315,7 +285,39 @@ export default function ServicesEditor({ data = {}, onUpdate }) {
         </div>
       </div>
 
-      {/* Resto del componente igual... */}
+      {/* Vista Previa */}
+      {selectedServices.length > 0 && (
+        <div>
+          <h4 className="text-white font-medium mb-4">
+            Vista Previa ({selectedServices.length} seleccionados)
+          </h4>
+          
+          <div className="bg-gray-800 border border-gray-700 rounded-lg p-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {selectedServices.slice(0, 3).map((service) => (
+                <div key={service._id || service.id} className="bg-gray-900 rounded-lg p-4 border border-gray-600">
+                  <div className="text-2xl mb-2">{service.icon}</div>
+                  <h5 className="text-white font-medium mb-1">{service.title}</h5>
+                  <p className="text-gray-400 text-sm line-clamp-2">
+                    {service.description}
+                  </p>
+                  <div className="text-cyan-400 text-sm mt-2">
+                    {service.pricing?.startingPrice || service.startingPrice || 'Desde'}
+                  </div>
+                </div>
+              ))}
+            </div>
+            
+            {selectedServices.length > 3 && (
+              <p className="text-gray-400 text-sm mt-4 text-center">
+                +{selectedServices.length - 3} servicios más disponibles
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Configuración de Sección */}
       <div className="bg-gray-900 border border-gray-700 rounded-lg p-6">
         <h4 className="text-white font-medium mb-4">Configuración de Sección</h4>
         
@@ -357,6 +359,38 @@ export default function ServicesEditor({ data = {}, onUpdate }) {
           </label>
         </div>
       </div>
+
+      {/* Orden de Visualización */}
+      {selectedServices.length > 0 && (
+        <div className="bg-gray-900 border border-gray-700 rounded-lg p-6">
+          <h4 className="text-white font-medium mb-4">Orden de Visualización</h4>
+          <p className="text-gray-400 text-sm mb-4">
+            Servicios seleccionados:
+          </p>
+          
+          <div className="space-y-2">
+            {selectedServices.map((service, index) => (
+              <div
+                key={service._id || service.id}
+                className="flex items-center space-x-3 p-3 bg-gray-800 border border-gray-600 rounded-lg"
+              >
+                <div className="text-gray-400">⋮⋮</div>
+                <div className="text-xl">{service.icon}</div>
+                <div className="flex-1">
+                  <div className="text-white font-medium">{service.title}</div>
+                </div>
+                <div className="text-gray-400 text-sm">#{index + 1}</div>
+                <button
+                  onClick={() => toggleServiceSelection(service)}
+                  className="text-red-400 hover:text-red-300 text-sm px-2 py-1 rounded"
+                >
+                  Quitar
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
