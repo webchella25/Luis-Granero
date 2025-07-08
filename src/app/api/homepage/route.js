@@ -1,4 +1,4 @@
-// src/app/api/homepage/route.js
+// src/app/api/homepage/route.js (CORREGIDO)
 import connectDB from '@/lib/mongodb';
 import SiteConfig from '@/models/SiteConfig';
 import Service from '@/models/Service';
@@ -9,7 +9,7 @@ export async function GET() {
   try {
     await connectDB();
 
-    // Obtener configuración del hero
+    // Obtener configuración del hero y servicios seleccionados
     const configs = await SiteConfig.find({ 
       category: { $in: ['homepage', 'general', 'contact'] } 
     }).lean();
@@ -19,10 +19,33 @@ export async function GET() {
       return acc;
     }, {});
 
-    // Obtener servicios activos
-    const services = await Service.find({ isActive: true })
+    // Obtener servicios seleccionados para homepage (si existe la configuración)
+    const selectedServiceIds = configObj.homepage_selected_services || [];
+    
+    let services = [];
+    
+    if (selectedServiceIds.length > 0) {
+      // Si hay servicios seleccionados, traer solo esos
+      services = await Service.find({ 
+        _id: { $in: selectedServiceIds },
+        isActive: true 
+      })
       .sort({ orderIndex: 1 })
       .lean();
+      
+      // Ordenar según el orden seleccionado en homepage
+      const orderedServices = selectedServiceIds.map(id => 
+        services.find(service => service._id.toString() === id.toString())
+      ).filter(Boolean);
+      
+      services = orderedServices;
+    } else {
+      // Fallback: traer los primeros 3 servicios activos
+      services = await Service.find({ isActive: true })
+        .sort({ orderIndex: 1 })
+        .limit(3)
+        .lean();
+    }
 
     // Obtener tech stack
     const techStack = await TechStack.find({ isActive: true })
@@ -53,6 +76,8 @@ export async function GET() {
       ]
     };
 
+    console.log(`🏠 Homepage API: ${services.length} servicios seleccionados`);
+
     return Response.json({
       hero,
       services,
@@ -61,7 +86,7 @@ export async function GET() {
       config: configObj
     }, {
       headers: {
-        'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400',
+        'Cache-Control': 'no-store, no-cache, must-revalidate',
       }
     });
 
@@ -70,6 +95,9 @@ export async function GET() {
     
     // Fallback a datos por defecto si hay error
     const { homepageSchema } = await import('@/lib/pageData');
-    return Response.json(homepageSchema, { status: 200 });
+    return Response.json({
+      ...homepageSchema,
+      services: homepageSchema.services.slice(0, 3) // Solo 3 por defecto
+    }, { status: 200 });
   }
 }

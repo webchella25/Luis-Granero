@@ -1,280 +1,268 @@
-// src/components/admin/editors/ServicesEditor.js
-'use client'
-import { useState, useEffect } from 'react'
+// src/components/admin/editors/ServicesEditor.js (NUEVO COMPONENTE COMPLETO)
+'use client';
 
-export default function ServicesEditor({ data, onChange }) {
-  const [services, setServices] = useState([])
-  const [selectedServices, setSelectedServices] = useState(data || [])
-  const [loading, setLoading] = useState(true)
+import { useState, useEffect } from 'react';
+import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
+
+export default function ServicesEditor({ data, onUpdate }) {
+  const [availableServices, setAvailableServices] = useState([]);
+  const [selectedServices, setSelectedServices] = useState(data.selectedServices || []);
+  const [sectionConfig, setSectionConfig] = useState({
+    title: data.servicesTitle || 'Servicios Especializados',
+    subtitle: data.servicesSubtitle || 'Desarrollo web moderno enfocado en resultados.',
+    showViewAllButton: data.showViewAllButton !== false
+  });
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchServices()
-  }, [])
+    loadAvailableServices();
+  }, []);
 
-  const fetchServices = async () => {
+  const loadAvailableServices = async () => {
     try {
-      const response = await fetch('/api/admin/services')
+      const response = await fetch('/api/admin/services');
       if (response.ok) {
-        const data = await response.json()
-        setServices(Array.isArray(data) ? data : [])
+        const result = await response.json();
+        setAvailableServices(result.services || []);
       }
     } catch (error) {
-      console.error('Error fetching services:', error)
+      console.error('Error loading services:', error);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
-  const toggleService = (service) => {
-    const isSelected = selectedServices.some(s => s._id === service._id)
+  const toggleServiceSelection = (service) => {
+    const isSelected = selectedServices.some(s => s._id === service._id);
     
-    let updatedServices
     if (isSelected) {
-      updatedServices = selectedServices.filter(s => s._id !== service._id)
-    } else {
-      updatedServices = [...selectedServices, service]
+      // Remover servicio
+      const updated = selectedServices.filter(s => s._id !== service._id);
+      setSelectedServices(updated);
+      updateParent(updated);
+    } else if (selectedServices.length < 6) {
+      // Añadir servicio (máximo 6)
+      const updated = [...selectedServices, service];
+      setSelectedServices(updated);
+      updateParent(updated);
     }
-    
-    setSelectedServices(updatedServices)
-    onChange(updatedServices)
-  }
+  };
+
+  const handleDragEnd = (result) => {
+    if (!result.destination) return;
+
+    const items = Array.from(selectedServices);
+    const [reorderedItem] = items.splice(result.source.index, 1);
+    items.splice(result.destination.index, 0, reorderedItem);
+
+    setSelectedServices(items);
+    updateParent(items);
+  };
+
+  const updateSectionConfig = (field, value) => {
+    const updated = { ...sectionConfig, [field]: value };
+    setSectionConfig(updated);
+    onUpdate('servicesConfig', updated);
+  };
+
+  const updateParent = (services) => {
+    onUpdate('selectedServices', services);
+    onUpdate('servicesConfig', sectionConfig);
+  };
 
   if (loading) {
     return (
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-          Servicios en Homepage
-        </h3>
-        <div className="animate-pulse grid grid-cols-1 md:grid-cols-2 gap-4">
-          {[1, 2, 3, 4].map(i => (
-            <div key={i} className="h-32 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
-          ))}
-        </div>
+      <div className="flex items-center justify-center py-12">
+        <div className="text-white">Cargando servicios...</div>
       </div>
-    )
+    );
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-            Servicios en Homepage
-          </h3>
-          <p className="text-gray-600 dark:text-gray-400">
-            Selecciona qué servicios mostrar en la página principal
-          </p>
+    <div className="space-y-8">
+      
+      {/* Servicios Disponibles */}
+      <div>
+        <div className="flex items-center space-x-2 mb-4">
+          <span className="text-2xl">⚡</span>
+          <div>
+            <h3 className="text-lg font-medium text-white">Servicios en Homepage</h3>
+            <p className="text-gray-400 text-sm">Selecciona qué servicios mostrar en la página principal</p>
+          </div>
         </div>
-        <div className="text-2xl">⚡</div>
-      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Servicios Disponibles */}
-        <div>
-          <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">
-            Servicios Disponibles ({services.length})
+        <div className="bg-gray-900 border border-gray-700 rounded-lg p-6">
+          <h4 className="text-white font-medium mb-4">
+            Servicios Disponibles ({availableServices.length})
           </h4>
           
-          <div className="space-y-3 max-h-96 overflow-y-auto">
-            {services.map((service) => {
-              const isSelected = selectedServices.some(s => s._id === service._id)
+          <div className="grid grid-cols-1 gap-4 max-h-96 overflow-y-auto">
+            {availableServices.map((service) => {
+              const isSelected = selectedServices.some(s => s._id === service._id);
               
               return (
                 <div
                   key={service._id}
-                  onClick={() => toggleService(service)}
-                  className={`p-4 border rounded-lg cursor-pointer transition-all ${
-                    isSelected
-                      ? 'border-cyan-500 bg-cyan-50 dark:bg-cyan-900/20'
-                      : 'border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 hover:border-gray-300'
+                  onClick={() => toggleServiceSelection(service)}
+                  className={`border rounded-lg p-4 cursor-pointer transition-all ${
+                    isSelected 
+                      ? 'border-cyan-500 bg-cyan-500/10' 
+                      : 'border-gray-600 hover:border-gray-500'
                   }`}
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <span className="text-2xl">{service.icon}</span>
-                      <div>
-                        <h5 className="font-medium text-gray-900 dark:text-gray-100">
-                          {service.title}
-                        </h5>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                          {service.subtitle}
-                        </p>
-                      </div>
-                    </div>
-                    
-                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                      isSelected 
-                        ? 'border-cyan-500 bg-cyan-500'
-                        : 'border-gray-300 dark:border-gray-600'
-                    }`}>
-                      {isSelected && (
-                        <span className="text-white text-xs">✓</span>
+                  <div className="flex items-start space-x-4">
+                    <div className="text-2xl">{service.icon}</div>
+                    <div className="flex-1">
+                      <h5 className="text-white font-medium">{service.title}</h5>
+                      {service.subtitle && (
+                        <p className="text-cyan-400 text-sm mb-2">{service.subtitle}</p>
+                      )}
+                      <p className="text-gray-400 text-sm mb-3 line-clamp-2">
+                        {service.description}
+                      </p>
+                      
+                      {service.pricing?.startingPrice && (
+                        <div className="flex items-center space-x-4 text-sm">
+                          <span className="text-green-400 font-medium">
+                            {service.pricing.startingPrice}
+                          </span>
+                          {service.deliveryTime && (
+                            <span className="text-gray-500">
+                              {service.deliveryTime}
+                            </span>
+                          )}
+                        </div>
                       )}
                     </div>
-                  </div>
-                  
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-2 line-clamp-2">
-                    {service.description}
-                  </p>
-                  
-                  <div className="flex items-center justify-between mt-3">
-                    <span className="text-sm font-semibold text-cyan-600">
-                      {service.pricing?.startingPrice}
-                    </span>
-                    <span className="text-xs text-gray-500">
-                      {service.deliveryTime}
-                    </span>
+                    
+                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
+                      isSelected 
+                        ? 'border-cyan-500 bg-cyan-500' 
+                        : 'border-gray-500'
+                    }`}>
+                      {isSelected && <span className="text-black text-sm">✓</span>}
+                    </div>
                   </div>
                 </div>
-              )
+              );
             })}
           </div>
         </div>
+      </div>
 
-        {/* Vista Previa */}
+      {/* Vista Previa */}
+      {selectedServices.length > 0 && (
         <div>
-          <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">
+          <h4 className="text-white font-medium mb-4">
             Vista Previa ({selectedServices.length} seleccionados)
           </h4>
           
-          <div className="bg-gray-50 dark:bg-gray-700 p-6 rounded-lg">
-            {selectedServices.length > 0 ? (
-              <div className="grid grid-cols-1 gap-4">
-                {selectedServices.map((service) => (
-                  // Continuación de ServicesEditor.js
-                  <div key={service._id} className="bg-white dark:bg-gray-600 p-4 rounded-lg border border-gray-200 dark:border-gray-500">
-                    <div className="flex items-start space-x-3">
-                      <div className={`p-2 rounded-lg bg-gradient-to-r ${service.color || 'from-cyan-400 to-blue-500'}`}>
-                        <span className="text-white text-lg">{service.icon}</span>
-                      </div>
-                      
-                      <div className="flex-1">
-                        <h5 className="font-semibold text-gray-900 dark:text-gray-100 mb-1">
-                          {service.title}
-                        </h5>
-                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                          {service.subtitle}
-                        </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2">
-                          {service.description}
-                        </p>
-                        
-                        <div className="flex items-center justify-between mt-3">
-                          <span className="text-sm font-semibold text-cyan-600">
-                            Desde {service.pricing?.startingPrice}
-                          </span>
-                          <span className="text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">
-                            {service.deliveryTime}
-                          </span>
-                        </div>
-                        
-                        {service.technologies && service.technologies.length > 0 && (
-                          <div className="flex flex-wrap gap-1 mt-2">
-                            {service.technologies.slice(0, 3).map((tech, index) => (
-                              <span key={index} className="text-xs bg-cyan-100 dark:bg-cyan-900 text-cyan-800 dark:text-cyan-200 px-2 py-1 rounded">
-                                {tech}
-                              </span>
-                            ))}
-                            {service.technologies.length > 3 && (
-                              <span className="text-xs text-gray-500">+{service.technologies.length - 3}</span>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8">
-                <div className="text-4xl mb-4">⚡</div>
-                <h5 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">
-                  No hay servicios seleccionados
-                </h5>
-                <p className="text-gray-600 dark:text-gray-400 text-sm">
-                  Selecciona servicios de la lista para mostrarlos en la homepage
-                </p>
-              </div>
-            )}
-          </div>
-          
-          {/* Configuración adicional */}
-          <div className="mt-6 bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-            <h5 className="font-medium text-gray-900 dark:text-gray-100 mb-3">
-              Configuración de Sección
-            </h5>
-            
-            <div className="space-y-3">
-              <div>
-                <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">
-                  Título de la sección
-                </label>
-                <input
-                  type="text"
-                  defaultValue="Mis Servicios"
-                  className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">
-                  Subtítulo
-                </label>
-                <input
-                  type="text"
-                  defaultValue="Soluciones web personalizadas para tu negocio"
-                  className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                />
-              </div>
-              
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  id="showViewAllButton"
-                  defaultChecked={true}
-                  className="mr-2"
-                />
-                <label htmlFor="showViewAllButton" className="text-sm text-gray-700 dark:text-gray-300">
-                  Mostrar botón "Ver todos los servicios"
-                </label>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      {/* Orden de los servicios */}
-      {selectedServices.length > 1 && (
-        <div className="mt-6">
-          <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">
-            Orden de Visualización
-          </h4>
-          
-          <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-              Arrastra para reordenar los servicios:
-            </p>
-            
-            <div className="space-y-2">
-              {selectedServices.map((service, index) => (
-                <div
-                  key={service._id}
-                  className="flex items-center space-x-3 bg-white dark:bg-gray-600 p-3 rounded border border-gray-200 dark:border-gray-500 cursor-move"
-                >
-                  <span className="text-gray-400">⋮⋮</span>
-                  <span className="text-lg">{service.icon}</span>
-                  <span className="font-medium text-gray-900 dark:text-gray-100">
-                    {service.title}
-                  </span>
-                  <span className="text-sm text-gray-500 ml-auto">
-                    #{index + 1}
-                  </span>
+          <div className="bg-gray-800 border border-gray-700 rounded-lg p-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {selectedServices.slice(0, 3).map((service) => (
+                <div key={service._id} className="bg-gray-900 rounded-lg p-4 border border-gray-600">
+                  <div className="text-2xl mb-2">{service.icon}</div>
+                  <h5 className="text-white font-medium mb-1">{service.title}</h5>
+                  <p className="text-gray-400 text-sm line-clamp-2">
+                    {service.description}
+                  </p>
+                  <div className="text-cyan-400 text-sm mt-2">Desde</div>
                 </div>
               ))}
             </div>
+            
+            {selectedServices.length > 3 && (
+              <p className="text-gray-400 text-sm mt-4 text-center">
+                +{selectedServices.length - 3} servicios más se mostrarán en rotación
+              </p>
+            )}
           </div>
         </div>
       )}
+
+      {/* Configuración de Sección */}
+      <div className="bg-gray-900 border border-gray-700 rounded-lg p-6">
+        <h4 className="text-white font-medium mb-4">Configuración de Sección</h4>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Título de la sección
+            </label>
+            <input
+              type="text"
+              value={sectionConfig.title}
+              onChange={(e) => updateSectionConfig('title', e.target.value)}
+              className="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white"
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Subtítulo
+            </label>
+            <input
+              type="text"
+              value={sectionConfig.subtitle}
+              onChange={(e) => updateSectionConfig('subtitle', e.target.value)}
+              className="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white"
+            />
+          </div>
+        </div>
+
+        <div className="flex items-center space-x-2">
+          <input
+            type="checkbox"
+            checked={sectionConfig.showViewAllButton}
+            onChange={(e) => updateSectionConfig('showViewAllButton', e.target.checked)}
+            className="w-4 h-4"
+          />
+          <label className="text-gray-300">
+            Mostrar botón "Ver todos los servicios"
+          </label>
+        </div>
+      </div>
+
+      {/* Orden de Visualización */}
+      {selectedServices.length > 0 && (
+        <div className="bg-gray-900 border border-gray-700 rounded-lg p-6">
+          <h4 className="text-white font-medium mb-4">Orden de Visualización</h4>
+          <p className="text-gray-400 text-sm mb-4">
+            Arrastra para reordenar los servicios:
+          </p>
+          
+          <DragDropContext onDragEnd={handleDragEnd}>
+            <Droppable droppableId="services">
+              {(provided) => (
+                <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-2">
+                  {selectedServices.map((service, index) => (
+                    <Draggable key={service._id} draggableId={service._id.toString()} index={index}>
+                      {(provided, snapshot) => (
+                        <div
+                          ref={provided.innerRef}
+                          {...provided.draggableProps}
+                          {...provided.dragHandleProps}
+                          className={`flex items-center space-x-3 p-3 bg-gray-800 border border-gray-600 rounded-lg ${
+                            snapshot.isDragging ? 'shadow-lg' : ''
+                          }`}
+                        >
+                          <div className="text-gray-400 cursor-grab">⋮⋮</div>
+                          <div className="text-xl">{service.icon}</div>
+                          <div className="flex-1">
+                            <div className="text-white font-medium">{service.title}</div>
+                          </div>
+                          <div className="text-gray-400 text-sm">#{index + 1}</div>
+                        </div>
+                      )}
+                    </Draggable>
+                  ))}
+                  {provided.placeholder}
+                </div>
+              )}
+            </Droppable>
+          </DragDropContext>
+        </div>
+      )}
     </div>
-  )
+  );
 }
