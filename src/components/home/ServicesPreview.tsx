@@ -1,4 +1,4 @@
-// src/components/home/ServicesPreview.tsx
+// src/components/home/ServicesPreview.tsx (CON DEBUG COMPLETO)
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -6,8 +6,8 @@ import Link from 'next/link';
 import { ArrowRightIcon } from '@heroicons/react/24/outline';
 
 interface Service {
-  id?: number;
   _id?: string;
+  id?: number;
   title: string;
   description: string;
   icon: string;
@@ -25,6 +25,7 @@ interface Props {
 export default function ServicesPreview({ data }: Props) {
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
+  const [debugInfo, setDebugInfo] = useState<any>({});
 
   // Servicios por defecto como fallback
   const defaultServices: Service[] = [
@@ -60,33 +61,67 @@ export default function ServicesPreview({ data }: Props) {
   useEffect(() => {
     const fetchServices = async () => {
       try {
-        // Intentar cargar desde API homepage primero
-        const response = await fetch('/api/homepage');
+        setLoading(true);
+        console.log('🏠 ServicesPreview: Iniciando carga de servicios...');
+        
+        const response = await fetch('/api/homepage', {
+          cache: 'no-store',
+          headers: { 'Cache-Control': 'no-cache' }
+        });
+        
+        console.log(`🏠 ServicesPreview: Response status: ${response.status}`);
+        
         if (response.ok) {
-          const data = await response.json();
-          if (data.services && data.services.length > 0) {
-            setServices(data.services.slice(0, 6));
-            setLoading(false);
-            return;
+          const homepageData = await response.json();
+          console.log('🏠 ServicesPreview: Data completa recibida:', homepageData);
+          
+          // Debug específico para servicios
+          console.log('🏠 ServicesPreview: Servicios en data:', homepageData.services);
+          console.log('🏠 ServicesPreview: Tipo de servicios:', typeof homepageData.services);
+          console.log('🏠 ServicesPreview: Es array?:', Array.isArray(homepageData.services));
+          console.log('🏠 ServicesPreview: Cantidad:', homepageData.services?.length);
+          
+          if (homepageData.services?.length > 0) {
+            console.log('🏠 ServicesPreview: Lista de servicios:', 
+              homepageData.services.map((s: any) => ({
+                id: s._id || s.id,
+                title: s.title,
+                icon: s.icon
+              }))
+            );
           }
-        }
-
-        // Fallback: intentar desde API services
-        const servicesResponse = await fetch('/api/public/services');
-        if (servicesResponse.ok) {
-          const servicesData = await servicesResponse.json();
-          if (servicesData.services && servicesData.services.length > 0) {
-            setServices(servicesData.services.slice(0, 6));
-            setLoading(false);
-            return;
+          
+          // Verificar configuración
+          console.log('🏠 ServicesPreview: Config general:', homepageData.config);
+          console.log('🏠 ServicesPreview: Selected services config:', homepageData.config?.homepage_selected_services);
+          
+          setDebugInfo({
+            source: '/api/homepage',
+            servicesCount: homepageData.services?.length || 0,
+            selectedIds: homepageData.config?.homepage_selected_services || [],
+            allConfig: Object.keys(homepageData.config || {})
+          });
+          
+          if (homepageData.services && homepageData.services.length > 0) {
+            // Usar los servicios de la API
+            setServices(homepageData.services.slice(0, 6));
+            console.log('✅ ServicesPreview: Usando servicios de homepage API');
+          } else {
+            console.log('⚠️ ServicesPreview: No hay servicios en homepage, usando defaults');
+            setServices(defaultServices);
+            setDebugInfo(prev => ({ ...prev, fallbackReason: 'No services in homepage response' }));
           }
+        } else {
+          throw new Error(`HTTP ${response.status}`);
         }
-
-        // Si no hay datos, usar por defecto
-        setServices(defaultServices);
       } catch (error) {
-        console.error('Error loading services:', error);
+        console.error('❌ ServicesPreview: Error loading services:', error);
         setServices(defaultServices);
+        setDebugInfo({
+          source: 'fallback',
+          error: error.message,
+          fallbackReason: 'API error'
+        });
       } finally {
         setLoading(false);
       }
@@ -96,7 +131,9 @@ export default function ServicesPreview({ data }: Props) {
     if (!data || data.length === 0) {
       fetchServices();
     } else {
+      console.log('🏠 ServicesPreview: Usando datos de props:', data);
       setServices(data.slice(0, 6));
+      setDebugInfo({ source: 'props', servicesCount: data.length });
       setLoading(false);
     }
   }, [data]);
@@ -124,8 +161,29 @@ export default function ServicesPreview({ data }: Props) {
   }
 
   return (
-    <section id="servicios" className="py-20 bg-gray-950">
+    <section id="servicios" className="py-20 bg-gray-950 relative">
       <div className="container mx-auto px-4">
+        
+        {/* Debug Info */}
+        <div className="fixed top-20 right-4 bg-black/90 border border-gray-600 rounded-lg p-4 text-xs z-50 max-w-sm">
+          <div className="text-green-400 font-bold mb-2">🏠 ServicesPreview Debug</div>
+          <div className="text-gray-300 space-y-1">
+            <div>Fuente: <span className="text-cyan-400">{debugInfo.source}</span></div>
+            <div>Servicios: <span className="text-yellow-400">{services.length}</span></div>
+            <div>IDs seleccionados: <span className="text-purple-400">{debugInfo.selectedIds?.length || 0}</span></div>
+            {debugInfo.error && (
+              <div className="text-red-400">Error: {debugInfo.error}</div>
+            )}
+            {debugInfo.fallbackReason && (
+              <div className="text-orange-400">Fallback: {debugInfo.fallbackReason}</div>
+            )}
+            <div>Config keys: <span className="text-gray-400">{debugInfo.allConfig?.length || 0}</span></div>
+          </div>
+          <div className="mt-2 text-gray-500">
+            Servicios: {services.map(s => s.title).join(', ')}
+          </div>
+        </div>
+
         <div className="text-center mb-16">
           <h2 className="text-4xl md:text-5xl font-bold gradient-text mb-6">
             Servicios Especializados
@@ -207,11 +265,11 @@ export default function ServicesPreview({ data }: Props) {
           ))}
         </div>
 
-        {/* Call to Action */}
+        {/* Call to Action - ARREGLADO PARA EVITAR SOLAPAMIENTO */}
         <div className="text-center">
           <Link
             href="/servicios"
-            className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-semibold rounded-lg hover:from-cyan-600 hover:to-blue-600 transition-all duration-300 transform hover:scale-105 hover:shadow-lg hover:shadow-cyan-500/25"
+            className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-semibold rounded-lg hover:from-cyan-600 hover:to-blue-600 transition-all duration-300 transform hover:scale-105 hover:shadow-lg hover:shadow-cyan-500/25 mb-8"
           >
             Ver todos los servicios
             <ArrowRightIcon className="ml-2 w-5 h-5" />
