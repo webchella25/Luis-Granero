@@ -1,4 +1,4 @@
-// src/app/admin/content/homepage/page.js
+// src/app/admin/content/homepage/page.js (AÑADIR DEBUG AL GUARDAR)
 'use client'
 import { useState, useEffect } from 'react'
 import { Tab } from '@headlessui/react'
@@ -28,29 +28,44 @@ export default function HomepageEditor() {
   const handleSave = async () => {
     setIsSaving(true)
     try {
+      console.log('💾 Admin: Iniciando guardado...')
+      console.log('💾 Admin: Datos a guardar:', pageData)
+      console.log('💾 Admin: Selected services:', pageData.selectedServices)
+      console.log('💾 Admin: Services config:', pageData.servicesConfig)
+      
       const response = await fetch('/api/admin/pages/homepage', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(pageData)
       })
       
+      console.log('💾 Admin: Response status:', response.status)
+      
       if (response.ok) {
+        const result = await response.json()
+        console.log('✅ Admin: Guardado exitoso:', result)
         setLastSaved(new Date())
-        // Show success notification
+      } else {
+        const error = await response.text()
+        console.error('❌ Admin: Error en response:', error)
       }
     } catch (error) {
-      console.error('Error saving:', error)
-      // Show error notification
+      console.error('❌ Admin: Error saving:', error)
     } finally {
       setIsSaving(false)
     }
   }
 
   const updatePageData = (section, data) => {
-    setPageData(prev => ({
-      ...prev,
-      [section]: data
-    }))
+    console.log('📝 Admin: Updating page data:', section, data)
+    setPageData(prev => {
+      const updated = {
+        ...prev,
+        [section]: data
+      }
+      console.log('📝 Admin: New page data:', updated)
+      return updated
+    })
   }
 
   return (
@@ -78,6 +93,21 @@ export default function HomepageEditor() {
             Vista Previa
           </button>
         </div>
+      </div>
+
+      {/* Debug actual */}
+      <div className="mb-6 bg-gray-800 border border-gray-600 rounded-lg p-4 text-xs">
+        <div className="text-cyan-400 font-bold mb-2">🔧 Debug Homepage Admin</div>
+        <div className="text-gray-300 space-y-1">
+          <div>Selected services: <span className="text-yellow-400">{pageData.selectedServices?.length || 0}</span></div>
+          <div>Services config: <span className="text-purple-400">{pageData.servicesConfig ? 'Si' : 'No'}</span></div>
+          <div>Tab actual: <span className="text-green-400">{tabs[selectedIndex].name}</span></div>
+        </div>
+        {pageData.selectedServices?.length > 0 && (
+          <div className="mt-2 text-gray-500">
+            Servicios: {pageData.selectedServices.map(s => s.title).join(', ')}
+          </div>
+        )}
       </div>
 
       {/* Tabs */}
