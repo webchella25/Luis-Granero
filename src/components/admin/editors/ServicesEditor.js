@@ -1,4 +1,4 @@
-// src/components/admin/editors/ServicesEditor.js (CON DEBUG)
+// src/components/admin/editors/ServicesEditor.js (CORREGIDO)
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -22,43 +22,33 @@ export default function ServicesEditor({ data, onUpdate }) {
     try {
       console.log('🔍 Cargando servicios desde admin...');
       
-      // Intentar desde múltiples fuentes
-      const endpoints = [
-        '/api/admin/services',
-        '/api/homepage',
-        '/api/public/services'
-      ];
-
-      let servicesLoaded = false;
-
-      for (const endpoint of endpoints) {
-        try {
-          console.log(`📡 Probando endpoint: ${endpoint}`);
-          const response = await fetch(endpoint);
-          console.log(`📊 Response status: ${response.status}`);
+      // SOLO usar la API de admin services (todos los servicios disponibles)
+      const response = await fetch('/api/admin/services');
+      console.log(`📊 Response status: ${response.status}`);
+      
+      if (response.ok) {
+        const result = await response.json();
+        console.log(`📦 Data received from admin services:`, result);
+        
+        let services = result.services || [];
+        
+        // Verificar estructura de datos
+        if (Array.isArray(services) && services.length > 0) {
+          console.log(`✅ Found ${services.length} services from admin`);
+          console.log('📋 Services list:', services.map(s => ({
+            id: s._id || s.id,
+            title: s.title,
+            icon: s.icon
+          })));
           
-          if (response.ok) {
-            const result = await response.json();
-            console.log(`📦 Data received from ${endpoint}:`, result);
-            
-            // Intentar diferentes estructuras de respuesta
-            let services = result.services || result.data?.services || [];
-            
-            if (services.length > 0) {
-              console.log(`✅ Found ${services.length} services from ${endpoint}`);
-              setAvailableServices(services);
-              servicesLoaded = true;
-              break;
-            }
-          }
-        } catch (endpointError) {
-          console.error(`❌ Error with ${endpoint}:`, endpointError);
+          setAvailableServices(services);
+        } else {
+          console.log('⚠️ No services in admin response, using fallback');
+          setAvailableServices(getFallbackServices());
         }
-      }
-
-      if (!servicesLoaded) {
-        console.log('⚠️ No services found, using fallback');
-        setAvailableServices(getFallbackServices());
+      } else {
+        console.error(`❌ Admin services API error: ${response.status}`);
+        throw new Error(`HTTP ${response.status}`);
       }
 
     } catch (error) {
@@ -112,14 +102,42 @@ export default function ServicesEditor({ data, onUpdate }) {
       pricing: { startingPrice: '800€' },
       deliveryTime: '1-2 semanas',
       isActive: true
+    },
+    {
+      _id: 'fallback-4',
+      slug: 'apis-backend',
+      title: 'APIs y Backend',
+      subtitle: 'Node.js, Integración',
+      description: 'Desarrollo de APIs robustas y backends escalables.',
+      icon: '🔧',
+      color: 'from-orange-400 to-red-500',
+      features: ['APIs REST', 'Autenticación', 'Base de datos'],
+      technologies: ['Node.js', 'Express', 'MongoDB'],
+      pricing: { startingPrice: '1,800€' },
+      deliveryTime: '2-5 semanas',
+      isActive: true
+    },
+    {
+      _id: 'fallback-5',
+      slug: 'aplicaciones-web',
+      title: 'Aplicaciones Web Complejas',
+      subtitle: 'SPA, PWA, Dashboards',
+      description: 'Herramientas web específicas para tu negocio.',
+      icon: '⚡',
+      color: 'from-purple-400 to-pink-500',
+      features: ['Dashboards', 'PWA', 'Gestión usuarios'],
+      technologies: ['React', 'Node.js', 'PostgreSQL'],
+      pricing: { startingPrice: '2,500€' },
+      deliveryTime: '3-6 semanas',
+      isActive: true
     }
   ];
 
   const toggleServiceSelection = (service) => {
-    const isSelected = selectedServices.some(s => s._id === service._id);
+    const isSelected = selectedServices.some(s => (s._id || s.id) === (service._id || service.id));
     
     if (isSelected) {
-      const updated = selectedServices.filter(s => s._id !== service._id);
+      const updated = selectedServices.filter(s => (s._id || s.id) !== (service._id || service.id));
       setSelectedServices(updated);
       updateParent(updated);
     } else if (selectedServices.length < 6) {
@@ -169,13 +187,16 @@ export default function ServicesEditor({ data, onUpdate }) {
       {/* Debug info */}
       <div className="bg-gray-800 border border-gray-600 rounded p-3 text-xs">
         <div className="text-gray-400">
-          Debug: {availableServices.length} servicios cargados
+          Debug: {availableServices.length} servicios cargados desde /api/admin/services
         </div>
         {availableServices.length > 0 && (
           <div className="text-gray-500 mt-1">
             Servicios: {availableServices.map(s => s.title).join(', ')}
           </div>
         )}
+        <div className="text-gray-500 mt-1">
+          Seleccionados: {selectedServices.length}
+        </div>
       </div>
 
       {/* Servicios Disponibles */}
@@ -206,11 +227,12 @@ export default function ServicesEditor({ data, onUpdate }) {
           ) : (
             <div className="grid grid-cols-1 gap-4 max-h-96 overflow-y-auto">
               {availableServices.map((service) => {
-                const isSelected = selectedServices.some(s => s._id === service._id);
+                const serviceId = service._id || service.id;
+                const isSelected = selectedServices.some(s => (s._id || s.id) === serviceId);
                 
                 return (
                   <div
-                    key={service._id}
+                    key={serviceId}
                     onClick={() => toggleServiceSelection(service)}
                     className={`border rounded-lg p-4 cursor-pointer transition-all ${
                       isSelected 
@@ -269,20 +291,22 @@ export default function ServicesEditor({ data, onUpdate }) {
           <div className="bg-gray-800 border border-gray-700 rounded-lg p-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {selectedServices.slice(0, 3).map((service) => (
-                <div key={service._id} className="bg-gray-900 rounded-lg p-4 border border-gray-600">
+                <div key={service._id || service.id} className="bg-gray-900 rounded-lg p-4 border border-gray-600">
                   <div className="text-2xl mb-2">{service.icon}</div>
                   <h5 className="text-white font-medium mb-1">{service.title}</h5>
                   <p className="text-gray-400 text-sm line-clamp-2">
                     {service.description}
                   </p>
-                  <div className="text-cyan-400 text-sm mt-2">Desde</div>
+                  <div className="text-cyan-400 text-sm mt-2">
+                    {service.pricing?.startingPrice || service.startingPrice || 'Desde'}
+                  </div>
                 </div>
               ))}
             </div>
             
             {selectedServices.length > 3 && (
               <p className="text-gray-400 text-sm mt-4 text-center">
-                +{selectedServices.length - 3} servicios más se mostrarán en rotación
+                +{selectedServices.length - 3} servicios más disponibles
               </p>
             )}
           </div>
@@ -337,13 +361,13 @@ export default function ServicesEditor({ data, onUpdate }) {
         <div className="bg-gray-900 border border-gray-700 rounded-lg p-6">
           <h4 className="text-white font-medium mb-4">Orden de Visualización</h4>
           <p className="text-gray-400 text-sm mb-4">
-            Arrastra para reordenar los servicios:
+            Ordenar los servicios seleccionados:
           </p>
           
           <div className="space-y-2">
             {selectedServices.map((service, index) => (
               <div
-                key={service._id}
+                key={service._id || service.id}
                 className="flex items-center space-x-3 p-3 bg-gray-800 border border-gray-600 rounded-lg"
               >
                 <div className="text-gray-400">⋮⋮</div>
@@ -354,7 +378,7 @@ export default function ServicesEditor({ data, onUpdate }) {
                 <div className="text-gray-400 text-sm">#{index + 1}</div>
                 <button
                   onClick={() => toggleServiceSelection(service)}
-                  className="text-red-400 hover:text-red-300 text-sm"
+                  className="text-red-400 hover:text-red-300 text-sm px-2 py-1 rounded"
                 >
                   Quitar
                 </button>
