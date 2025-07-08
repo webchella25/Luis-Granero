@@ -1,4 +1,4 @@
-// src/components/home/ServicesPreview.tsx (CON DEBUG COMPLETO)
+// src/components/home/ServicesPreview.tsx (ARREGLADO)
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -18,6 +18,15 @@ interface Service {
   deliveryTime?: string;
 }
 
+interface DebugInfo {
+  source?: string;
+  servicesCount?: number;
+  selectedIds?: string[];
+  allConfig?: string[];
+  error?: string;
+  fallbackReason?: string;
+}
+
 interface Props {
   data?: Service[];
 }
@@ -25,7 +34,7 @@ interface Props {
 export default function ServicesPreview({ data }: Props) {
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
-  const [debugInfo, setDebugInfo] = useState<any>({});
+  const [debugInfo, setDebugInfo] = useState<DebugInfo>({});
 
   // Servicios por defecto como fallback
   const defaultServices: Service[] = [
@@ -109,12 +118,12 @@ export default function ServicesPreview({ data }: Props) {
           } else {
             console.log('⚠️ ServicesPreview: No hay servicios en homepage, usando defaults');
             setServices(defaultServices);
-            setDebugInfo(prev => ({ ...prev, fallbackReason: 'No services in homepage response' }));
+            setDebugInfo((prev: DebugInfo) => ({ ...prev, fallbackReason: 'No services in homepage response' }));
           }
         } else {
           throw new Error(`HTTP ${response.status}`);
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('❌ ServicesPreview: Error loading services:', error);
         setServices(defaultServices);
         setDebugInfo({
@@ -179,7 +188,7 @@ export default function ServicesPreview({ data }: Props) {
             )}
             <div>Config keys: <span className="text-gray-400">{debugInfo.allConfig?.length || 0}</span></div>
           </div>
-          <div className="mt-2 text-gray-500">
+          <div className="mt-2 text-gray-500 max-h-20 overflow-hidden">
             Servicios: {services.map(s => s.title).join(', ')}
           </div>
         </div>
@@ -265,11 +274,11 @@ export default function ServicesPreview({ data }: Props) {
           ))}
         </div>
 
-        {/* Call to Action - ARREGLADO PARA EVITAR SOLAPAMIENTO */}
-        <div className="text-center">
+        {/* Call to Action */}
+        <div className="text-center mb-16">
           <Link
             href="/servicios"
-            className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-semibold rounded-lg hover:from-cyan-600 hover:to-blue-600 transition-all duration-300 transform hover:scale-105 hover:shadow-lg hover:shadow-cyan-500/25 mb-8"
+            className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-semibold rounded-lg hover:from-cyan-600 hover:to-blue-600 transition-all duration-300 transform hover:scale-105 hover:shadow-lg hover:shadow-cyan-500/25"
           >
             Ver todos los servicios
             <ArrowRightIcon className="ml-2 w-5 h-5" />
