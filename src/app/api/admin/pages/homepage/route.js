@@ -1,4 +1,4 @@
-// src/app/api/admin/pages/homepage/route.js (NUEVO)
+// src/app/api/admin/pages/homepage/route.js (CREAR SI NO EXISTE)
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import dbConnect from '@/lib/mongodb';
@@ -15,10 +15,12 @@ export async function POST(request) {
     await dbConnect();
     
     const data = await request.json();
+    console.log('💾 Saving homepage data:', data);
     
     // Guardar servicios seleccionados
     if (data.selectedServices) {
-      const serviceIds = data.selectedServices.map(s => s._id);
+      const serviceIds = data.selectedServices.map(s => s._id || s.id);
+      console.log('💾 Saving selected service IDs:', serviceIds);
       
       await SiteConfig.findOneAndUpdate(
         { key: 'homepage_selected_services' },
@@ -28,8 +30,10 @@ export async function POST(request) {
           category: 'homepage',
           type: 'array'
         },
-        { upsert: true }
+        { upsert: true, new: true }
       );
+      
+      console.log('✅ Selected services saved');
     }
 
     // Guardar configuración de la sección
@@ -47,9 +51,11 @@ export async function POST(request) {
             ...config,
             category: 'homepage'
           },
-          { upsert: true }
+          { upsert: true, new: true }
         );
       }
+      
+      console.log('✅ Services config saved');
     }
 
     return NextResponse.json({ 
@@ -57,7 +63,7 @@ export async function POST(request) {
     });
 
   } catch (error) {
-    console.error('Error saving homepage:', error);
+    console.error('❌ Error saving homepage:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

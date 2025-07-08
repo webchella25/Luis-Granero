@@ -1,4 +1,4 @@
-// src/components/home/ServicesPreview.tsx (ARREGLADO)
+// src/components/home/ServicesPreview.tsx (SIN DEBUG FLOTANTE)
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -18,15 +18,6 @@ interface Service {
   deliveryTime?: string;
 }
 
-interface DebugInfo {
-  source?: string;
-  servicesCount?: number;
-  selectedIds?: string[];
-  allConfig?: string[];
-  error?: string;
-  fallbackReason?: string;
-}
-
 interface Props {
   data?: Service[];
 }
@@ -34,7 +25,6 @@ interface Props {
 export default function ServicesPreview({ data }: Props) {
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
-  const [debugInfo, setDebugInfo] = useState<DebugInfo>({});
 
   // Servicios por defecto como fallback
   const defaultServices: Service[] = [
@@ -83,42 +73,15 @@ export default function ServicesPreview({ data }: Props) {
         if (response.ok) {
           const homepageData = await response.json();
           console.log('🏠 ServicesPreview: Data completa recibida:', homepageData);
-          
-          // Debug específico para servicios
-          console.log('🏠 ServicesPreview: Servicios en data:', homepageData.services);
-          console.log('🏠 ServicesPreview: Tipo de servicios:', typeof homepageData.services);
-          console.log('🏠 ServicesPreview: Es array?:', Array.isArray(homepageData.services));
-          console.log('🏠 ServicesPreview: Cantidad:', homepageData.services?.length);
-          
-          if (homepageData.services?.length > 0) {
-            console.log('🏠 ServicesPreview: Lista de servicios:', 
-              homepageData.services.map((s: any) => ({
-                id: s._id || s.id,
-                title: s.title,
-                icon: s.icon
-              }))
-            );
-          }
-          
-          // Verificar configuración
-          console.log('🏠 ServicesPreview: Config general:', homepageData.config);
-          console.log('🏠 ServicesPreview: Selected services config:', homepageData.config?.homepage_selected_services);
-          
-          setDebugInfo({
-            source: '/api/homepage',
-            servicesCount: homepageData.services?.length || 0,
-            selectedIds: homepageData.config?.homepage_selected_services || [],
-            allConfig: Object.keys(homepageData.config || {})
-          });
+          console.log('🏠 ServicesPreview: Servicios:', homepageData.services?.length || 0);
+          console.log('🏠 ServicesPreview: Selected IDs:', homepageData.config?.homepage_selected_services);
           
           if (homepageData.services && homepageData.services.length > 0) {
-            // Usar los servicios de la API
             setServices(homepageData.services.slice(0, 6));
             console.log('✅ ServicesPreview: Usando servicios de homepage API');
           } else {
-            console.log('⚠️ ServicesPreview: No hay servicios en homepage, usando defaults');
+            console.log('⚠️ ServicesPreview: No hay servicios, usando defaults');
             setServices(defaultServices);
-            setDebugInfo((prev: DebugInfo) => ({ ...prev, fallbackReason: 'No services in homepage response' }));
           }
         } else {
           throw new Error(`HTTP ${response.status}`);
@@ -126,23 +89,16 @@ export default function ServicesPreview({ data }: Props) {
       } catch (error: any) {
         console.error('❌ ServicesPreview: Error loading services:', error);
         setServices(defaultServices);
-        setDebugInfo({
-          source: 'fallback',
-          error: error.message,
-          fallbackReason: 'API error'
-        });
       } finally {
         setLoading(false);
       }
     };
 
-    // Si no se pasan datos como props, cargar desde API
     if (!data || data.length === 0) {
       fetchServices();
     } else {
       console.log('🏠 ServicesPreview: Usando datos de props:', data);
       setServices(data.slice(0, 6));
-      setDebugInfo({ source: 'props', servicesCount: data.length });
       setLoading(false);
     }
   }, [data]);
@@ -170,29 +126,8 @@ export default function ServicesPreview({ data }: Props) {
   }
 
   return (
-    <section id="servicios" className="py-20 bg-gray-950 relative">
+    <section id="servicios" className="py-20 bg-gray-950">
       <div className="container mx-auto px-4">
-        
-        {/* Debug Info */}
-        <div className="fixed top-20 right-4 bg-black/90 border border-gray-600 rounded-lg p-4 text-xs z-50 max-w-sm">
-          <div className="text-green-400 font-bold mb-2">🏠 ServicesPreview Debug</div>
-          <div className="text-gray-300 space-y-1">
-            <div>Fuente: <span className="text-cyan-400">{debugInfo.source}</span></div>
-            <div>Servicios: <span className="text-yellow-400">{services.length}</span></div>
-            <div>IDs seleccionados: <span className="text-purple-400">{debugInfo.selectedIds?.length || 0}</span></div>
-            {debugInfo.error && (
-              <div className="text-red-400">Error: {debugInfo.error}</div>
-            )}
-            {debugInfo.fallbackReason && (
-              <div className="text-orange-400">Fallback: {debugInfo.fallbackReason}</div>
-            )}
-            <div>Config keys: <span className="text-gray-400">{debugInfo.allConfig?.length || 0}</span></div>
-          </div>
-          <div className="mt-2 text-gray-500 max-h-20 overflow-hidden">
-            Servicios: {services.map(s => s.title).join(', ')}
-          </div>
-        </div>
-
         <div className="text-center mb-16">
           <h2 className="text-4xl md:text-5xl font-bold gradient-text mb-6">
             Servicios Especializados
