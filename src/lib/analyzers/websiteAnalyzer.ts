@@ -110,28 +110,28 @@ export async function analyzeWebsite(url: string): Promise<WebAnalysis | null> {
     }
     
     // 7. Buscar emails en el HTML
-    const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
-    const foundEmails = html.match(emailRegex) || [];
-    const uniqueEmails = [...new Set(foundEmails)];
-    
-    // Filtrar emails basura
-    const validEmails = uniqueEmails.filter(email => 
-      !email.includes('example.com') &&
-      !email.includes('domain.com') &&
-      !email.includes('sentry') &&
-      !email.includes('wixpress')
-    );
-    
-    return {
-      score: Math.max(0, score),
-      loadTime,
-      issues,
-      hasMobile,
-      hasSSL,
-      technology,
-      hasEmail: validEmails.length > 0,
-      emails: validEmails.slice(0, 3) // Máximo 3 emails
-    };
+const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
+const foundEmails = html.match(emailRegex) || [];
+const uniqueEmails: string[] = [...new Set(foundEmails)]; // ← Añadir tipo aquí
+
+// Filtrar emails basura
+const validEmails = uniqueEmails.filter((email: string) => // ← Y aquí
+  !email.includes('example.com') &&
+  !email.includes('domain.com') &&
+  !email.includes('sentry') &&
+  !email.includes('wixpress')
+);
+
+return {
+  score: Math.max(0, score),
+  loadTime,
+  issues,
+  hasMobile,
+  hasSSL,
+  technology,
+  hasEmail: validEmails.length > 0,
+  emails: validEmails.slice(0, 3)
+};
     
   } catch (error: any) {
     console.error(`❌ Error analizando ${url}:`, error.message);
