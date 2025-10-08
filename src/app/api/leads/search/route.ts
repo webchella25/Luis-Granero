@@ -1,8 +1,7 @@
-// app/api/leads/search/route.ts
-
+// src/app/api/leads/search/route.ts
 import { NextResponse } from 'next/server';
 import { scrapeGoogleMaps } from '@/lib/scrapers/googleMapsScraper';
-import { analyzeWebsite, guessBusinessEmails } from '@/lib/analyzers/websiteAnalyzer';
+import { analyzeWebsite, guessBusinessEmails } from '@/lib/scrapers/websiteAnalyzer';
 
 export async function POST(request: Request) {
   try {
@@ -14,17 +13,32 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
+
+    // Verificar que existe la API key
+    if (!process.env.SERPAPI_KEY) {
+      return NextResponse.json(
+        { error: 'SERPAPI_KEY no configurada en variables de entorno' },
+        { status: 500 }
+      );
+    }
     
     console.log(`\n🚀 Iniciando búsqueda de leads...`);
     console.log(`📍 Búsqueda: "${query}" en "${location}"`);
     
-    // 1. Scraping de Google Maps
+    // 1. Scraping de Google Maps con SerpAPI
     const rawBusinesses = await scrapeGoogleMaps(query, location, maxResults);
     
     if (rawBusinesses.length === 0) {
       return NextResponse.json({ 
+        success: true,
         leads: [], 
-        message: 'No se encontraron resultados' 
+        message: 'No se encontraron resultados',
+        stats: {
+          total: 0,
+          withWebsite: 0,
+          withoutWebsite: 0,
+          highOpportunity: 0
+        }
       });
     }
     
@@ -38,7 +52,11 @@ export async function POST(request: Request) {
         // Analizar website si existe
         let webAnalysis = null;
         if (business.website) {
-          webAnalysis = await analyzeWebsite(business.website);
+          try {
+            webAnalysis = await analyzeWebsite(business.website);
+          } catch (error) {
+            console.log(`  ⚠️ Error analizando web: ${error}`);
+          }
         }
         
         // Obtener o adivinar emails
@@ -82,7 +100,11 @@ export async function POST(request: Request) {
   } catch (error: any) {
     console.error('❌ Error en búsqueda de leads:', error);
     return NextResponse.json(
-      { error: error.message || 'Error en el servidor' },
+      { 
+        success: false,
+        error: error.message || 'Error en el servidor',
+        details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      },
       { status: 500 }
     );
   }
@@ -111,8 +133,8 @@ function calculateOpportunityScore(business: any, webAnalysis: any): number {
   }
   
   // Rating alto = negocio establecido = mejor cliente potencial
-  if (business.rating >= 4.5) score += 10;
-  if (business.reviewCount > 50) score += 10;
+  if (business.rating && business.rating >= 4.5) score += 10;
+  if (business.reviewCount && business.reviewCount > 50) score += 10;
   
   return Math.min(100, Math.max(0, Math.round(score)));
 }

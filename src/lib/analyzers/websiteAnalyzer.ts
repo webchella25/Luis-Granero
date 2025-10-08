@@ -109,13 +109,13 @@ export async function analyzeWebsite(url: string): Promise<WebAnalysis | null> {
       score -= 30;
     }
     
-    // 7. Buscar emails en el HTML
+// 7. Buscar emails en el HTML
 const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
-const foundEmails = html.match(emailRegex) || [];
-const uniqueEmails: string[] = [...new Set(foundEmails)]; // ← Añadir tipo aquí
+const foundEmails: string[] = html.match(emailRegex) || [];
+const uniqueEmails: string[] = [...new Set(foundEmails)];
 
 // Filtrar emails basura
-const validEmails = uniqueEmails.filter((email: string) => // ← Y aquí
+const validEmails = uniqueEmails.filter((email) => 
   !email.includes('example.com') &&
   !email.includes('domain.com') &&
   !email.includes('sentry') &&
