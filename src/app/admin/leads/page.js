@@ -1,4 +1,4 @@
-// src/app/admin/leads/page.js - TODOS LOS → CORREGIDOS
+// src/app/admin/leads/page.js - TODO CON LINK
 'use client'
 
 import { useState, useEffect } from 'react'
@@ -211,14 +211,14 @@ export default function LeadsPage() {
                     <td className="p-4">
                       {lead.website ? (
                         <div>
-                          
+                          <Link
                             href={lead.website}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-cyan-500 hover:underline text-sm"
                           >
                             Ver sitio &rarr;
-                          </a>
+                          </Link>
                           {lead.webAnalysis?.issues && lead.webAnalysis.issues.length &gt; 0 && (
                             <p className="text-orange-500 text-xs mt-1">
                               {lead.webAnalysis.issues[0]}
