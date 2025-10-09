@@ -1,4 +1,4 @@
-// src/app/admin/leads/page.js - TODO CON LINK
+// src/app/admin/leads/page.js - VERSIÓN FINAL CORRECTA
 'use client'
 
 import { useState, useEffect } from 'react'
@@ -164,7 +164,7 @@ export default function LeadsPage() {
             href="/admin/test-scraper"
             className="mt-4 text-cyan-500 hover:underline inline-block"
           >
-            Buscar tu primer lead &rarr;
+            Buscar tu primer lead
           </Link>
         </div>
       ) : (
@@ -217,16 +217,16 @@ export default function LeadsPage() {
                             rel="noopener noreferrer"
                             className="text-cyan-500 hover:underline text-sm"
                           >
-                            Ver sitio &rarr;
+                            Ver sitio
                           </Link>
-                          {lead.webAnalysis?.issues && lead.webAnalysis.issues.length &gt; 0 && (
+                          {lead.webAnalysis?.issues && lead.webAnalysis.issues.length > 0 && (
                             <p className="text-orange-500 text-xs mt-1">
                               {lead.webAnalysis.issues[0]}
                             </p>
                           )}
                         </div>
                       ) : (
-                        <span className="text-red-500 text-sm">❌ Sin web</span>
+                        <span className="text-red-500 text-sm">Sin web</span>
                       )}
                     </td>
                     <td className="p-4">
@@ -301,8 +301,8 @@ function StatCard({ title, value, icon, color }) {
 
 function ScoreBadge({ score }) {
   const getColor = () => {
-    if (score &gt;= 80) return 'bg-green-500/20 text-green-400 border-green-500'
-    if (score &gt;= 60) return 'bg-yellow-500/20 text-yellow-400 border-yellow-500'
+    if (score >= 80) return 'bg-green-500/20 text-green-400 border-green-500'
+    if (score >= 60) return 'bg-yellow-500/20 text-yellow-400 border-yellow-500'
     return 'bg-gray-500/20 text-gray-400 border-gray-500'
   }
   
