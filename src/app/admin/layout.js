@@ -1,7 +1,7 @@
 // src/app/admin/layout.js - VERSIÓN CORREGIDA
 'use client'
 import { useSession } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import AdminSidebar from '@/components/admin/AdminSidebar'
 import AdminHeader from '@/components/admin/AdminHeader'
@@ -11,24 +11,40 @@ import { Toaster } from 'react-hot-toast'
 export default function AdminLayout({ children }) {
   const { data: session, status } = useSession()
   const router = useRouter()
+  const pathname = usePathname()
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
+  // ⚡ CRÍTICO: Si estamos en /admin/login, NO aplicar protección
+  const isLoginPage = pathname === '/admin/login' || pathname === '/admin/login-test'
+  
   useEffect(() => {
+    // Si es página de login, no hacer nada
+    if (isLoginPage) return
+    
+    // Para otras páginas admin, verificar sesión
     if (status === 'loading') return
     if (!session) {
       router.push('/admin/login')
       return
     }
-  }, [session, status, router])
+  }, [session, status, router, isLoginPage])
 
+  // Si es página de login, solo renderizar children sin layout
+  if (isLoginPage) {
+    return <>{children}</>
+  }
+
+  // Mostrar loading mientras verifica sesión
   if (status === 'loading') {
     return <AdminLoadingScreen />
   }
 
+  // Si no hay sesión y no es login, no mostrar nada (redirige arriba)
   if (!session) {
     return null
   }
 
+  // Layout normal para páginas admin autenticadas
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex">
       {/* Sidebar - FIXED POSITION */}
