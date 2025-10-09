@@ -1,4 +1,4 @@
-// src/app/admin/leads/[id]/page.js
+// src/app/admin/leads/[id]/page.js - CORREGIDO
 'use client'
 
 import { useState, useEffect } from 'react'
@@ -91,9 +91,9 @@ export default function LeadDetailPage() {
           <div>
             <span className="text-gray-500 dark:text-gray-400 text-sm block mb-1">Website</span>
             {lead.website ? (
-              <a href={lead.website} target="_blank" rel="noopener noreferrer" className="text-cyan-500 hover:underline">
+              <Link href={lead.website} target="_blank" rel="noopener noreferrer" className="text-cyan-500 hover:underline">
                 Ver sitio web
-              </a>
+              </Link>
             ) : (
               <p className="text-red-500">Sin web</p>
             )}
@@ -117,7 +117,6 @@ export default function LeadDetailPage() {
           </div>
         </div>
 
-        {/* Análisis Web */}
         {lead.webAnalysis && (
           <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-900 rounded-lg">
             <h3 className="font-semibold text-gray-900 dark:text-white mb-3">Análisis Web</h3>
@@ -150,7 +149,6 @@ export default function LeadDetailPage() {
           </div>
         )}
 
-        {/* Historial de contacto */}
         {lead.contactHistory && lead.contactHistory.length > 0 && (
           <div className="mb-6">
             <h3 className="font-semibold text-gray-900 dark:text-white mb-3">Historial de Contacto</h3>
@@ -180,7 +178,6 @@ export default function LeadDetailPage() {
           </div>
         )}
 
-        {/* Acciones */}
         <div className="flex gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
           <Link
             href={`/admin/leads/${params.id}/email`}
@@ -189,22 +186,22 @@ export default function LeadDetailPage() {
             ✉️ Generar Email
           </Link>
           {lead.phone && (
-            
+            <Link
               href={`tel:${lead.phone}`}
               className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg font-semibold transition-colors inline-block"
             >
               📞 Llamar
-            </a>
+            </Link>
           )}
           {lead.website && (
-            
+            <Link
               href={lead.website}
               target="_blank"
               rel="noopener noreferrer"
               className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold transition-colors inline-block"
             >
               🌐 Ver Web
-            </a>
+            </Link>
           )}
         </div>
       </div>
