@@ -1,8 +1,9 @@
-// src/app/admin/leads/page.js (NO .tsx)
+// src/app/admin/leads/page.js - TODOS LOS → CORREGIDOS
 'use client'
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 
 export default function LeadsPage() {
   const router = useRouter()
@@ -72,7 +73,6 @@ export default function LeadsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
@@ -83,15 +83,14 @@ export default function LeadsPage() {
           </p>
         </div>
         
-        <button
-          onClick={() => router.push('/admin/test-scraper')}
-          className="bg-cyan-500 hover:bg-cyan-600 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
+        <Link
+          href="/admin/test-scraper"
+          className="bg-cyan-500 hover:bg-cyan-600 text-white px-6 py-3 rounded-lg font-semibold transition-colors inline-block"
         >
           ➕ Buscar Nuevos Leads
-        </button>
+        </Link>
       </div>
 
-      {/* Stats Cards */}
       {stats && (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <StatCard
@@ -121,7 +120,6 @@ export default function LeadsPage() {
         </div>
       )}
 
-      {/* Filters */}
       <div className="bg-white dark:bg-gray-800 rounded-lg p-4 flex gap-4 items-center border border-gray-200 dark:border-gray-700">
         <select
           value={filters.status}
@@ -154,7 +152,6 @@ export default function LeadsPage() {
         )}
       </div>
 
-      {/* Leads Table */}
       {loading ? (
         <div className="text-center py-12">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-500"></div>
@@ -163,12 +160,12 @@ export default function LeadsPage() {
       ) : leads.length === 0 ? (
         <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
           <p className="text-gray-600 dark:text-gray-400 text-lg">No hay leads todavía</p>
-          <button
-            onClick={() => router.push('/admin/test-scraper')}
-            className="mt-4 text-cyan-500 hover:underline"
+          <Link
+            href="/admin/test-scraper"
+            className="mt-4 text-cyan-500 hover:underline inline-block"
           >
-            Buscar tu primer lead →
-          </button>
+            Buscar tu primer lead &rarr;
+          </Link>
         </div>
       ) : (
         <div className="bg-white dark:bg-gray-800 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
@@ -220,9 +217,9 @@ export default function LeadsPage() {
                             rel="noopener noreferrer"
                             className="text-cyan-500 hover:underline text-sm"
                           >
-                            Ver sitio →
+                            Ver sitio &rarr;
                           </a>
-                          {lead.webAnalysis?.issues && lead.webAnalysis.issues.length > 0 && (
+                          {lead.webAnalysis?.issues && lead.webAnalysis.issues.length &gt; 0 && (
                             <p className="text-orange-500 text-xs mt-1">
                               {lead.webAnalysis.issues[0]}
                             </p>
@@ -247,20 +244,20 @@ export default function LeadsPage() {
                     </td>
                     <td className="p-4">
                       <div className="flex gap-2">
-                        <button
-                          onClick={() => router.push(`/admin/leads/${lead._id}`)}
+                        <Link
+                          href={`/admin/leads/${lead._id}`}
                           className="text-cyan-500 hover:text-cyan-400 text-sm"
                           title="Ver detalles"
                         >
                           👁️
-                        </button>
-                        <button
-                          onClick={() => router.push(`/admin/leads/${lead._id}/email`)}
+                        </Link>
+                        <Link
+                          href={`/admin/leads/${lead._id}/email`}
                           className="text-green-500 hover:text-green-400 text-sm"
                           title="Generar email"
                         >
                           ✉️
-                        </button>
+                        </Link>
                         <button
                           onClick={() => deleteLead(lead._id)}
                           className="text-red-500 hover:text-red-400 text-sm"
@@ -281,7 +278,6 @@ export default function LeadsPage() {
   )
 }
 
-// Componentes auxiliares
 function StatCard({ title, value, icon, color }) {
   const colors = {
     blue: 'from-blue-500 to-cyan-500',
@@ -305,8 +301,8 @@ function StatCard({ title, value, icon, color }) {
 
 function ScoreBadge({ score }) {
   const getColor = () => {
-    if (score >= 80) return 'bg-green-500/20 text-green-400 border-green-500'
-    if (score >= 60) return 'bg-yellow-500/20 text-yellow-400 border-yellow-500'
+    if (score &gt;= 80) return 'bg-green-500/20 text-green-400 border-green-500'
+    if (score &gt;= 60) return 'bg-yellow-500/20 text-yellow-400 border-yellow-500'
     return 'bg-gray-500/20 text-gray-400 border-gray-500'
   }
   
