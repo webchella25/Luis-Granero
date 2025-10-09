@@ -35,9 +35,9 @@ export async function POST(request: Request) {
     });
 
     // Convertir saltos de línea a HTML
-    const htmlBody = body
-      .split('\n\n').map(p => `<p>${p.replace(/\n/g, '<br>')}</p>`).join('')
-      .replace(/✓/g, '✅');
+const htmlBody = body
+  .split('\n\n').map((p: string) => `<p>${p.replace(/\n/g, '<br>')}</p>`).join('')
+  .replace(/✓/g, '✅');
 
     // Enviar email
     const info = await transporter.sendMail({
