@@ -1,4 +1,3 @@
-// src/components/admin/AdminSidebar.js - VERSIÓN CORREGIDA
 'use client'
 import { useState } from 'react'
 import Link from 'next/link'
@@ -7,6 +6,8 @@ import { signOut } from 'next-auth/react'
 
 const navigation = [
   { name: 'Dashboard', href: '/admin', icon: '📊' },
+  { name: 'Leads', href: '/admin/leads', icon: '🎯' }, // ← NUEVO
+  { name: 'Buscar Leads', href: '/admin/test-scraper', icon: '🔍' }, // ← NUEVO
   { name: 'Portfolio', href: '/admin/portfolio', icon: '🚀' },
   { name: 'Blog', href: '/admin/blog', icon: '📝' },
   { name: 'Servicios', href: '/admin/services', icon: '⚡' },

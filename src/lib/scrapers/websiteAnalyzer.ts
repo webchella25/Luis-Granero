@@ -17,9 +17,26 @@ export interface WebAnalysis {
 export async function analyzeWebsite(url: string): Promise<WebAnalysis | null> {
   if (!url) return null;
   
-  // Normalizar URL
-  if (!url.startsWith('http')) {
+  // ⚡ NORMALIZAR URL: Si no tiene protocolo, asumir HTTPS
+  if (!url.startsWith('http://') && !url.startsWith('https://')) {
     url = 'https://' + url;
+  }
+  
+  // Si es HTTP explícito, intentar primero con HTTPS
+  if (url.startsWith('http://')) {
+    const httpsUrl = url.replace('http://', 'https://');
+    try {
+      // Intentar con HTTPS primero
+      const testResponse = await axios.head(httpsUrl, { 
+        timeout: 3000,
+        maxRedirects: 5 
+      });
+      // Si funciona, usar HTTPS
+      url = httpsUrl;
+    } catch {
+      // Si falla HTTPS, mantener HTTP original
+      console.log(`  ℹ️ ${url} no soporta HTTPS, usando HTTP`);
+    }
   }
   
   console.log(`🔍 Analizando: ${url}`);
@@ -29,7 +46,10 @@ export async function analyzeWebsite(url: string): Promise<WebAnalysis | null> {
     const response = await axios.get(url, {
       timeout: 10000,
       maxRedirects: 5,
-      validateStatus: (status) => status < 500
+      validateStatus: (status) => status < 500,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+      }
     });
     const loadTime = Date.now() - startTime;
     const html = response.data;
@@ -55,10 +75,10 @@ export async function analyzeWebsite(url: string): Promise<WebAnalysis | null> {
       score -= 25;
     }
     
-    // 3. SSL/HTTPS
+    // 3. SSL/HTTPS - AHORA SÍ CORRECTO
     const hasSSL = url.startsWith('https://');
     if (!hasSSL) {
-      issues.push('Sin certificado SSL (HTTP)');
+      issues.push('Sin certificado SSL');
       score -= 20;
     }
     
