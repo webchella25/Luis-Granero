@@ -1,4 +1,4 @@
-// src/app/admin/leads/page.js - VERSIÓN FINAL CORRECTA
+// src/app/admin/leads/page.js - VERSIÓN FINAL CORRECTA...
 'use client'
 
 import { useState, useEffect } from 'react'
