@@ -1,13 +1,12 @@
-// src/app/api/leads/[id]/route.ts
+// src/app/api/leads/[id]/route.ts - CORREGIDO PARA NEXT.JS 15
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import connectDB from '@/lib/mongodb';
 import Lead from '@/models/Lead';
-import mongoose from 'mongoose';
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession();
@@ -15,12 +14,13 @@ export async function PATCH(
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
 
+    const { id } = await params;
     const updates = await request.json();
     
     await connectDB();
     
     const lead = await Lead.findByIdAndUpdate(
-      params.id,
+      id,
       { 
         ...updates,
         updatedAt: new Date()
@@ -42,7 +42,7 @@ export async function PATCH(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession();
@@ -50,9 +50,11 @@ export async function DELETE(
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
 
+    const { id } = await params;
+    
     await connectDB();
     
-    const lead = await Lead.findByIdAndDelete(params.id);
+    const lead = await Lead.findByIdAndDelete(id);
     
     if (!lead) {
       return NextResponse.json({ error: 'Lead no encontrado' }, { status: 404 });
