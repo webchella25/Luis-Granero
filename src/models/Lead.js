@@ -1,4 +1,4 @@
-// src/models/Lead.js (NO .ts)
+// src/models/Lead.js - VERSIÓN CORREGIDA
 import mongoose from 'mongoose';
 
 const LeadSchema = new mongoose.Schema({
@@ -10,7 +10,7 @@ const LeadSchema = new mongoose.Schema({
   rating: Number,
   reviewCount: Number,
   category: String,
-  placeId: { type: String, unique: true }, // Para evitar duplicados
+  placeId: String, // ← SIN unique aquí
   
   // Análisis web
   webAnalysis: {
@@ -61,10 +61,10 @@ const LeadSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Indexes
+// Indexes - solo aquí
 LeadSchema.index({ name: 'text', address: 'text', category: 'text' });
 LeadSchema.index({ status: 1, opportunityScore: -1 });
 LeadSchema.index({ createdAt: -1 });
-LeadSchema.index({ placeId: 1 }, { unique: true });
+LeadSchema.index({ placeId: 1 }, { unique: true, sparse: true }); // ← Único índice de placeId
 
 export default mongoose.models.Lead || mongoose.model('Lead', LeadSchema);
