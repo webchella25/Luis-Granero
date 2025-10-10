@@ -228,4 +228,112 @@ export default function AgendarPage() {
               <label className="block text-sm font-semibold text-gray-700 mb-3">
                 Selecciona un día *
               </label>
-              <div classN
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {availableDates.map((date) => {
+                  const dateStr = date.toISOString().split('T')[0]
+                  const isSelected = selectedDate === dateStr
+                  
+                  return (
+                    <button
+                      key={dateStr}
+                      type="button"
+                      onClick={() => setSelectedDate(dateStr)}
+                      className={`
+                        p-3 rounded-xl border-2 transition-all text-center
+                        ${isSelected 
+                          ? 'border-cyan-500 bg-cyan-50 text-cyan-700 font-semibold' 
+                          : 'border-gray-200 hover:border-cyan-300 hover:bg-gray-50'
+                        }
+                      `}
+                    >
+                      <div className="text-xs text-gray-500 uppercase">
+                        {date.toLocaleDateString('es-ES', { weekday: 'short' })}
+                      </div>
+                      <div className="text-lg font-bold">
+                        {date.getDate()}
+                      </div>
+                      <div className="text-xs text-gray-600">
+                        {date.toLocaleDateString('es-ES', { month: 'short' })}
+                      </div>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* Hora */}
+            {selectedDate && (
+              <div className="animate-fadeIn">
+                <label className="block text-sm font-semibold text-gray-700 mb-3">
+                  Selecciona una hora *
+                </label>
+                <div className="grid grid-cols-4 gap-3">
+                  {availableSlots.map((slot) => {
+                    const isSelected = selectedTime === slot
+                    
+                    return (
+                      <button
+                        key={slot}
+                        type="button"
+                        onClick={() => setSelectedTime(slot)}
+                        className={`
+                          py-3 rounded-xl border-2 transition-all font-semibold
+                          ${isSelected 
+                            ? 'border-cyan-500 bg-cyan-500 text-white' 
+                            : 'border-gray-200 hover:border-cyan-300 hover:bg-gray-50'
+                          }
+                        `}
+                      >
+                        {slot}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Info adicional */}
+            <div className="bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-200 rounded-xl p-4">
+              <p className="text-sm font-semibold text-blue-900 mb-2">📋 En la llamada hablaremos sobre:</p>
+              <ul className="text-sm text-blue-800 space-y-1">
+                <li>✓ Tu proyecto y objetivos</li>
+                <li>✓ Soluciones técnicas recomendadas</li>
+                <li>✓ Presupuesto y plazos estimados</li>
+              </ul>
+            </div>
+
+            {/* Submit Button */}
+            <button
+              type="submit"
+              disabled={submitting || !selectedDate || !selectedTime}
+              className="w-full bg-gradient-to-r from-cyan-500 via-blue-500 to-purple-600 text-white py-4 rounded-xl font-bold text-lg hover:shadow-2xl transform hover:-translate-y-1 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+            >
+              {submitting ? (
+                <span className="flex items-center justify-center">
+                  <svg className="animate-spin h-5 w-5 mr-3" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Agendando...
+                </span>
+              ) : (
+                '📅 Confirmar Llamada'
+              )}
+            </button>
+          </form>
+
+          {/* Footer */}
+          <div className="bg-gray-50 px-8 py-6 border-t border-gray-200">
+            <div className="flex items-center justify-center space-x-2 text-sm text-gray-600">
+              <span>🔒</span>
+              <p>Tus datos están protegidos y solo se usarán para coordinar la llamada</p>
+            </div>
+            <p className="text-center text-xs text-gray-500 mt-3">
+              <strong>Luis Granero</strong> - Desarrollo Web Profesional
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
