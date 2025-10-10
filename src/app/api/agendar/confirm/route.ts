@@ -1,4 +1,4 @@
-// src/app/api/agendar/confirm/route.ts
+// src/app/api/agendar/confirm/route.ts - CORREGIDO
 import { NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import Appointment from '@/models/Appointment';
@@ -58,7 +58,7 @@ export async function POST(request: Request) {
     });
     
     // Enviar email de confirmación
-    const transporter = nodemailer.createTransporter({
+    const transporter = nodemailer.createTransport({  // ← CORREGIDO: createTransport
       host: process.env.SMTP_HOST,
       port: parseInt(process.env.SMTP_PORT || '587'),
       secure: false,
@@ -72,7 +72,7 @@ export async function POST(request: Request) {
     
     await transporter.sendMail({
       from: `${process.env.EMAIL_FROM_NAME} <${process.env.EMAIL_FROM}>`,
-      to: appointment.email || phone, // Usar email del appointment si existe
+      to: appointment.email || phone,
       subject: confirmationTemplate.subject(),
       html: confirmationTemplate.htmlBody(appointment)
     });
