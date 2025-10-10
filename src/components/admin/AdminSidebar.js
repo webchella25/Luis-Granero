@@ -1,3 +1,4 @@
+// src/components/admin/AdminSidebar.js - VERSIÓN COMPLETA CON SCROLL
 'use client'
 import { useState } from 'react'
 import Link from 'next/link'
@@ -6,8 +7,9 @@ import { signOut } from 'next-auth/react'
 
 const navigation = [
   { name: 'Dashboard', href: '/admin', icon: '📊' },
-  { name: 'Leads', href: '/admin/leads', icon: '🎯' }, // ← NUEVO
-  { name: 'Buscar Leads', href: '/admin/test-scraper', icon: '🔍' }, // ← NUEVO
+  { name: 'Leads', href: '/admin/leads', icon: '🎯' },
+  { name: 'Buscar Leads', href: '/admin/test-scraper', icon: '🔍' },
+  { name: 'Llamadas', href: '/admin/appointments', icon: '📅' },
   { name: 'Portfolio', href: '/admin/portfolio', icon: '🚀' },
   { name: 'Blog', href: '/admin/blog', icon: '📝' },
   { name: 'Servicios', href: '/admin/services', icon: '⚡' },
@@ -22,19 +24,22 @@ export default function AdminSidebar({ isOpen, onClose }) {
   
   return (
     <>
-      {/* Sidebar - FIXED PARA DESKTOP, OVERLAY PARA MOBILE */}
+      {/* Sidebar - FIXED CON SCROLL */}
       <div className={`
-        fixed top-0 left-0 z-50 w-64 h-full bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700
+        fixed top-0 left-0 z-50 w-64 h-full 
+        bg-white dark:bg-gray-800 
+        border-r border-gray-200 dark:border-gray-700
         transform transition-transform duration-300 ease-in-out lg:translate-x-0
+        flex flex-col
         ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
       `}>
-        {/* Logo */}
-        <div className="flex items-center justify-center h-16 px-4 bg-gradient-to-r from-cyan-600 to-blue-600 border-b border-gray-200 dark:border-gray-700">
+        {/* Logo - FIXED */}
+        <div className="flex-shrink-0 flex items-center justify-center h-16 px-4 bg-gradient-to-r from-cyan-600 to-blue-600 border-b border-gray-200 dark:border-gray-700">
           <h1 className="text-xl font-bold text-white">Luis Granero</h1>
         </div>
         
-        {/* Navigation */}
-        <nav className="flex-1 px-4 py-6 overflow-y-auto">
+        {/* Navigation - SCROLLABLE */}
+        <nav className="flex-1 overflow-y-auto px-4 py-6">
           <ul className="space-y-2">
             {navigation.map((item) => {
               const isActive = pathname === item.href
@@ -66,8 +71,8 @@ export default function AdminSidebar({ isOpen, onClose }) {
           </ul>
         </nav>
         
-        {/* User Section */}
-        <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+        {/* User Section - FIXED AT BOTTOM */}
+        <div className="flex-shrink-0 p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
           <button
             onClick={() => signOut()}
             className="w-full flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
