@@ -1,4 +1,4 @@
-// src/app/api/leads/send-email/route.ts - ACTUALIZAR
+// src/app/api/leads/send-email/route.ts - COMPLETO CORREGIDO
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import connectDB from '@/lib/mongodb';
@@ -56,7 +56,7 @@ export async function POST(request: Request) {
     console.log('📧 Enviando email a:', to);
 
     // Configurar Brevo SMTP
-    const transporter = nodemailer.createTransporter({
+    const transporter = nodemailer.createTransport({  // ← CORREGIDO
       host: process.env.SMTP_HOST,
       port: parseInt(process.env.SMTP_PORT || '587'),
       secure: false,
@@ -96,7 +96,7 @@ export async function POST(request: Request) {
       success: true, 
       message: 'Email enviado correctamente con link de agendamiento',
       messageId: info.messageId,
-      magicLink: magicLink // Para que puedas verlo en el admin
+      magicLink: magicLink
     });
 
   } catch (error: any) {
