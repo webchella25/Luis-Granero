@@ -1,4 +1,4 @@
-// src/models/Appointment.js
+// src/models/Appointment.js - CORREGIDO
 import mongoose from 'mongoose';
 
 const AppointmentSchema = new mongoose.Schema({
@@ -22,21 +22,12 @@ const AppointmentSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  phone: {
-    type: String,
-    required: true
-  },
+  phone: String,
   email: String,
   
-  // Fecha y hora de la cita
-  scheduledDate: {
-    type: Date,
-    required: true
-  },
-  scheduledTime: {
-    type: String,
-    required: true
-  },
+  // Fecha y hora de la cita - NO requeridos al inicio
+  scheduledDate: Date,  // ← SIN required
+  scheduledTime: String, // ← SIN required
   
   // Estado de la cita
   status: {
