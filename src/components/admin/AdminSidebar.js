@@ -1,87 +1,190 @@
-// src/components/admin/AdminSidebar.js - VERSIÓN COMPLETA CON SCROLL
+// src/components/admin/AdminSidebar.jsx - VERSIÓN MEJORADA
 'use client'
+
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { signOut } from 'next-auth/react'
 
-const navigation = [
-  { name: 'Dashboard', href: '/admin', icon: '📊' },
-  { name: 'Leads', href: '/admin/leads', icon: '🎯' },
-  { name: 'Buscar Leads', href: '/admin/test-scraper', icon: '🔍' },
-  { name: 'Llamadas', href: '/admin/appointments', icon: '📅' },
-  { name: 'Portfolio', href: '/admin/portfolio', icon: '🚀' },
-  { name: 'Blog', href: '/admin/blog', icon: '📝' },
-  { name: 'Servicios', href: '/admin/services', icon: '⚡' },
-  { name: 'Homepage', href: '/admin/homepage', icon: '🏠' },
-  { name: 'Mensajes', href: '/admin/messages', icon: '💬' },
-  { name: 'Analytics', href: '/admin/analytics', icon: '📈' },
-  { name: 'Configuración', href: '/admin/settings', icon: '⚙️' },
-]
-
-export default function AdminSidebar({ isOpen, onClose }) {
+export default function AdminSidebar() {
   const pathname = usePathname()
-  
+  const [collapsed, setCollapsed] = useState({
+    web: false,
+    crm: false,
+    analytics: false
+  })
+
+  const toggleSection = (section) => {
+    setCollapsed(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }))
+  }
+
+  const sections = {
+    dashboard: {
+      title: 'Dashboard',
+      icon: '📊',
+      items: [
+        { name: 'Inicio', href: '/admin', icon: '🏠' }
+      ]
+    },
+    web: {
+      title: 'Contenido Web',
+      icon: '🌐',
+      items: [
+        { name: 'Blog', href: '/admin/blog', icon: '📝' },
+        { name: 'Portfolio', href: '/admin/portfolio', icon: '💼' },
+        { name: 'Proyectos', href: '/admin/projects', icon: '🚀' },
+        { name: 'Contactos', href: '/admin/contacts', icon: '📧' },
+        { name: 'Configuración', href: '/admin/settings', icon: '⚙️' }
+      ]
+    },
+    crm: {
+      title: 'Herramientas CRM',
+      icon: '🎯',
+      badge: 'PRO',
+      items: [
+        { name: 'Buscar Leads', href: '/admin/test-scraper', icon: '🔍', badge: 'new' },
+        { name: 'Gestión de Leads', href: '/admin/leads', icon: '📊' },
+        { name: 'Templates Email', href: '/admin/templates', icon: '📝' },
+        { name: 'Citas Agendadas', href: '/admin/appointments', icon: '📅' }
+      ]
+    },
+    analytics: {
+      title: 'Analytics & Stats',
+      icon: '📈',
+      items: [
+        { name: 'Métricas', href: '/admin/analytics', icon: '📊' },
+        { name: 'Usuarios', href: '/admin/users', icon: '👥' }
+      ]
+    }
+  }
+
+  const isActive = (href) => {
+    if (href === '/admin') return pathname === '/admin'
+    return pathname.startsWith(href)
+  }
+
   return (
-    <>
-      {/* Sidebar - FIXED CON SCROLL */}
-      <div className={`
-        fixed top-0 left-0 z-50 w-64 h-full 
-        bg-white dark:bg-gray-800 
-        border-r border-gray-200 dark:border-gray-700
-        transform transition-transform duration-300 ease-in-out lg:translate-x-0
-        flex flex-col
-        ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-      `}>
-        {/* Logo - FIXED */}
-        <div className="flex-shrink-0 flex items-center justify-center h-16 px-4 bg-gradient-to-r from-cyan-600 to-blue-600 border-b border-gray-200 dark:border-gray-700">
-          <h1 className="text-xl font-bold text-white">Luis Granero</h1>
-        </div>
-        
-        {/* Navigation - SCROLLABLE */}
-        <nav className="flex-1 overflow-y-auto px-4 py-6">
-          <ul className="space-y-2">
-            {navigation.map((item) => {
-              const isActive = pathname === item.href
-              return (
-                <li key={item.name}>
-                  <Link
-                    href={item.href}
-                    onClick={onClose}
-                    className={`
-                      flex items-center px-4 py-3 text-sm font-medium rounded-lg
-                      transition-all duration-200 group
-                      ${isActive 
-                        ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-lg' 
-                        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-                      }
-                    `}
-                  >
-                    <span className="text-lg mr-3">{item.icon}</span>
-                    {item.name}
-                    {isActive && (
-                      <span className="ml-auto">
-                        <div className="w-2 h-2 bg-white rounded-full"></div>
-                      </span>
-                    )}
-                  </Link>
-                </li>
-              )
-            })}
-          </ul>
-        </nav>
-        
-        {/* User Section - FIXED AT BOTTOM */}
-        <div className="flex-shrink-0 p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-          <button
-            onClick={() => signOut()}
-            className="w-full flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-          >
-            <span className="mr-3">🚪</span>
-            Cerrar Sesión
-          </button>
-        </div>
+    <aside className="w-64 bg-gray-900 border-r border-gray-800 h-screen overflow-y-auto sticky top-0">
+      <div className="p-6">
+        <h1 className="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-green-400 bg-clip-text text-transparent">
+          Luis Granero
+        </h1>
+        <p className="text-xs text-gray-500 mt-1">Panel de Administración</p>
       </div>
-    </>
+
+      <nav className="px-3 pb-6">
+        {/* Dashboard */}
+        <Link
+          href="/admin"
+          className={`flex items-center gap-3 px-4 py-3 rounded-lg mb-2 transition-all ${
+            isActive('/admin') && pathname === '/admin'
+              ? 'bg-gradient-to-r from-cyan-500 to-green-500 text-black font-semibold'
+              : 'text-gray-400 hover:bg-gray-800 hover:text-white'
+          }`}
+        >
+          <span className="text-xl">📊</span>
+          <span>Dashboard</span>
+        </Link>
+
+        {/* Secciones colapsables */}
+        {['web', 'crm', 'analytics'].map((sectionKey) => {
+          const section = sections[sectionKey]
+          const hasActiveItem = section.items.some(item => isActive(item.href))
+
+          return (
+            <div key={sectionKey} className="mb-4">
+              {/* Header de sección */}
+              <button
+                onClick={() => toggleSection(sectionKey)}
+                className={`w-full flex items-center justify-between px-4 py-3 rounded-lg transition-all mb-1 ${
+                  hasActiveItem
+                    ? 'bg-gray-800 text-cyan-400'
+                    : 'text-gray-500 hover:bg-gray-800 hover:text-gray-300'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <span className="text-lg">{section.icon}</span>
+                  <span className="font-semibold text-sm uppercase tracking-wide">
+                    {section.title}
+                  </span>
+                  {section.badge && (
+                    <span className="px-2 py-0.5 bg-cyan-500 text-black text-xs font-bold rounded-full">
+                      {section.badge}
+                    </span>
+                  )}
+                </div>
+                <span className={`transition-transform ${collapsed[sectionKey] ? '' : 'rotate-180'}`}>
+                  ▼
+                </span>
+              </button>
+
+              {/* Items de la sección */}
+              {!collapsed[sectionKey] && (
+                <div className="ml-4 space-y-1">
+                  {section.items.map((item) => (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className={`flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all ${
+                        isActive(item.href)
+                          ? 'bg-gradient-to-r from-cyan-500 to-green-500 text-black font-semibold'
+                          : 'text-gray-400 hover:bg-gray-800 hover:text-white'
+                      }`}
+                    >
+                      <span className="text-lg">{item.icon}</span>
+                      <span className="text-sm">{item.name}</span>
+                      {item.badge && (
+                        <span className="ml-auto px-2 py-0.5 bg-green-500 text-black text-xs font-bold rounded-full">
+                          {item.badge}
+                        </span>
+                      )}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+          )
+        })}
+
+        {/* Divider */}
+        <div className="border-t border-gray-800 my-4"></div>
+
+        {/* Acciones rápidas */}
+        <div className="px-4 py-3 bg-gray-800 rounded-lg">
+          <p className="text-xs text-gray-500 font-semibold mb-2 uppercase">
+            Accesos Rápidos
+          </p>
+          <div className="space-y-2">
+            <Link
+              href="/admin/test-scraper"
+              className="flex items-center gap-2 text-sm text-cyan-400 hover:text-cyan-300"
+            >
+              <span>➕</span> Buscar Leads
+            </Link>
+            <Link
+              href="/admin/templates"
+              className="flex items-center gap-2 text-sm text-green-400 hover:text-green-300"
+            >
+              <span>✏️</span> Editar Templates
+            </Link>
+          </div>
+        </div>
+
+        {/* User info */}
+        <div className="mt-6 px-4 py-3 bg-gray-800 rounded-lg">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-gradient-to-r from-cyan-500 to-green-500 rounded-full flex items-center justify-center text-black font-bold">
+              LG
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-white">Luis Granero</p>
+              <p className="text-xs text-gray-500">Admin</p>
+            </div>
+          </div>
+        </div>
+      </nav>
+    </aside>
   )
 }
