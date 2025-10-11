@@ -117,7 +117,7 @@ export async function POST(request: Request) {
     // Convertir texto a HTML básico (opcional: puedes mejorarlo)
     const htmlBody = processed.body
       .split('\n')
-      .map(line => {
+      .map((line: string) => {
         if (line.startsWith('✓') || line.startsWith('•')) {
           return `<li>${line.substring(1).trim()}</li>`;
         }
