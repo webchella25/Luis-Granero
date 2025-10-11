@@ -1,10 +1,13 @@
-// src/app/api/leads/[id]/route.js - VERSIÓN COMPLETA
-import { NextResponse } from 'next/server';
+// src/app/api/leads/[id]/route.ts - VERSIÓN CORREGIDA CON TIPOS
+import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import Lead from '@/models/Lead';
 
 // GET - Obtener un lead específico
-export async function GET(request, { params }) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
   try {
     await dbConnect();
     
@@ -21,7 +24,7 @@ export async function GET(request, { params }) {
       success: true,
       lead
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching lead:', error);
     return NextResponse.json(
       { success: false, error: error.message },
@@ -31,7 +34,10 @@ export async function GET(request, { params }) {
 }
 
 // PATCH - Actualizar un lead
-export async function PATCH(request, { params }) {
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
   try {
     await dbConnect();
     
@@ -45,7 +51,7 @@ export async function PATCH(request, { params }) {
     delete updates.$push;
     
     // Construir el objeto de actualización
-    const updateOperation = { $set: updates };
+    const updateOperation: any = { $set: updates };
     
     if (pushOperations) {
       updateOperation.$push = pushOperations;
@@ -68,7 +74,7 @@ export async function PATCH(request, { params }) {
       success: true,
       lead
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error updating lead:', error);
     return NextResponse.json(
       { success: false, error: error.message },
@@ -78,7 +84,10 @@ export async function PATCH(request, { params }) {
 }
 
 // DELETE - Eliminar un lead
-export async function DELETE(request, { params }) {
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
   try {
     await dbConnect();
     
@@ -95,7 +104,7 @@ export async function DELETE(request, { params }) {
       success: true,
       message: 'Lead eliminado correctamente'
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error deleting lead:', error);
     return NextResponse.json(
       { success: false, error: error.message },
