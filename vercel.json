@@ -4,8 +4,5 @@
       "path": "/api/cron/send-scheduled-emails",
       "schedule": "0 9 * * *"
     }
-  ],
-  "env": {
-    "CRON_SECRET": "@cron_secret"
-  }
+  ]
 }
