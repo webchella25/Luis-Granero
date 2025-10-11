@@ -1,4 +1,4 @@
-// src/app/admin/leads/[id]/page.js - VERSIÓN COMPLETA
+// src/app/admin/leads/[id]/page.js - VERSIÓN CORREGIDA CON LINK
 'use client'
 
 import { useState, useEffect } from 'react'
@@ -159,9 +159,9 @@ www.luisgranero.com`
               <div>
                 <span className="text-gray-500 dark:text-gray-400 text-sm">Website</span>
                 {lead.website ? (
-                  <a href={lead.website} target="_blank" rel="noopener noreferrer" className="text-cyan-500 hover:underline">
+                  <Link href={lead.website} target="_blank" rel="noopener noreferrer" className="text-cyan-500 hover:underline">
                     Ver sitio web
-                  </a>
+                  </Link>
                 ) : (
                   <p className="text-red-500 font-semibold">❌ Sin web</p>
                 )}
@@ -196,12 +196,12 @@ www.luisgranero.com`
                 {lead.possibleEmails.map((email, i) => (
                   <div key={i} className="flex items-center justify-between bg-gray-50 dark:bg-gray-900 px-4 py-2 rounded">
                     <span className="text-gray-900 dark:text-white font-mono">{email}</span>
-                    
+                    <Link
                       href={`mailto:${email}`}
                       className="text-cyan-500 hover:underline text-sm"
                     >
                       Enviar email
-                    </a>
+                    </Link>
                   </div>
                 ))}
               </div>
@@ -216,7 +216,7 @@ www.luisgranero.com`
               </h2>
               <div className="grid grid-cols-2 gap-3">
                 {lead.socialMedia.instagram && (
-                  
+                  <Link
                     href={lead.socialMedia.instagram}
                     target="_blank"
                     rel="noopener noreferrer"
@@ -224,10 +224,10 @@ www.luisgranero.com`
                   >
                     <span className="text-xl">📷</span>
                     Instagram
-                  </a>
+                  </Link>
                 )}
                 {lead.socialMedia.facebook && (
-                  
+                  <Link
                     href={lead.socialMedia.facebook}
                     target="_blank"
                     rel="noopener noreferrer"
@@ -235,10 +235,10 @@ www.luisgranero.com`
                   >
                     <span className="text-xl">👥</span>
                     Facebook
-                  </a>
+                  </Link>
                 )}
                 {lead.socialMedia.twitter && (
-                  
+                  <Link
                     href={lead.socialMedia.twitter}
                     target="_blank"
                     rel="noopener noreferrer"
@@ -246,10 +246,10 @@ www.luisgranero.com`
                   >
                     <span className="text-xl">🐦</span>
                     Twitter/X
-                  </a>
+                  </Link>
                 )}
                 {lead.socialMedia.linkedin && (
-                  
+                  <Link
                     href={lead.socialMedia.linkedin}
                     target="_blank"
                     rel="noopener noreferrer"
@@ -257,7 +257,7 @@ www.luisgranero.com`
                   >
                     <span className="text-xl">💼</span>
                     LinkedIn
-                  </a>
+                  </Link>
                 )}
               </div>
             </div>
@@ -354,7 +354,6 @@ www.luisgranero.com`
 
         {/* Sidebar - Opciones de Contacto */}
         <div className="space-y-6">
-          {/* Opciones de Contacto */}
           <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700 sticky top-6">
             <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
               📞 Contactar Lead
@@ -375,7 +374,7 @@ www.luisgranero.com`
               
               {/* WhatsApp */}
               {lead.phone && (
-                
+                <Link
                   href={generateWhatsAppLink(lead)}
                   target="_blank"
                   rel="noopener noreferrer"
@@ -384,19 +383,19 @@ www.luisgranero.com`
                 >
                   <span className="text-xl">📱</span>
                   Abrir WhatsApp
-                </a>
+                </Link>
               )}
               
               {/* Llamada Directa */}
               {lead.phone && (
-                
+                <Link
                   href={`tel:${lead.phone}`}
                   onClick={() => markAsContacted('phone')}
                   className="flex items-center justify-center gap-2 bg-gradient-to-r from-cyan-500 to-cyan-600 text-white px-4 py-3 rounded-lg font-semibold hover:opacity-90 transition-opacity w-full"
                 >
                   <span className="text-xl">📞</span>
                   Llamar Ahora
-                </a>
+                </Link>
               )}
               
               {/* Copiar Mensaje */}
@@ -410,7 +409,7 @@ www.luisgranero.com`
               
               {/* Ver Web */}
               {lead.website && (
-                
+                <Link
                   href={lead.website}
                   target="_blank"
                   rel="noopener noreferrer"
@@ -418,11 +417,10 @@ www.luisgranero.com`
                 >
                   <span className="text-xl">🌐</span>
                   Ver Sitio Web
-                </a>
+                </Link>
               )}
             </div>
 
-            {/* Ayuda */}
             <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
                 💡 <strong>Consejo:</strong>
@@ -431,7 +429,7 @@ www.luisgranero.com`
                 <li>✅ Si hay email, envía primero email automático</li>
                 <li>📱 Si no responde, prueba WhatsApp</li>
                 <li>📞 Llamada directa como último recurso</li>
-                <li>📋 Usa "Copiar mensaje" para redes sociales</li>
+                <li>📋 Usa Copiar mensaje para redes sociales</li>
               </ul>
             </div>
           </div>

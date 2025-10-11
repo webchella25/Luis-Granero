@@ -273,88 +273,88 @@ www.luisgranero.com`
                     </td>
 
                     {/* Acciones */}
-                    <td className="p-4">
-                      <div className="flex gap-2 items-center">
-                        {/* Ver detalles */}
-                        <Link
-                          href={`/admin/leads/${lead._id}`}
-                          className="text-cyan-500 hover:text-cyan-400 text-xl"
-                          title="Ver detalles"
-                        >
-                          👁️
-                        </Link>
-                        
-                        {/* Email */}
-                        {lead.possibleEmails?.[0] && (
-                          <Link
-                            href={`/admin/leads/${lead._id}/email`}
-                            className="text-blue-500 hover:text-blue-400 text-xl"
-                            title="Enviar email"
-                          >
-                            ✉️
-                          </Link>
-                        )}
-                        
-                        {/* WhatsApp */}
-                        {lead.phone && (
-                          
-                            href={generateWhatsAppLink(lead)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-green-500 hover:text-green-400 text-xl"
-                            title="WhatsApp"
-                          >
-                            📱
-                          </a>
-                        )}
-                        
-                        {/* Llamada */}
-                        {lead.phone && (
-                          
-                            href={`tel:${lead.phone}`}
-                            className="text-cyan-600 hover:text-cyan-500 text-xl"
-                            title="Llamar"
-                          >
-                            📞
-                          </a>
-                        )}
-                        
-                        {/* Instagram */}
-                        {lead.socialMedia?.instagram && (
-                          
-                            href={lead.socialMedia.instagram}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-pink-500 hover:text-pink-400 text-xl"
-                            title="Instagram"
-                          >
-                            📷
-                          </a>
-                        )}
-                        
-                        {/* Facebook */}
-                        {lead.socialMedia?.facebook && (
-                          
-                            href={lead.socialMedia.facebook}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-600 hover:text-blue-500 text-xl"
-                            title="Facebook"
-                          >
-                            👥
-                          </a>
-                        )}
-                        
-                        {/* Eliminar */}
-                        <button
-                          onClick={() => deleteLead(lead._id)}
-                          className="text-red-500 hover:text-red-400 text-xl"
-                          title="Eliminar"
-                        >
-                          🗑️
-                        </button>
-                      </div>
-                    </td>
+<td className="p-4">
+  <div className="flex gap-2 items-center">
+    {/* Ver detalles */}
+    <Link
+      href={`/admin/leads/${lead._id}`}
+      className="text-cyan-500 hover:text-cyan-400 text-xl"
+      title="Ver detalles"
+    >
+      👁️
+    </Link>
+    
+    {/* Email */}
+    {lead.possibleEmails && lead.possibleEmails[0] && (
+      <Link
+        href={`/admin/leads/${lead._id}/email`}
+        className="text-blue-500 hover:text-blue-400 text-xl"
+        title="Enviar email"
+      >
+        ✉️
+      </Link>
+    )}
+    
+    {/* WhatsApp */}
+    {lead.phone && (
+      <Link
+        href={generateWhatsAppLink(lead)}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-green-500 hover:text-green-400 text-xl"
+        title="WhatsApp"
+      >
+        📱
+      </Link>
+    )}
+    
+    {/* Llamada */}
+    {lead.phone && (
+      <Link
+        href={`tel:${lead.phone}`}
+        className="text-cyan-600 hover:text-cyan-500 text-xl"
+        title="Llamar"
+      >
+        📞
+      </Link>
+    )}
+    
+    {/* Instagram */}
+    {lead.socialMedia && lead.socialMedia.instagram && (
+      <Link
+        href={lead.socialMedia.instagram}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-pink-500 hover:text-pink-400 text-xl"
+        title="Instagram"
+      >
+        📷
+      </Link>
+    )}
+    
+    {/* Facebook */}
+    {lead.socialMedia && lead.socialMedia.facebook && (
+      <Link
+        href={lead.socialMedia.facebook}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-blue-600 hover:text-blue-500 text-xl"
+        title="Facebook"
+		>
+        👥
+      </Link>
+    )}
+    
+    {/* Eliminar */}
+    <button
+      onClick={() => deleteLead(lead._id)}
+      className="text-red-500 hover:text-red-400 text-xl"
+      title="Eliminar"
+    >
+      🗑️
+    </button>
+  </div>
+</td>
                   </tr>
                 ))}
               </tbody>
