@@ -1,4 +1,4 @@
-// src/models/Lead.js - VERSIÓN CORREGIDA
+// src/models/Lead.js - ACTUALIZADO
 import mongoose from 'mongoose';
 
 const LeadSchema = new mongoose.Schema({
@@ -10,7 +10,7 @@ const LeadSchema = new mongoose.Schema({
   rating: Number,
   reviewCount: Number,
   category: String,
-  placeId: String, // ← SIN unique aquí
+  placeId: String,
   
   // Análisis web
   webAnalysis: {
@@ -27,6 +27,15 @@ const LeadSchema = new mongoose.Schema({
   // Emails posibles
   possibleEmails: [String],
   
+  // Redes sociales - NUEVO
+  socialMedia: {
+    instagram: String,
+    facebook: String,
+    twitter: String,
+    linkedin: String,
+    youtube: String
+  },
+  
   // Score de oportunidad
   opportunityScore: { type: Number, default: 0 },
   
@@ -40,7 +49,7 @@ const LeadSchema = new mongoose.Schema({
   // Historial de contacto
   contactHistory: [{
     date: { type: Date, default: Date.now },
-    type: { type: String, enum: ['email', 'phone', 'meeting', 'note'] },
+    type: { type: String, enum: ['email', 'phone', 'whatsapp', 'meeting', 'note'] },
     notes: String,
     emailSubject: String,
     emailContent: String
@@ -61,10 +70,10 @@ const LeadSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Indexes - solo aquí
+// Indexes
 LeadSchema.index({ name: 'text', address: 'text', category: 'text' });
 LeadSchema.index({ status: 1, opportunityScore: -1 });
 LeadSchema.index({ createdAt: -1 });
-LeadSchema.index({ placeId: 1 }, { unique: true, sparse: true }); // ← Único índice de placeId
+LeadSchema.index({ placeId: 1 }, { unique: true, sparse: true });
 
 export default mongoose.models.Lead || mongoose.model('Lead', LeadSchema);
