@@ -1,13 +1,10 @@
-// src/app/api/leads/[id]/route.ts - VERSIÓN CORREGIDA CON TIPOS
-import { NextRequest, NextResponse } from 'next/server';
+// src/app/api/leads/[id]/route.js - VERSIÓN .JS (renombrar el archivo)
+import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import Lead from '@/models/Lead';
 
 // GET - Obtener un lead específico
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function GET(request, { params }) {
   try {
     await dbConnect();
     
@@ -24,7 +21,7 @@ export async function GET(
       success: true,
       lead
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error fetching lead:', error);
     return NextResponse.json(
       { success: false, error: error.message },
@@ -34,10 +31,7 @@ export async function GET(
 }
 
 // PATCH - Actualizar un lead
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function PATCH(request, { params }) {
   try {
     await dbConnect();
     
@@ -51,7 +45,7 @@ export async function PATCH(
     delete updates.$push;
     
     // Construir el objeto de actualización
-    const updateOperation: any = { $set: updates };
+    const updateOperation = { $set: updates };
     
     if (pushOperations) {
       updateOperation.$push = pushOperations;
@@ -74,7 +68,7 @@ export async function PATCH(
       success: true,
       lead
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error updating lead:', error);
     return NextResponse.json(
       { success: false, error: error.message },
@@ -84,10 +78,7 @@ export async function PATCH(
 }
 
 // DELETE - Eliminar un lead
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(request, { params }) {
   try {
     await dbConnect();
     
@@ -104,7 +95,7 @@ export async function DELETE(
       success: true,
       message: 'Lead eliminado correctamente'
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error deleting lead:', error);
     return NextResponse.json(
       { success: false, error: error.message },
