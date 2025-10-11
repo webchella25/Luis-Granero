@@ -238,15 +238,15 @@ www.luisgranero.com`
                     <td className="p-4">
                       {lead.website ? (
                         <div>
-                          
+                          <Link
                             href={lead.website}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-cyan-500 hover:underline text-sm"
                           >
                             Ver sitio
-                          </a>
-                          {lead.webAnalysis?.issues && lead.webAnalysis.issues.length > 0 && (
+                          </Link>
+                          {lead.webAnalysis && lead.webAnalysis.issues && lead.webAnalysis.issues.length > 0 && (
                             <p className="text-orange-500 text-xs mt-1">
                               ⚠️ {lead.webAnalysis.issues[0]}
                             </p>
