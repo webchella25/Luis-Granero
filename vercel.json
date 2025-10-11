@@ -1,0 +1,19 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/send-scheduled-emails",
+      "schedule": "0 9 * * *"
+    },
+    {
+      "path": "/api/cron/cleanup-old-logs",
+      "schedule": "0 2 * * 0"
+    },
+    {
+      "path": "/api/cron/update-lead-stats",
+      "schedule": "0 */6 * * *"
+    }
+  ],
+  "env": {
+    "CRON_SECRET": "@cron_secret"
+  }
+}
