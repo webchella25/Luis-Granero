@@ -1,4 +1,4 @@
-// src/app/admin/leads/[id]/page.js - VERSIÓN COMPLETA CON EDICIÓN
+// src/app/admin/leads/[id]/page.js - ARCHIVO COMPLETO CON SIDEBAR REORGANIZADO
 'use client'
 
 import { useState, useEffect } from 'react'
@@ -34,7 +34,6 @@ export default function LeadDetailPage() {
 
   const handleSaveLead = async (formData) => {
     try {
-      // Construir el objeto de actualización
       const updates = {
         name: formData.name,
         phone: formData.phone,
@@ -43,7 +42,6 @@ export default function LeadDetailPage() {
         notes: formData.notes
       }
 
-      // Si hay email, actualizar possibleEmails
       if (formData.email) {
         updates.possibleEmails = [formData.email]
       }
@@ -56,7 +54,7 @@ export default function LeadDetailPage() {
 
       if (res.ok) {
         alert('✅ Lead actualizado correctamente')
-        fetchLead() // Recargar datos
+        fetchLead()
       } else {
         alert('❌ Error al actualizar lead')
       }
@@ -177,7 +175,6 @@ www.luisgranero.com`
             </div>
           </div>
           
-          {/* Botón de editar */}
           <button
             onClick={() => setShowEditModal(true)}
             className="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg font-semibold transition-colors flex items-center gap-2"
@@ -188,9 +185,9 @@ www.luisgranero.com`
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Columna principal - Información del lead */}
+        {/* Columna Principal */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Información básica */}
+          {/* Información Básica */}
           <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
             <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
               📋 Información del Negocio
@@ -264,7 +261,7 @@ www.luisgranero.com`
             </div>
           )}
 
-          {/* Si NO hay emails, mostrar aviso */}
+          {/* Si NO hay emails */}
           {(!lead.possibleEmails || lead.possibleEmails.length === 0) && (
             <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg p-4">
               <p className="text-yellow-800 dark:text-yellow-200 font-semibold mb-2">
@@ -429,94 +426,20 @@ www.luisgranero.com`
           )}
         </div>
 
-        {/* Sidebar - Opciones de Contacto */}
+        {/* Sidebar */}
         <div className="space-y-6">
+          {/* ACCIONES RÁPIDAS - AHORA ARRIBA Y STICKY */}
           <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700 sticky top-6">
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
-              📞 Contactar Lead
-            </h2>
-            
-            <div className="space-y-3">
-              {/* Email Automático */}
-              {lead.possibleEmails && lead.possibleEmails.length > 0 && (
-                <Link
-                  href={`/admin/leads/${params.id}/email`}
-                  onClick={() => markAsContacted('email')}
-                  className="flex items-center justify-center gap-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-3 rounded-lg font-semibold hover:opacity-90 transition-opacity w-full"
-                >
-                  <span className="text-xl">✉️</span>
-                  Enviar Email Automático
-                </Link>
-              )}
-              
-              {/* WhatsApp */}
-              {lead.phone && (
-                <Link
-                  href={generateWhatsAppLink(lead)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={() => markAsContacted('whatsapp')}
-                  className="flex items-center justify-center gap-2 bg-gradient-to-r from-green-500 to-green-600 text-white px-4 py-3 rounded-lg font-semibold hover:opacity-90 transition-opacity w-full"
-                >
-                  <span className="text-xl">📱</span>
-                  Abrir WhatsApp
-                </Link>
-              )}
-              
-              {/* Llamada Directa */}
-              {lead.phone && (
-                <Link
-                  href={`tel:${lead.phone}`}
-                  onClick={() => markAsContacted('phone')}
-                  className="flex items-center justify-center gap-2 bg-gradient-to-r from-cyan-500 to-cyan-600 text-white px-4 py-3 rounded-lg font-semibold hover:opacity-90 transition-opacity w-full"
-                >
-                  <span className="text-xl">📞</span>
-                  Llamar Ahora
-                </Link>
-              )}
-              
-              {/* Copiar Mensaje */}
-              <button
-                onClick={() => copyContactMessage(lead)}
-                className="flex items-center justify-center gap-2 bg-gradient-to-r from-gray-500 to-gray-600 text-white px-4 py-3 rounded-lg font-semibold hover:opacity-90 transition-opacity w-full"
-              >
-                <span className="text-xl">📋</span>
-                Copiar Mensaje
-              </button>
-              
-              {/* Ver Web */}
-              {lead.website && (
-                <Link
-                  href={lead.website}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-2 bg-gradient-to-r from-purple-500 to-purple-600 text-white px-4 py-3 rounded-lg font-semibold hover:opacity-90 transition-opacity w-full"
-                >
-                  <span className="text-xl">🌐</span>
-                  Ver Sitio Web
-                </Link>
-              )}
-            </div>
-
-            <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-                💡 <strong>Consejo:</strong>
-              </p>
-              <ul className="text-xs text-gray-500 dark:text-gray-400 space-y-2">
-                <li>✅ Si hay email, envía primero email automático</li>
-                <li>📱 Si no responde, prueba WhatsApp</li>
-                <li>📞 Llamada directa como último recurso</li>
-                <li>📋 Usa Copiar mensaje para redes sociales</li>
-              </ul>
-            </div>
-          </div>
-
-          {/* Acciones Rápidas */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
-            <h3 className="font-bold text-gray-900 dark:text-white mb-3">
+            <h3 className="font-bold text-gray-900 dark:text-white mb-4">
               ⚡ Acciones Rápidas
             </h3>
             <div className="space-y-2">
+              <button
+                onClick={() => setShowEditModal(true)}
+                className="w-full text-left px-3 py-2 text-sm text-cyan-600 dark:text-cyan-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors font-semibold"
+              >
+                ✏️ Editar información
+              </button>
               <button
                 onClick={async () => {
                   await fetch(`/api/leads/${params.id}`, {
@@ -554,6 +477,82 @@ www.luisgranero.com`
               >
                 🗑️ Eliminar lead
               </button>
+            </div>
+          </div>
+
+          {/* Opciones de Contacto */}
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
+              📞 Contactar Lead
+            </h2>
+            
+            <div className="space-y-3">
+              {lead.possibleEmails && lead.possibleEmails.length > 0 && (
+                <Link
+                  href={`/admin/leads/${params.id}/email`}
+                  onClick={() => markAsContacted('email')}
+                  className="flex items-center justify-center gap-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-3 rounded-lg font-semibold hover:opacity-90 transition-opacity w-full"
+                >
+                  <span className="text-xl">✉️</span>
+                  Enviar Email Automático
+                </Link>
+              )}
+              
+              {lead.phone && (
+                <Link
+                  href={generateWhatsAppLink(lead)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => markAsContacted('whatsapp')}
+                  className="flex items-center justify-center gap-2 bg-gradient-to-r from-green-500 to-green-600 text-white px-4 py-3 rounded-lg font-semibold hover:opacity-90 transition-opacity w-full"
+                >
+                  <span className="text-xl">📱</span>
+                  Abrir WhatsApp
+                </Link>
+              )}
+              
+              {lead.phone && (
+                <Link
+                  href={`tel:${lead.phone}`}
+                  onClick={() => markAsContacted('phone')}
+                  className="flex items-center justify-center gap-2 bg-gradient-to-r from-cyan-500 to-cyan-600 text-white px-4 py-3 rounded-lg font-semibold hover:opacity-90 transition-opacity w-full"
+                >
+                  <span className="text-xl">📞</span>
+                  Llamar Ahora
+                </Link>
+              )}
+              
+              <button
+                onClick={() => copyContactMessage(lead)}
+                className="flex items-center justify-center gap-2 bg-gradient-to-r from-gray-500 to-gray-600 text-white px-4 py-3 rounded-lg font-semibold hover:opacity-90 transition-opacity w-full"
+              >
+                <span className="text-xl">📋</span>
+                Copiar Mensaje
+              </button>
+              
+              {lead.website && (
+                <Link
+                  href={lead.website}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-2 bg-gradient-to-r from-purple-500 to-purple-600 text-white px-4 py-3 rounded-lg font-semibold hover:opacity-90 transition-opacity w-full"
+                >
+                  <span className="text-xl">🌐</span>
+                  Ver Sitio Web
+                </Link>
+              )}
+            </div>
+
+            <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                💡 <strong>Consejo:</strong>
+              </p>
+              <ul className="text-xs text-gray-500 dark:text-gray-400 space-y-2">
+                <li>✅ Si hay email, envía primero email automático</li>
+                <li>📱 Si no responde, prueba WhatsApp</li>
+                <li>📞 Llamada directa como último recurso</li>
+                <li>📋 Usa Copiar mensaje para redes sociales</li>
+              </ul>
             </div>
           </div>
         </div>

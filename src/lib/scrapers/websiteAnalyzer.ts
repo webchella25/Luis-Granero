@@ -1,5 +1,4 @@
-// lib/analyzers/websiteAnalyzer.ts
-
+// src/lib/scrapers/websiteAnalyzer.ts - VERSIÓN COMPLETA
 import axios from 'axios';
 import * as cheerio from 'cheerio';
 
@@ -17,24 +16,17 @@ export interface WebAnalysis {
 export async function analyzeWebsite(url: string): Promise<WebAnalysis | null> {
   if (!url) return null;
   
-  // ⚡ NORMALIZAR URL: Si no tiene protocolo, asumir HTTPS
+  // Normalizar URL
   if (!url.startsWith('http://') && !url.startsWith('https://')) {
     url = 'https://' + url;
   }
   
-  // Si es HTTP explícito, intentar primero con HTTPS
   if (url.startsWith('http://')) {
     const httpsUrl = url.replace('http://', 'https://');
     try {
-      // Intentar con HTTPS primero
-      const testResponse = await axios.head(httpsUrl, { 
-        timeout: 3000,
-        maxRedirects: 5 
-      });
-      // Si funciona, usar HTTPS
+      await axios.head(httpsUrl, { timeout: 3000, maxRedirects: 5 });
       url = httpsUrl;
     } catch {
-      // Si falla HTTPS, mantener HTTP original
       console.log(`  ℹ️ ${url} no soporta HTTPS, usando HTTP`);
     }
   }
@@ -55,7 +47,6 @@ export async function analyzeWebsite(url: string): Promise<WebAnalysis | null> {
     const html = response.data;
     const $ = cheerio.load(html);
     
-    // Inicializar análisis
     let score = 100;
     const issues: string[] = [];
     
@@ -75,7 +66,7 @@ export async function analyzeWebsite(url: string): Promise<WebAnalysis | null> {
       score -= 25;
     }
     
-    // 3. SSL/HTTPS - AHORA SÍ CORRECTO
+    // 3. SSL/HTTPS
     const hasSSL = url.startsWith('https://');
     if (!hasSSL) {
       issues.push('Sin certificado SSL');
@@ -101,7 +92,6 @@ export async function analyzeWebsite(url: string): Promise<WebAnalysis | null> {
     
     if (htmlLower.includes('wordpress') || htmlLower.includes('wp-content')) {
       technology = 'WordPress';
-      // Detectar si es muy antiguo
       if (htmlLower.includes('jquery/1.') || htmlLower.includes('jquery/2.')) {
         issues.push('WordPress con jQuery antiguo');
         score -= 10;
@@ -129,29 +119,46 @@ export async function analyzeWebsite(url: string): Promise<WebAnalysis | null> {
       score -= 30;
     }
     
-// 7. Buscar emails en el HTML
-const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
-const foundEmails: string[] = html.match(emailRegex) || [];
-const uniqueEmails: string[] = [...new Set(foundEmails)];
+    // 7. Buscar emails en el HTML - CON FILTROS
+    const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
+    const foundEmails: string[] = html.match(emailRegex) || [];
+    const uniqueEmails: string[] = [...new Set(foundEmails)];
 
-// Filtrar emails basura
-const validEmails = uniqueEmails.filter((email) => 
-  !email.includes('example.com') &&
-  !email.includes('domain.com') &&
-  !email.includes('sentry') &&
-  !email.includes('wixpress')
-);
+    // Lista de dominios inválidos
+    const INVALID_DOMAINS = [
+      'facebook.com',
+      'instagram.com',
+      'twitter.com',
+      'linkedin.com',
+      'youtube.com',
+      'tiktok.com',
+      'example.com',
+      'domain.com',
+      'test.com',
+      'sentry.io',
+      'wixpress.com',
+      'schema.org',
+      'w3.org',
+      'googleapis.com',
+      'gravatar.com'
+    ];
 
-return {
-  score: Math.max(0, score),
-  loadTime,
-  issues,
-  hasMobile,
-  hasSSL,
-  technology,
-  hasEmail: validEmails.length > 0,
-  emails: validEmails.slice(0, 3)
-};
+    // Filtrar emails válidos
+    const validEmails = uniqueEmails.filter((email) => {
+      const domain = email.split('@')[1]?.toLowerCase() || '';
+      return !INVALID_DOMAINS.some(invalid => domain.includes(invalid));
+    });
+
+    return {
+      score: Math.max(0, score),
+      loadTime,
+      issues,
+      hasMobile,
+      hasSSL,
+      technology,
+      hasEmail: validEmails.length > 0,
+      emails: validEmails.slice(0, 3)
+    };
     
   } catch (error: any) {
     console.error(`❌ Error analizando ${url}:`, error.message);
@@ -169,23 +176,56 @@ return {
   }
 }
 
-// Función para adivinar emails comunes
+// Función para adivinar emails comunes - CON FILTROS
 export function guessBusinessEmails(businessName: string, website: string): string[] {
   if (!website) return [];
   
-  const domain = website
-    .replace(/^(https?:\/\/)?(www\.)?/, '')
-    .split('/')[0]
-    .toLowerCase();
-  
-  const commonPatterns = [
-    `info@${domain}`,
-    `contacto@${domain}`,
-    `hola@${domain}`,
-    `ventas@${domain}`,
-    `comercial@${domain}`,
-    `administracion@${domain}`
+  // Lista de dominios a excluir
+  const INVALID_DOMAINS = [
+    'facebook.com',
+    'instagram.com',
+    'twitter.com',
+    'linkedin.com',
+    'youtube.com',
+    'tiktok.com',
+    'gmail.com',
+    'hotmail.com',
+    'outlook.com',
+    'yahoo.com',
+    'example.com',
+    'test.com',
+    'wix.com',
+    'wordpress.com',
+    'blogspot.com',
+    'weebly.com',
+    'squarespace.com'
   ];
   
-  return commonPatterns;
+  try {
+    const domain = website
+      .replace(/^(https?:\/\/)?(www\.)?/, '')
+      .split('/')[0]
+      .toLowerCase();
+    
+    // Verificar si el dominio está en la lista de inválidos
+    const isInvalidDomain = INVALID_DOMAINS.some(invalid => domain.includes(invalid));
+    
+    if (isInvalidDomain) {
+      console.log(`⚠️ Dominio excluido: ${domain}`);
+      return [];
+    }
+
+    const commonPatterns = [
+      `info@${domain}`,
+      `contacto@${domain}`,
+      `hola@${domain}`,
+      `ventas@${domain}`,
+      `comercial@${domain}`,
+      `administracion@${domain}`
+    ];
+    
+    return commonPatterns;
+  } catch (error) {
+    return [];
+  }
 }
