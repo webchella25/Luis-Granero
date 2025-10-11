@@ -1,97 +1,105 @@
-// src/app/api/leads/[id]/route.ts - AÑADIR GET
+// src/app/api/leads/[id]/route.js - VERSIÓN COMPLETA
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import connectDB from '@/lib/mongodb';
+import dbConnect from '@/lib/mongodb';
 import Lead from '@/models/Lead';
 
-export async function GET(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+// GET - Obtener un lead específico
+export async function GET(request, { params }) {
   try {
-    const session = await getServerSession();
-    if (!session) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
-    }
-
-    const { id } = await params;
+    await dbConnect();
     
-    await connectDB();
-    
-    const lead = await Lead.findById(id);
+    const lead = await Lead.findById(params.id);
     
     if (!lead) {
-      return NextResponse.json({ error: 'Lead no encontrado' }, { status: 404 });
+      return NextResponse.json(
+        { success: false, error: 'Lead no encontrado' },
+        { status: 404 }
+      );
     }
     
-    return NextResponse.json({ success: true, lead });
-    
-  } catch (error: any) {
+    return NextResponse.json({
+      success: true,
+      lead
+    });
+  } catch (error) {
     console.error('Error fetching lead:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json(
+      { success: false, error: error.message },
+      { status: 500 }
+    );
   }
 }
 
-export async function PATCH(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+// PATCH - Actualizar un lead
+export async function PATCH(request, { params }) {
   try {
-    const session = await getServerSession();
-    if (!session) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
-    }
-
-    const { id } = await params;
+    await dbConnect();
+    
     const updates = await request.json();
     
-    await connectDB();
+    // Actualizar fecha de modificación
+    updates.updatedAt = new Date();
+    
+    // Si viene $push (para historial), manejarlo separado
+    const pushOperations = updates.$push;
+    delete updates.$push;
+    
+    // Construir el objeto de actualización
+    const updateOperation = { $set: updates };
+    
+    if (pushOperations) {
+      updateOperation.$push = pushOperations;
+    }
     
     const lead = await Lead.findByIdAndUpdate(
-      id,
-      { 
-        ...updates,
-        updatedAt: new Date()
-      },
-      { new: true }
+      params.id,
+      updateOperation,
+      { new: true, runValidators: true }
     );
     
     if (!lead) {
-      return NextResponse.json({ error: 'Lead no encontrado' }, { status: 404 });
+      return NextResponse.json(
+        { success: false, error: 'Lead no encontrado' },
+        { status: 404 }
+      );
     }
     
-    return NextResponse.json({ success: true, lead });
-    
-  } catch (error: any) {
+    return NextResponse.json({
+      success: true,
+      lead
+    });
+  } catch (error) {
     console.error('Error updating lead:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json(
+      { success: false, error: error.message },
+      { status: 500 }
+    );
   }
 }
 
-export async function DELETE(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+// DELETE - Eliminar un lead
+export async function DELETE(request, { params }) {
   try {
-    const session = await getServerSession();
-    if (!session) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
-    }
-
-    const { id } = await params;
+    await dbConnect();
     
-    await connectDB();
-    
-    const lead = await Lead.findByIdAndDelete(id);
+    const lead = await Lead.findByIdAndDelete(params.id);
     
     if (!lead) {
-      return NextResponse.json({ error: 'Lead no encontrado' }, { status: 404 });
+      return NextResponse.json(
+        { success: false, error: 'Lead no encontrado' },
+        { status: 404 }
+      );
     }
     
-    return NextResponse.json({ success: true, message: 'Lead eliminado' });
-    
-  } catch (error: any) {
+    return NextResponse.json({
+      success: true,
+      message: 'Lead eliminado correctamente'
+    });
+  } catch (error) {
     console.error('Error deleting lead:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json(
+      { success: false, error: error.message },
+      { status: 500 }
+    );
   }
 }
