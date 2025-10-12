@@ -1,16 +1,16 @@
-// src/app/api/cron/send-scheduled-emails/route.js - ACTUALIZADO COMPLETO
+// src/app/api/cron/send-scheduled-emails/route.js - CORREGIDO
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import EmailLog from '@/models/EmailLog';
 import SequenceEnrollment from '@/models/SequenceEnrollment';
 import Lead from '@/models/Lead';
-import Template from '@/models/Template'; // ← CAMBIADO
+import Template from '@/models/Template';
 import Sequence from '@/models/Sequence';
-import Appointment from '@/models/Appointment'; // ← NUEVO
+import Appointment from '@/models/Appointment';
 import nodemailer from 'nodemailer';
-import crypto from 'crypto'; // ← NUEVO
+import crypto from 'crypto';
 
-// Configurar transporter (usa tus variables de entorno)
+// Configurar transporter
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST || 'smtp-relay.brevo.com',
   port: parseInt(process.env.SMTP_PORT || '587'),
@@ -21,7 +21,7 @@ const transporter = nodemailer.createTransport({
   }
 });
 
-// ✅ FUNCIÓN ACTUALIZADA CON TODOS LOS SHORTCODES
+// Función para reemplazar shortcodes
 function replaceShortcodes(text, lead, magicLink = '') {
   if (!text) return '';
   
@@ -53,7 +53,7 @@ function replaceShortcodes(text, lead, magicLink = '') {
   return result;
 }
 
-export async function GET(request) {
+async function handleRequest(request) {
   try {
     await dbConnect();
     
@@ -68,16 +68,16 @@ export async function GET(request) {
     
     const now = new Date();
     
-    // Buscar emails programados para hoy o antes que NO se hayan enviado
+    // Buscar emails programados
     const emailsToSend = await EmailLog.find({
       status: 'scheduled',
       scheduledFor: { $lte: now }
     })
     .populate('leadId')
     .populate('sequenceId')
-    .limit(50); // Máximo 50 emails por ejecución
+    .limit(50);
     
-    console.log(`📧 Emails pendientes de envío: ${emailsToSend.length}`);
+    console.log(`📧 Emails pendientes: ${emailsToSend.length}`);
     
     if (emailsToSend.length === 0) {
       return NextResponse.json({
@@ -97,18 +97,16 @@ export async function GET(request) {
         const enrollment = await SequenceEnrollment.findById(emailLog.enrollmentId);
         
         if (!enrollment || enrollment.status !== 'active') {
-          console.log(`⏸️ Enrollment inactivo para lead ${emailLog.leadId?.name}`);
-          
+          console.log(`⏸️ Enrollment inactivo`);
           await EmailLog.findByIdAndUpdate(emailLog._id, {
             status: 'failed',
             error: 'Enrollment no activo'
           });
-          
           failed++;
           continue;
         }
         
-        // ✅ OBTENER TEMPLATE DEL MODELO CORRECTO
+        // Obtener template
         const template = await Template.findOne({ 
           id: emailLog.templateId,
           type: 'email',
@@ -117,12 +115,10 @@ export async function GET(request) {
         
         if (!template) {
           console.log(`❌ Template no encontrado: ${emailLog.templateId}`);
-          
           await EmailLog.findByIdAndUpdate(emailLog._id, {
             status: 'failed',
             error: 'Template no encontrado'
           });
-          
           failed++;
           continue;
         }
@@ -130,23 +126,21 @@ export async function GET(request) {
         const lead = emailLog.leadId;
         
         if (!lead || !lead.possibleEmails?.[0]) {
-          console.log(`❌ Lead sin email: ${lead?.name}`);
-          
+          console.log(`❌ Lead sin email`);
           await EmailLog.findByIdAndUpdate(emailLog._id, {
             status: 'failed',
-            error: 'Lead sin email válido'
+            error: 'Lead sin email'
           });
-          
           failed++;
           continue;
         }
         
-        // ✅ CREAR MAGIC LINK
+        // Crear magic link
         const magicToken = crypto.randomBytes(32).toString('hex');
         const tokenExpiration = new Date();
-        tokenExpiration.setDate(tokenExpiration.getDate() + 30); // 30 días
+        tokenExpiration.setDate(tokenExpiration.getDate() + 30);
         
-        const appointment = await Appointment.create({
+        await Appointment.create({
           leadId: lead._id,
           token: magicToken,
           tokenExpiresAt: tokenExpiration,
@@ -158,13 +152,11 @@ export async function GET(request) {
         
         const magicLink = `https://www.luisgranero.com/agendar/${magicToken}`;
         
-        console.log(`🔗 Magic link generado para ${lead.name}: ${magicToken.substring(0, 10)}...`);
-        
-        // ✅ REEMPLAZAR SHORTCODES CON MAGIC LINK
+        // Reemplazar shortcodes
         const subject = replaceShortcodes(template.subject, lead, magicLink);
         const body = replaceShortcodes(template.body, lead, magicLink);
         
-        // Convertir texto a HTML básico
+        // Convertir a HTML
         const htmlBody = body
           .split('\n')
           .map(line => {
@@ -180,8 +172,8 @@ export async function GET(request) {
           })
           .join('');
         
-        // ✅ ENVIAR EMAIL
-        const mailOptions = {
+        // Enviar email
+        const info = await transporter.sendMail({
           from: `${process.env.EMAIL_FROM_NAME || 'Luis Granero'} <${process.env.EMAIL_FROM || process.env.SMTP_USER}>`,
           to: lead.possibleEmails[0],
           subject: subject,
@@ -198,17 +190,10 @@ export async function GET(request) {
                 📱 698 38 36 10
               </p>
             </div>
-          `,
-          headers: {
-            'X-Email-Log-ID': emailLog._id.toString(),
-            'X-Lead-ID': lead._id.toString(),
-            'X-Sequence-ID': emailLog.sequenceId?._id.toString()
-          }
-        };
+          `
+        });
         
-        const info = await transporter.sendMail(mailOptions);
-        
-        console.log(`✅ Email enviado a ${lead.name}: ${info.messageId}`);
+        console.log(`✅ Email enviado a ${lead.name}`);
         
         // Actualizar EmailLog
         await EmailLog.findByIdAndUpdate(emailLog._id, {
@@ -218,13 +203,13 @@ export async function GET(request) {
           subject: subject
         });
         
-        // Actualizar step del enrollment
+        // Actualizar enrollment
         await SequenceEnrollment.findByIdAndUpdate(enrollment._id, {
           currentStep: emailLog.step + 1,
           lastEmailSent: new Date()
         });
         
-        // Añadir a historial del lead
+        // Añadir a historial
         await Lead.findByIdAndUpdate(lead._id, {
           status: 'contacted',
           $push: {
@@ -232,12 +217,12 @@ export async function GET(request) {
               date: new Date(),
               type: 'email',
               emailSubject: subject,
-              notes: `Email automático: ${template.name} (Paso ${emailLog.step + 1}/${emailLog.sequenceId?.steps?.length})`
+              notes: `Email automático: ${template.name}`
             }
           }
         });
         
-        // Verificar si es el último paso de la secuencia
+        // Verificar si es último paso
         const sequence = emailLog.sequenceId;
         if (sequence && emailLog.step >= sequence.steps.length - 1) {
           await SequenceEnrollment.findByIdAndUpdate(enrollment._id, {
@@ -259,16 +244,14 @@ export async function GET(request) {
         results.push({
           leadName: lead.name,
           email: lead.possibleEmails[0],
-          subject: subject,
-          status: 'sent',
-          messageId: info.messageId
+          status: 'sent'
         });
         
-        // Delay entre emails (1 segundo)
+        // Delay 1 segundo entre emails
         await new Promise(resolve => setTimeout(resolve, 1000));
         
       } catch (error) {
-        console.error(`❌ Error enviando email a ${emailLog.leadId?.name}:`, error);
+        console.error(`❌ Error:`, error);
         
         await EmailLog.findByIdAndUpdate(emailLog._id, {
           status: 'failed',
@@ -298,8 +281,7 @@ export async function GET(request) {
     });
     
   } catch (error) {
-    console.error('❌ Error en cron job:', error);
-    
+    console.error('❌ Error en cron:', error);
     return NextResponse.json(
       { success: false, error: error.message },
       { status: 500 }
@@ -307,9 +289,9 @@ export async function GET(request) {
   }
 }
 
-// Permitir POST para testing manual
-export async function POST(request) {
-  return GET(request);
+// Exportar GET y POST (ambos usan la misma función)
+export async function GET(request) {
+  return handleRequest(request);
 }
 
 export async function POST(request) {
