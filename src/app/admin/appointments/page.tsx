@@ -1,4 +1,4 @@
-// src/app/admin/appointments/page.tsx
+// src/app/admin/appointments/page.tsx - VERSIÓN CORREGIDA COMPLETA
 'use client'
 
 import { useState, useEffect } from 'react'
@@ -16,7 +16,11 @@ export default function AppointmentsPage() {
   const fetchAppointments = async () => {
     setLoading(true)
     try {
-      const res = await fetch(`/api/admin/appointments?status=${filter}`)
+      const url = filter === 'all' 
+        ? '/api/admin/appointments' 
+        : `/api/admin/appointments?status=${filter}`;
+      
+      const res = await fetch(url)
       const data = await res.json()
       
       if (data.success) {
@@ -45,6 +49,55 @@ export default function AppointmentsPage() {
     }
   }
 
+  const deleteAppointment = async (id: string) => {
+    if (!confirm('¿Eliminar esta cita?')) return;
+    
+    try {
+      const res = await fetch(`/api/admin/appointments/${id}`, {
+        method: 'DELETE'
+      })
+
+      if (res.ok) {
+        fetchAppointments()
+      }
+    } catch (error) {
+      console.error('Error:', error)
+    }
+  }
+
+  const formatDate = (date: string | Date | undefined) => {
+    if (!date) return 'No definida';
+    
+    try {
+      return new Date(date).toLocaleDateString('es-ES', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    } catch (error) {
+      return 'Fecha inválida';
+    }
+  };
+
+  const getStatusBadge = (status: string) => {
+    const badges: Record<string, { bg: string; text: string; label: string }> = {
+      pending: { bg: 'bg-yellow-100 dark:bg-yellow-900', text: 'text-yellow-700 dark:text-yellow-300', label: 'Pendiente' },
+      confirmed: { bg: 'bg-green-100 dark:bg-green-900', text: 'text-green-700 dark:text-green-300', label: 'Confirmada' },
+      completed: { bg: 'bg-blue-100 dark:bg-blue-900', text: 'text-blue-700 dark:text-blue-300', label: 'Completada' },
+      cancelled: { bg: 'bg-red-100 dark:bg-red-900', text: 'text-red-700 dark:text-red-300', label: 'Cancelada' },
+      no_show: { bg: 'bg-gray-100 dark:bg-gray-900', text: 'text-gray-700 dark:text-gray-300', label: 'No asistió' }
+    };
+    
+    const badge = badges[status] || badges.pending;
+    
+    return (
+      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${badge.bg} ${badge.text}`}>
+        {badge.label}
+      </span>
+    );
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -59,7 +112,7 @@ export default function AppointmentsPage() {
       </div>
 
       {/* Filtros */}
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         {['all', 'pending', 'confirmed', 'completed', 'cancelled'].map((status) => (
           <button
             key={status}
@@ -67,7 +120,7 @@ export default function AppointmentsPage() {
             className={`px-4 py-2 rounded-lg font-medium transition-colors ${
               filter === status
                 ? 'bg-cyan-500 text-white'
-                : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300'
+                : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
             }`}
           >
             {status === 'all' && 'Todas'}
@@ -86,6 +139,7 @@ export default function AppointmentsPage() {
         </div>
       ) : appointments.length === 0 ? (
         <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+          <div className="text-6xl mb-4">📭</div>
           <p className="text-gray-600 dark:text-gray-400">No hay citas agendadas</p>
         </div>
       ) : (
@@ -95,65 +149,112 @@ export default function AppointmentsPage() {
               key={apt._id}
               className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-shadow"
             >
-              <div className="flex justify-between items-start">
+              <div className="flex justify-between items-start mb-4">
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
                     <h3 className="text-xl font-bold text-gray-900 dark:text-white">
                       {apt.name}
                     </h3>
-                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                      apt.status === 'confirmed' ? 'bg-green-100 text-green-700' :
-                      apt.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
-                      apt.status === 'completed' ? 'bg-blue-100 text-blue-700' :
-                      'bg-gray-100 text-gray-700'
-                    }`}>
-                      {apt.status}
-                    </span>
+                    {getStatusBadge(apt.status)}
                   </div>
+                </div>
+              </div>
 
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <span className="text-gray-500 dark:text-gray-400">📅 Fecha:</span>
-                      <p className="text-gray-900 dark:text-white font-medium">
-                        {new Date(apt.scheduledDate).toLocaleDateString('es-ES', {
-                          weekday: 'long',
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric'
-                        })}
-                      </p>
-                    </div>
-                    <div>
-                      <span className="text-gray-500 dark:text-gray-400">🕐 Hora:</span>
-                      <p className="text-gray-900 dark:text-white font-medium">{apt.scheduledTime}</p>
-                    </div>
-                    <div>
-                      <span className="text-gray-500 dark:text-gray-400">📞 Teléfono:</span>
-                      <p className="text-gray-900 dark:text-white font-medium">{apt.phone}</p>
-                    </div>
-                    <div>
-                      <span className="text-gray-500 dark:text-gray-400">✉️ Email:</span>
-                      <p className="text-gray-900 dark:text-white font-medium">{apt.email || 'N/A'}</p>
-                    </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                  <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">
+                    📅 Fecha:
+                  </div>
+                  <div className="text-gray-900 dark:text-white font-medium">
+                    {formatDate(apt.scheduledDate)}
                   </div>
                 </div>
 
-                <div className="flex gap-2">
-                  {apt.status === 'confirmed' && (
-                    <button
-                      onClick={() => updateStatus(apt._id, 'completed')}
-                      className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
-                    >
-                      ✓ Completada
-                    </button>
-                  )}
+                <div>
+                  <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">
+                    🕐 Hora:
+                  </div>
+                  <div className="text-gray-900 dark:text-white font-medium">
+                    {apt.scheduledTime || 'No definida'}
+                  </div>
+                </div>
+
+                <div>
+                  <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">
+                    📞 Teléfono:
+                  </div>
+                  <div className="text-gray-900 dark:text-white font-medium">
+                    {apt.phone || 'No disponible'}
+                  </div>
+                </div>
+
+                <div>
+                  <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">
+                    ✉️ Email:
+                  </div>
+                  <div className="text-gray-900 dark:text-white font-medium">
+                    {apt.email || 'No disponible'}
+                  </div>
+                </div>
+              </div>
+
+              {apt.notes && (
+                <div className="mb-4 p-3 bg-gray-50 dark:bg-gray-700 rounded">
+                  <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">
+                    📝 Notas:
+                  </div>
+                  <div className="text-gray-900 dark:text-white text-sm">
+                    {apt.notes}
+                  </div>
+                </div>
+              )}
+
+              <div className="flex flex-wrap gap-2">
+                {/* Botón Ver Lead - CORREGIDO */}
+                {apt.leadId && (
                   <Link
                     href={`/admin/leads/${apt.leadId}`}
-                    className="px-4 py-2 bg-cyan-500 text-white rounded-lg hover:bg-cyan-600 transition-colors"
+                    className="px-4 py-2 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg text-sm font-medium transition-colors"
                   >
-                    Ver Lead
+                    👁️ Ver Lead
                   </Link>
-                </div>
+                )}
+
+                {/* Cambiar estado */}
+                {apt.status === 'pending' && (
+                  <button
+                    onClick={() => updateStatus(apt._id, 'confirmed')}
+                    className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg text-sm font-medium transition-colors"
+                  >
+                    ✅ Confirmar
+                  </button>
+                )}
+
+                {apt.status === 'confirmed' && (
+                  <button
+                    onClick={() => updateStatus(apt._id, 'completed')}
+                    className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium transition-colors"
+                  >
+                    ✔️ Completada
+                  </button>
+                )}
+
+                {(apt.status === 'pending' || apt.status === 'confirmed') && (
+                  <button
+                    onClick={() => updateStatus(apt._id, 'cancelled')}
+                    className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-medium transition-colors"
+                  >
+                    ❌ Cancelar
+                  </button>
+                )}
+
+                {/* Eliminar */}
+                <button
+                  onClick={() => deleteAppointment(apt._id)}
+                  className="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg text-sm font-medium transition-colors"
+                >
+                  🗑️ Eliminar
+                </button>
               </div>
             </div>
           ))}
