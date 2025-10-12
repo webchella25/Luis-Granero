@@ -768,8 +768,8 @@ export default function LeadDetailPage() {
                 placeholder="Escribe tu mensaje aquí..."
               />
               <div className="text-xs text-gray-400 mt-2">
-                💡 Puedes usar: {'{{'}}name{'}}'}, {'{{'}}first_name{'}}'}, {'{{'}}website{'}}'}
-              </div>
+  💡 Puedes usar: {'{{name}}'}, {'{{first_name}}'}, {'{{website}}'}
+</div>
             </div>
             
             <div className="flex gap-4">
