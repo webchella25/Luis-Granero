@@ -1,21 +1,27 @@
-// src/app/api/cron/update-lead-stats/route.js - NUEVO ARCHIVO (OPCIONAL)
+// src/app/api/cron/update-lead-stats/route.js - ACTUALIZADO
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import Lead from '@/models/Lead';
 import SequenceEnrollment from '@/models/SequenceEnrollment';
 
-export async function GET(request) {
+// ✅ Función compartida para GET y POST
+async function handleRequest(request) {
   try {
     await dbConnect();
     
     // Verificar autenticación
     const authHeader = request.headers.get('authorization');
-    if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    const expectedAuth = `Bearer ${process.env.CRON_SECRET}`;
+    
+    if (authHeader !== expectedAuth) {
+      console.error('❌ Unauthorized attempt');
       return NextResponse.json(
         { success: false, error: 'Unauthorized' },
         { status: 401 }
       );
     }
+    
+    console.log('📊 Actualizando stats de leads...');
     
     // Actualizar leads inactivos (sin contacto en 30 días)
     const thirtyDaysAgo = new Date();
@@ -27,7 +33,7 @@ export async function GET(request) {
         'contactHistory.0.date': { $lt: thirtyDaysAgo }
       },
       {
-        status: 'lost',
+        $set: { status: 'lost' },
         $push: {
           contactHistory: {
             date: new Date(),
@@ -42,14 +48,24 @@ export async function GET(request) {
     
     return NextResponse.json({
       success: true,
-      inactiveLeadsUpdated: inactiveLeads.modifiedCount
+      inactiveLeadsUpdated: inactiveLeads.modifiedCount,
+      timestamp: new Date().toISOString()
     });
     
   } catch (error) {
-    console.error('Error actualizando stats:', error);
+    console.error('❌ Error actualizando stats:', error);
     return NextResponse.json(
       { success: false, error: error.message },
       { status: 500 }
     );
   }
+}
+
+// ✅ Exportar GET y POST
+export async function GET(request) {
+  return handleRequest(request);
+}
+
+export async function POST(request) {
+  return handleRequest(request);
 }
