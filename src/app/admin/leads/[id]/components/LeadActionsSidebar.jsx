@@ -1,4 +1,4 @@
-// src/app/admin/leads/[id]/components/LeadActionsSidebar.jsx
+// src/app/admin/leads/[id]/components/LeadActionsSidebar.jsx - VERSIÓN COMPLETA CORREGIDA
 'use client';
 
 export default function LeadActionsSidebar({
@@ -10,6 +10,16 @@ export default function LeadActionsSidebar({
   onOpenEdit,
   onOpenEnroll
 }) {
+  // ← HELPERS PARA NORMALIZAR DATOS
+  const hasEmail = () => {
+    return (lead.possibleEmails && lead.possibleEmails.length > 0) ||
+           (lead.webAnalysis?.emails && lead.webAnalysis.emails.length > 0);
+  };
+
+  const hasPhone = () => {
+    return lead.phone || (lead.phoneNumbers && lead.phoneNumbers.length > 0);
+  };
+
   const getStatusColor = (status) => {
     const colors = {
       new: 'bg-blue-500',
@@ -19,7 +29,9 @@ export default function LeadActionsSidebar({
       proposal: 'bg-orange-500',
       negotiation: 'bg-pink-500',
       won: 'bg-emerald-500',
-      lost: 'bg-red-500'
+      lost: 'bg-red-500',
+      rejected: 'bg-gray-500',
+      client: 'bg-teal-500'
     };
     return colors[status] || 'bg-gray-500';
   };
@@ -33,7 +45,9 @@ export default function LeadActionsSidebar({
       proposal: 'Propuesta',
       negotiation: 'Negociación',
       won: 'Ganado',
-      lost: 'Perdido'
+      lost: 'Perdido',
+      rejected: 'Rechazado',
+      client: 'Cliente'
     };
     return labels[status] || status;
   };
@@ -73,16 +87,16 @@ export default function LeadActionsSidebar({
         <div className="space-y-3">
           <button
             onClick={onOpenEmail}
-            disabled={!lead.possibleEmails?.[0]}
-            className="w-full px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed text-white rounded-lg font-semibold transition shadow-lg shadow-cyan-500/50"
+            disabled={!hasEmail()}
+            className="w-full px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed text-white rounded-lg font-semibold transition shadow-lg shadow-cyan-500/50 disabled:shadow-none"
           >
             📧 Enviar Email
           </button>
           
           <button
             onClick={onOpenWhatsApp}
-            disabled={!lead.phoneNumbers?.[0]}
-            className="w-full px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed text-white rounded-lg font-semibold transition shadow-lg shadow-green-500/50"
+            disabled={!hasPhone()}
+            className="w-full px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed text-white rounded-lg font-semibold transition shadow-lg shadow-green-500/50 disabled:shadow-none"
           >
             💬 WhatsApp
           </button>
@@ -120,14 +134,29 @@ export default function LeadActionsSidebar({
           <div>
             <div className="text-gray-400 mb-1">Creado</div>
             <div className="text-white">
-              {new Date(lead.createdAt).toLocaleString('es-ES')}
+              {new Date(lead.createdAt).toLocaleString('es-ES', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+              })}
             </div>
           </div>
           
           {lead.source && (
             <div>
               <div className="text-gray-400 mb-1">Fuente</div>
-              <div className="text-white">{lead.source}</div>
+              <div className="text-white capitalize">
+                {lead.source === 'google_maps' ? 'Google Maps' : lead.source}
+              </div>
+            </div>
+          )}
+          
+          {lead.searchQuery && (
+            <div>
+              <div className="text-gray-400 mb-1">Búsqueda</div>
+              <div className="text-white">{lead.searchQuery}</div>
             </div>
           )}
           
@@ -138,12 +167,78 @@ export default function LeadActionsSidebar({
             </div>
           )}
           
-          <div>
-            <div className="text-gray-400 mb-1">ID</div>
-            <div className="text-white font-mono text-xs break-all">{lead._id}</div>
+          {lead.category && (
+            <div>
+              <div className="text-gray-400 mb-1">Categoría</div>
+              <div className="text-white capitalize">{lead.category}</div>
+            </div>
+          )}
+          
+          {lead.opportunityScore !== undefined && (
+            <div>
+              <div className="text-gray-400 mb-1">Score de Oportunidad</div>
+              <div className="flex items-center gap-2">
+                <div className="flex-1 bg-slate-700 rounded-full h-2 overflow-hidden">
+                  <div 
+                    className={`h-full rounded-full transition-all ${
+                      lead.opportunityScore >= 70 ? 'bg-green-500' :
+                      lead.opportunityScore >= 50 ? 'bg-yellow-500' :
+                      'bg-red-500'
+                    }`}
+                    style={{ width: `${lead.opportunityScore}%` }}
+                  />
+                </div>
+                <span className={`font-bold ${
+                  lead.opportunityScore >= 70 ? 'text-green-400' :
+                  lead.opportunityScore >= 50 ? 'text-yellow-400' :
+                  'text-red-400'
+                }`}>
+                  {lead.opportunityScore}
+                </span>
+              </div>
+            </div>
+          )}
+          
+          <div className="pt-3 border-t border-slate-700">
+            <div className="text-gray-400 mb-1">ID del Lead</div>
+            <div className="text-white font-mono text-xs break-all bg-slate-900 p-2 rounded">
+              {lead._id}
+            </div>
           </div>
         </div>
       </div>
+
+      {/* Stats del lead (si tiene) */}
+      {(lead.rating || lead.reviewCount) && (
+        <div className="bg-slate-800/50 backdrop-blur border border-cyan-500/20 rounded-lg p-6">
+          <h3 className="text-xl font-bold text-white mb-4">
+            ⭐ Valoración
+          </h3>
+          
+          <div className="space-y-3">
+            {lead.rating && (
+              <div className="flex items-center justify-between">
+                <span className="text-gray-400">Rating</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-yellow-400 text-xl">★</span>
+                  <span className="text-white font-semibold">
+                    {lead.rating.toFixed(1)}
+                  </span>
+                </div>
+              </div>
+            )}
+            
+            {lead.reviewCount && (
+              <div className="flex items-center justify-between">
+                <span className="text-gray-400">Reseñas</span>
+                <span className="text-white font-semibold">
+                  {lead.reviewCount}
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
