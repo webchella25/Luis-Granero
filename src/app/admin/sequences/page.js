@@ -1,4 +1,4 @@
-// src/app/admin/sequences/page.js - ACTUALIZADO COMPLETO
+// src/app/admin/sequences/page.js - VERSIÓN FINAL CORREGIDA
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -32,13 +32,22 @@ export default function SequencesPage() {
 
   const fetchTemplates = async () => {
     try {
-      const res = await fetch('/api/email-templates');
+      // ✅ CORREGIDO: Usar /api/templates con filtro type=email
+      const res = await fetch('/api/templates?type=email');
       const data = await res.json();
+      
+      console.log('📧 Templates recibidos:', data); // ← DEBUG
+      
       if (data.success) {
-        setTemplates(data.templates.filter(t => t.isActive));
+        // Filtrar solo templates activos de tipo email
+        const emailTemplates = data.templates.filter(t => 
+          t.type === 'email' && t.isActive
+        );
+        setTemplates(emailTemplates);
+        console.log('✅ Templates filtrados:', emailTemplates.length); // ← DEBUG
       }
     } catch (error) {
-      console.error('Error fetching templates:', error);
+      console.error('❌ Error fetching templates:', error);
     }
   };
 
@@ -107,10 +116,8 @@ export default function SequencesPage() {
             </div>
           </div>
           <div className="bg-slate-800/50 backdrop-blur border border-cyan-500/20 rounded-lg p-6">
-            <div className="text-gray-400 text-sm mb-1">Emails Enviados</div>
-            <div className="text-3xl font-bold text-blue-400">
-              {sequences.reduce((sum, s) => sum + (s.stats?.totalSent || 0), 0)}
-            </div>
+            <div className="text-gray-400 text-sm mb-1">Templates Disponibles</div>
+            <div className="text-3xl font-bold text-blue-400">{templates.length}</div>
           </div>
         </div>
 
@@ -239,7 +246,7 @@ export default function SequencesPage() {
 
       </div>
 
-      {/* Modal Mejorado */}
+      {/* Modal */}
       <AnimatePresence>
         {showCreateModal && (
           <CreateSequenceModal 
@@ -253,7 +260,7 @@ export default function SequencesPage() {
   );
 }
 
-// ✅ MODAL MEJORADO CON PASOS
+// ✅ MODAL CORREGIDO
 function CreateSequenceModal({ onClose, onCreated, templates }) {
   const [formData, setFormData] = useState({
     name: '',
@@ -261,6 +268,8 @@ function CreateSequenceModal({ onClose, onCreated, templates }) {
     trigger: 'manual',
     steps: []
   });
+
+  console.log('📋 Templates disponibles en modal:', templates.length); // ← DEBUG
 
   const addStep = () => {
     setFormData({
@@ -298,6 +307,11 @@ function CreateSequenceModal({ onClose, onCreated, templates }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
+    if (formData.steps.length === 0) {
+      alert('Debes añadir al menos 1 paso a la secuencia');
+      return;
+    }
+    
     try {
       const res = await fetch('/api/sequences', {
         method: 'POST',
@@ -309,7 +323,8 @@ function CreateSequenceModal({ onClose, onCreated, templates }) {
         onCreated();
         onClose();
       } else {
-        alert('Error al crear la secuencia');
+        const data = await res.json();
+        alert('Error: ' + (data.error || 'Error al crear la secuencia'));
       }
     } catch (error) {
       console.error('Error creating sequence:', error);
@@ -384,13 +399,25 @@ function CreateSequenceModal({ onClose, onCreated, templates }) {
               </button>
             </div>
 
+            {templates.length === 0 && (
+              <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4 mb-4">
+                <p className="text-yellow-400 text-sm">
+                  ⚠️ No hay templates de email disponibles. 
+                  <Link href="/admin/email-templates" className="underline ml-1">
+                    Crea uno primero
+                  </Link>
+                </p>
+              </div>
+            )}
+
             {formData.steps.length === 0 ? (
               <div className="bg-slate-700/30 border border-dashed border-slate-600 rounded-lg p-8 text-center">
                 <p className="text-gray-400 mb-4">No hay pasos añadidos</p>
                 <button
                   type="button"
                   onClick={addStep}
-                  className="text-cyan-400 hover:text-cyan-300"
+                  disabled={templates.length === 0}
+                  className="text-cyan-400 hover:text-cyan-300 disabled:text-gray-500"
                 >
                   Añadir primer paso →
                 </button>
@@ -433,7 +460,7 @@ function CreateSequenceModal({ onClose, onCreated, templates }) {
 
                       <div>
                         <label className="block text-gray-400 text-sm mb-2">
-                          Template de email *
+                          Template de email * ({templates.length} disponibles)
                         </label>
                         <select
                           required
@@ -441,9 +468,9 @@ function CreateSequenceModal({ onClose, onCreated, templates }) {
                           onChange={(e) => updateStep(index, 'templateId', e.target.value)}
                           className="w-full bg-slate-600 border border-slate-500 rounded px-3 py-2 text-white"
                         >
-                          <option value="">Selecciona...</option>
+                          <option value="">Selecciona un template...</option>
                           {templates.map((template) => (
-                            <option key={template.templateId} value={template.templateId}>
+                            <option key={template.id} value={template.id}>
                               {template.name}
                             </option>
                           ))}
@@ -473,7 +500,8 @@ function CreateSequenceModal({ onClose, onCreated, templates }) {
           <div className="flex gap-3 pt-4">
             <button
               type="submit"
-              className="flex-1 px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white rounded-lg font-semibold transition"
+              disabled={formData.steps.length === 0 || templates.length === 0}
+              className="flex-1 px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 disabled:from-gray-500 disabled:to-gray-600 text-white rounded-lg font-semibold transition"
             >
               Crear Secuencia
             </button>
