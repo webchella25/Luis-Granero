@@ -1,0 +1,24 @@
+# .github/workflows/update-lead-stats.yml
+name: 📊 Update Lead Stats
+
+on:
+  schedule:
+    # Ejecutar todos los días a las 2:00 AM UTC
+    - cron: '0 2 * * *'
+  
+  workflow_dispatch:
+
+jobs:
+  update-stats:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📊 Trigger Stats Update
+        run: |
+          curl -X POST https://www.luisgranero.com/api/cron/update-lead-stats \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -H "Content-Type: application/json"
+      
+      - name: ✅ Log Success
+        if: success()
+        run: echo "Stats updated successfully at $(date)"

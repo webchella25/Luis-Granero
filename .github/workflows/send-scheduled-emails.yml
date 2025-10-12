@@ -1,0 +1,31 @@
+# .github/workflows/send-scheduled-emails.yml
+name: 📧 Send Scheduled Emails
+
+on:
+  schedule:
+    # Ejecutar todos los días a las 9:00 AM (UTC)
+    # UTC+1 (España invierno) = 10:00 AM
+    # UTC+2 (España verano) = 11:00 AM
+    - cron: '0 9 * * *'
+  
+  # Permite ejecución manual desde GitHub
+  workflow_dispatch:
+
+jobs:
+  send-emails:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📧 Trigger Email Sending
+        run: |
+          curl -X POST https://www.luisgranero.com/api/cron/send-scheduled-emails \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -H "Content-Type: application/json"
+      
+      - name: ✅ Log Success
+        if: success()
+        run: echo "Emails sent successfully at $(date)"
+      
+      - name: ❌ Log Failure
+        if: failure()
+        run: echo "Failed to send emails at $(date)"
