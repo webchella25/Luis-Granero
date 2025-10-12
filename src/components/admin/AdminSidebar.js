@@ -1,4 +1,4 @@
-// src/components/admin/AdminSidebar.jsx - VERSIÓN FINAL CORREGIDA
+// src/components/admin/AdminSidebar.jsx - ACTUALIZADO CON SECUENCIAS
 'use client'
 
 import { useState } from 'react'
@@ -39,7 +39,8 @@ export default function AdminSidebar({ isOpen, onClose }) {
       items: [
         { name: 'Buscar Leads', href: '/admin/test-scraper', icon: '🔍', badge: 'new' },
         { name: 'Gestión de Leads', href: '/admin/leads', icon: '📊' },
-        { name: 'Templates Email', href: '/admin/templates', icon: '📝' },
+        { name: 'Secuencias', href: '/admin/sequences', icon: '🚀', badge: 'new' }, // 👈 NUEVO
+        { name: 'Templates Email', href: '/admin/email-templates', icon: '📧' }, // 👈 NUEVO
         { name: 'Citas Agendadas', href: '/admin/appointments', icon: '📅' }
       ]
     },
@@ -179,9 +180,16 @@ export default function AdminSidebar({ isOpen, onClose }) {
               <span>➕</span> Buscar Leads
             </Link>
             <Link
-              href="/admin/templates"
+              href="/admin/sequences"
               onClick={() => onClose?.()}
               className="flex items-center gap-2 text-xs text-green-400 hover:text-green-300 py-1.5 px-2 rounded hover:bg-gray-800 transition-colors"
+            >
+              <span>🚀</span> Nueva Secuencia
+            </Link>
+            <Link
+              href="/admin/email-templates"
+              onClick={() => onClose?.()}
+              className="flex items-center gap-2 text-xs text-purple-400 hover:text-purple-300 py-1.5 px-2 rounded hover:bg-gray-800 transition-colors"
             >
               <span>✏️</span> Editar Templates
             </Link>
