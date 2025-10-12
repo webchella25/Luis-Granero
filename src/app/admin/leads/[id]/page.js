@@ -395,25 +395,25 @@ export default function LeadDetailPage() {
                 </div>
                 
                 <div>
-                  <div className="text-gray-400 text-sm mb-2">Redes Sociales</div>
-                  {lead.socialMedia && Object.keys(lead.socialMedia).length > 0 ? (
-                    <div className="space-y-2">
-                      {Object.entries(lead.socialMedia).map(([platform, url]) => (
-                        
-                          key={platform}
-                          href={url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-2 text-cyan-400 hover:text-cyan-300"
-                        >
-                          {platform}: {url}
-                        </a>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-gray-500 italic">No disponible</div>
-                  )}
-                </div>
+  <div className="text-gray-400 text-sm mb-2">Redes Sociales</div>
+  {lead.socialMedia && Object.keys(lead.socialMedia).length > 0 ? (
+    <div className="space-y-2">
+      {Object.entries(lead.socialMedia).map(([platform, url]) => (
+        <Link
+          key={platform}
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-2 text-cyan-400 hover:text-cyan-300"
+        >
+          {platform}: {url}
+        </Link>
+      ))}
+    </div>
+  ) : (
+    <div className="text-gray-500 italic">No disponible</div>
+  )}
+</div>
                 
                 <div>
                   <div className="text-gray-400 text-sm mb-2">Ubicación</div>
