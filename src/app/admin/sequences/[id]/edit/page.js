@@ -1,4 +1,4 @@
-// src/app/admin/sequences/[id]/edit/page.js - NUEVO ARCHIVO
+// src/app/admin/sequences/[id]/edit/page.js - CORREGIDO COMPLETO
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -40,12 +40,19 @@ export default function EditSequencePage() {
         });
       }
       
-      // Fetch templates
-      const tempRes = await fetch('/api/email-templates');
+      // ✅ CORREGIDO: Usar /api/templates con filtro
+      const tempRes = await fetch('/api/templates?type=email');
       const tempData = await tempRes.json();
       
+      console.log('📧 Templates recibidos en edit:', tempData); // DEBUG
+      
       if (tempData.success) {
-        setTemplates(tempData.templates);
+        // Filtrar solo templates activos de tipo email
+        const emailTemplates = tempData.templates.filter(t => 
+          t.type === 'email' && t.isActive
+        );
+        setTemplates(emailTemplates);
+        console.log('✅ Templates filtrados en edit:', emailTemplates.length); // DEBUG
       }
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -60,7 +67,7 @@ export default function EditSequencePage() {
       steps: [
         ...formData.steps,
         {
-          day: formData.steps.length === 0 ? 0 : 3,
+          day: formData.steps.length === 0 ? 0 : formData.steps[formData.steps.length - 1].day + 3,
           templateId: '',
           description: ''
         }
@@ -119,7 +126,8 @@ export default function EditSequencePage() {
       if (res.ok) {
         router.push(`/admin/sequences/${params.id}`);
       } else {
-        alert('Error al guardar la secuencia');
+        const data = await res.json();
+        alert('Error: ' + (data.error || 'Error al guardar'));
       }
     } catch (error) {
       console.error('Error saving sequence:', error);
@@ -150,17 +158,20 @@ export default function EditSequencePage() {
           <h1 className="text-4xl font-bold text-white mb-2">
             ✏️ Editar Secuencia
           </h1>
+          <p className="text-gray-400">
+            Modifica los pasos y configuración de la secuencia
+          </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-8">
+        <form onSubmit={handleSubmit} className="space-y-6">
           
-          {/* Información básica */}
+          {/* Info Básica */}
           <div className="bg-slate-800/50 backdrop-blur border border-cyan-500/20 rounded-lg p-6">
             <h2 className="text-2xl font-bold text-white mb-6">
-              📋 Información Básica
+              📝 Información Básica
             </h2>
             
-            <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-gray-300 mb-2 font-semibold">
                   Nombre de la Secuencia
@@ -171,19 +182,7 @@ export default function EditSequencePage() {
                   value={formData.name}
                   onChange={(e) => setFormData({...formData, name: e.target.value})}
                   className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-3 text-white focus:border-cyan-500 focus:outline-none"
-                  placeholder="Ej: Prospección Web Lenta"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-gray-300 mb-2 font-semibold">
-                  Descripción
-                </label>
-                <textarea
-                  value={formData.description}
-                  onChange={(e) => setFormData({...formData, description: e.target.value})}
-                  className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-3 text-white focus:border-cyan-500 focus:outline-none h-24"
-                  placeholder="Describe el objetivo de esta secuencia..."
+                  placeholder="Ej: Prospección Restaurantes"
                 />
               </div>
               
@@ -203,14 +202,32 @@ export default function EditSequencePage() {
                 </select>
               </div>
             </div>
+            
+            <div className="mt-4">
+              <label className="block text-gray-300 mb-2 font-semibold">
+                Descripción
+              </label>
+              <textarea
+                value={formData.description}
+                onChange={(e) => setFormData({...formData, description: e.target.value})}
+                className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-3 text-white focus:border-cyan-500 focus:outline-none"
+                rows="3"
+                placeholder="Describe el objetivo de esta secuencia..."
+              />
+            </div>
           </div>
 
           {/* Pasos de la secuencia */}
           <div className="bg-slate-800/50 backdrop-blur border border-cyan-500/20 rounded-lg p-6">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-white">
-                📧 Pasos de la Secuencia
-              </h2>
+              <div>
+                <h2 className="text-2xl font-bold text-white">
+                  📧 Pasos de la Secuencia
+                </h2>
+                <p className="text-gray-400 text-sm mt-1">
+                  {templates.length} templates disponibles
+                </p>
+              </div>
               <button
                 type="button"
                 onClick={addStep}
@@ -220,38 +237,54 @@ export default function EditSequencePage() {
               </button>
             </div>
             
-            {formData.steps.length === 0 ? (
-              <div className="text-center py-12 border-2 border-dashed border-slate-600 rounded-lg">
-                <div className="text-6xl mb-4">📭</div>
-                <p className="text-gray-400 mb-4">
-                  No hay pasos en esta secuencia
+            {templates.length === 0 && (
+              <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4 mb-4">
+                <p className="text-yellow-400 text-sm">
+                  ⚠️ No hay templates disponibles. 
+                  <Link href="/admin/email-templates" className="underline ml-1">
+                    Crea uno primero
+                  </Link>
                 </p>
+              </div>
+            )}
+            
+            {formData.steps.length === 0 ? (
+              <div className="bg-slate-700/30 border border-dashed border-slate-600 rounded-lg p-12 text-center">
+                <div className="text-6xl mb-4">📭</div>
+                <p className="text-gray-400 mb-4">No hay pasos en esta secuencia</p>
                 <button
                   type="button"
                   onClick={addStep}
-                  className="px-6 py-3 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg font-semibold transition"
+                  disabled={templates.length === 0}
+                  className="text-cyan-400 hover:text-cyan-300 disabled:text-gray-500"
                 >
-                  Añadir primer paso
+                  Añadir primer paso →
                 </button>
               </div>
             ) : (
               <div className="space-y-4">
                 {formData.steps.map((step, index) => (
-                  <motion.div
+                  <div
                     key={index}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="bg-slate-700/50 border border-slate-600 rounded-lg p-5"
+                    className="bg-slate-700/50 border border-slate-600 rounded-lg p-6"
                   >
-                    <div className="flex items-start gap-4">
+                    <div className="flex items-start gap-6">
                       
-                      {/* Número de paso */}
-                      <div className="flex-shrink-0 w-10 h-10 bg-cyan-500/20 rounded-full flex items-center justify-center border border-cyan-500/50">
-                        <span className="text-cyan-400 font-bold">{index + 1}</span>
-                      </div>
-                      
-                      {/* Campos del paso */}
-                      <div className="flex-1 space-y-3">
+                      {/* Contenido del paso */}
+                      <div className="flex-1 space-y-4">
+                        <div className="flex items-center justify-between">
+                          <h3 className="text-lg font-semibold text-cyan-400">
+                            Paso {index + 1}
+                          </h3>
+                          <button
+                            type="button"
+                            onClick={() => removeStep(index)}
+                            className="text-red-400 hover:text-red-300 text-sm font-medium"
+                          >
+                            🗑️ Eliminar
+                          </button>
+                        </div>
+                        
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
                             <label className="block text-gray-300 text-sm mb-2">
@@ -259,21 +292,21 @@ export default function EditSequencePage() {
                             </label>
                             <input
                               type="number"
-                              min="0"
                               required
+                              min="0"
                               value={step.day}
                               onChange={(e) => updateStep(index, 'day', parseInt(e.target.value))}
                               className="w-full bg-slate-600 border border-slate-500 rounded-lg px-3 py-2 text-white focus:border-cyan-500 focus:outline-none"
                               placeholder="0"
                             />
-                            <p className="text-xs text-gray-500 mt-1">
-                              0 = inmediato, 1 = mañana, etc.
+                            <p className="text-gray-500 text-xs mt-1">
+                              Días desde que se inscribe el lead
                             </p>
                           </div>
                           
                           <div>
                             <label className="block text-gray-300 text-sm mb-2">
-                              Template de email
+                              Template de email *
                             </label>
                             <select
                               required
@@ -283,7 +316,7 @@ export default function EditSequencePage() {
                             >
                               <option value="">Selecciona un template...</option>
                               {templates.map((template) => (
-                                <option key={template.templateId} value={template.templateId}>
+                                <option key={template.id} value={template.id}>
                                   {template.name}
                                 </option>
                               ))}
@@ -305,7 +338,7 @@ export default function EditSequencePage() {
                         </div>
                       </div>
                       
-                      {/* Controles */}
+                      {/* Controles de orden */}
                       <div className="flex flex-col gap-2">
                         <button
                           type="button"
@@ -326,24 +359,16 @@ export default function EditSequencePage() {
                           disabled={index === formData.steps.length - 1}
                           className={`p-2 rounded ${
                             index === formData.steps.length - 1
-                              ? 'bg-slate-600 text-gray-500 cursor-not-allowed' 
+                              ? 'bg-slate-600 text-gray-500 cursor-not-allowed'
                               : 'bg-slate-600 hover:bg-slate-500 text-white'
                           }`}
                           title="Mover abajo"
                         >
                           ⬇️
                         </button>
-                        <button
-                          type="button"
-                          onClick={() => removeStep(index)}
-                          className="p-2 bg-red-500 hover:bg-red-600 text-white rounded"
-                          title="Eliminar paso"
-                        >
-                          🗑️
-                        </button>
                       </div>
                     </div>
-                  </motion.div>
+                  </div>
                 ))}
               </div>
             )}
@@ -351,21 +376,21 @@ export default function EditSequencePage() {
 
           {/* Botones de acción */}
           <div className="flex gap-4">
-            <Link
-              href={`/admin/sequences/${params.id}`}
-              className="flex-1 px-6 py-4 bg-slate-700 hover:bg-slate-600 text-white text-center rounded-lg font-semibold transition"
-            >
-              Cancelar
-            </Link>
             <button
               type="submit"
-              className="flex-1 px-6 py-4 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white rounded-lg font-semibold transition shadow-lg shadow-cyan-500/50"
+              disabled={formData.steps.length === 0}
+              className="flex-1 px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 disabled:from-gray-500 disabled:to-gray-600 text-white rounded-lg font-semibold transition"
             >
               💾 Guardar Cambios
             </button>
+            <Link
+              href={`/admin/sequences/${params.id}`}
+              className="px-6 py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-lg font-semibold transition text-center"
+            >
+              Cancelar
+            </Link>
           </div>
         </form>
-
       </div>
     </div>
   );
