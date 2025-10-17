@@ -1,5 +1,5 @@
 // src/app/api/leads/send-email/route.js - ACTUALIZADO CON TRACKING
-import { NextResponse } from 'next/response';
+import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import Lead from '@/models/Lead';
 import EmailLog from '@/models/EmailLog';
@@ -7,7 +7,6 @@ import EmailTemplate from '@/models/EmailTemplate';
 import nodemailer from 'nodemailer';
 import { prepareEmailForTracking } from '@/lib/email/tracking';
 
-// Configurar Brevo SMTP
 const transporter = nodemailer.createTransport({
   host: process.env.BREVO_SMTP_HOST || 'smtp-relay.brevo.com',
   port: 587,
@@ -31,7 +30,6 @@ export async function POST(request) {
     
     await dbConnect();
     
-    // Buscar lead
     const lead = await Lead.findById(leadId);
     if (!lead) {
       return NextResponse.json(
@@ -40,12 +38,10 @@ export async function POST(request) {
       );
     }
     
-    // Buscar template
     let template;
     if (templateId) {
       template = await EmailTemplate.findOne({ templateId });
     } else {
-      // Template por defecto
       const defaultTemplateId = lead.website ? 'email_has_website' : 'email_no_website';
       template = await EmailTemplate.findOne({ templateId: defaultTemplateId, isActive: true });
     }
@@ -57,16 +53,13 @@ export async function POST(request) {
       );
     }
     
-    // Procesar template con variables
     const subject = replaceShortcodes(template.subject, lead);
     let htmlBody = replaceShortcodes(template.body, lead);
     
-    // Convertir texto plano a HTML si es necesario
     if (!htmlBody.includes('<html>')) {
       htmlBody = convertTextToHtml(htmlBody);
     }
     
-    // CREAR EmailLog ANTES de enviar
     const emailLog = await EmailLog.create({
       leadId: lead._id,
       emailTo: to,
@@ -79,18 +72,16 @@ export async function POST(request) {
     
     console.log('📧 EmailLog created:', emailLog._id);
     
-    // AÑADIR TRACKING al HTML
     const trackedHtml = prepareEmailForTracking(htmlBody, emailLog._id.toString());
     
     console.log('🔍 Tracking añadido al email');
     
-    // Enviar email
     const mailOptions = {
       from: `"Luis Granero - Developer" <${process.env.BREVO_SMTP_USER}>`,
       to: to,
       subject: subject,
-      text: htmlBody.replace(/<[^>]*>/g, ''), // Versión texto plano
-      html: trackedHtml, // HTML con tracking
+      text: htmlBody.replace(/<[^>]*>/g, ''),
+      html: trackedHtml,
       headers: {
         'X-Email-Log-ID': emailLog._id.toString(),
         'X-Lead-ID': lead._id.toString()
@@ -101,14 +92,12 @@ export async function POST(request) {
     
     console.log('✅ Email enviado:', info.messageId);
     
-    // Actualizar EmailLog con el resultado
     await EmailLog.findByIdAndUpdate(emailLog._id, {
       status: 'sent',
       sentAt: new Date(),
       messageId: info.messageId
     });
     
-    // Actualizar lead
     await Lead.findByIdAndUpdate(leadId, {
       $set: { 
         status: 'contacted',
@@ -145,7 +134,6 @@ export async function POST(request) {
   }
 }
 
-// Función auxiliar para reemplazar shortcodes
 function replaceShortcodes(text, lead) {
   if (!text) return '';
   
@@ -171,7 +159,6 @@ function replaceShortcodes(text, lead) {
   return result;
 }
 
-// Función para convertir texto plano a HTML básico
 function convertTextToHtml(text) {
   return `
 <!DOCTYPE html>

@@ -1,4 +1,4 @@
-// src/components/admin/AdminSidebar.jsx - ACTUALIZADO CON SECUENCIAS
+// src/components/admin/AdminSidebar.jsx - ACTUALIZADO CON EMAIL ANALYTICS
 'use client'
 
 import { useState } from 'react'
@@ -39,8 +39,8 @@ export default function AdminSidebar({ isOpen, onClose }) {
       items: [
         { name: 'Buscar Leads', href: '/admin/test-scraper', icon: '🔍', badge: 'new' },
         { name: 'Gestión de Leads', href: '/admin/leads', icon: '📊' },
-        { name: 'Secuencias', href: '/admin/sequences', icon: '🚀', badge: 'new' }, // 👈 NUEVO
-        { name: 'Templates Email', href: '/admin/templates', icon: '📧' }, // 👈 NUEVO
+        { name: 'Secuencias', href: '/admin/sequences', icon: '🚀', badge: 'new' },
+        { name: 'Templates Email', href: '/admin/email-templates', icon: '📧' },
         { name: 'Citas Agendadas', href: '/admin/appointments', icon: '📅' }
       ]
     },
@@ -48,7 +48,8 @@ export default function AdminSidebar({ isOpen, onClose }) {
       title: 'Analytics',
       icon: '📈',
       items: [
-        { name: 'Email Analytics', href: '/admin/email-analytics', icon: '📊', badge: 'new' }
+        { name: 'Email Analytics', href: '/admin/email-analytics', icon: '📊', badge: 'new' },
+        { name: 'Métricas', href: '/admin/analytics', icon: '📈' },
         { name: 'Usuarios', href: '/admin/users', icon: '👥' }
       ]
     }
@@ -66,149 +67,88 @@ export default function AdminSidebar({ isOpen, onClose }) {
       transform transition-transform duration-300 ease-in-out
       lg:translate-x-0 
       ${isOpen ? 'translate-x-0' : '-translate-x-full'}
-      overflow-y-auto
-      flex flex-col
     `}>
+      
       {/* Header */}
-      <div className="p-6 border-b border-gray-800 dark:border-gray-700 flex-shrink-0">
-        <Link href="/admin" className="block">
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-green-400 bg-clip-text text-transparent">
-            Luis Granero
-          </h1>
-          <p className="text-xs text-gray-500 mt-1">Panel de Admin</p>
+      <div className="flex items-center justify-between p-4 border-b border-gray-800">
+        <Link href="/admin" className="flex items-center gap-2">
+          <span className="text-2xl">⚡</span>
+          <span className="font-bold text-white">Admin Panel</span>
         </Link>
         
-        {/* Botón cerrar mobile */}
         <button
           onClick={onClose}
-          className="lg:hidden absolute top-4 right-4 text-gray-400 hover:text-white"
+          className="lg:hidden text-gray-400 hover:text-white"
         >
           ✕
         </button>
       </div>
 
-      {/* Navigation - flex-1 para que ocupe el espacio disponible */}
-      <nav className="p-3 flex-1 overflow-y-auto">
-        {/* Dashboard */}
+      {/* Navigation */}
+      <nav className="p-4 space-y-6 overflow-y-auto h-[calc(100vh-80px)]">
+        
+        {/* Dashboard Link */}
         <Link
           href="/admin"
-          onClick={() => onClose?.()}
-          className={`flex items-center gap-3 px-4 py-3 rounded-lg mb-4 transition-all ${
+          className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
             pathname === '/admin'
-              ? 'bg-gradient-to-r from-cyan-500 to-green-500 text-black font-semibold'
-              : 'text-gray-400 hover:bg-gray-800 hover:text-white'
+              ? 'bg-cyan-500/20 text-cyan-400'
+              : 'text-gray-400 hover:text-white hover:bg-gray-800'
           }`}
         >
           <span className="text-xl">📊</span>
-          <span>Dashboard</span>
+          <span className="font-medium">Dashboard</span>
         </Link>
 
-        {/* Secciones colapsables */}
-        {Object.entries(sections).map(([sectionKey, section]) => {
-          const hasActiveItem = section.items.some(item => isActive(item.href))
-
-          return (
-            <div key={sectionKey} className="mb-3">
-              {/* Header de sección */}
-              <button
-                onClick={() => toggleSection(sectionKey)}
-                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition-all mb-1 ${
-                  hasActiveItem
-                    ? 'bg-gray-800 text-cyan-400'
-                    : 'text-gray-500 hover:bg-gray-800 hover:text-gray-300'
-                }`}
-              >
-                <div className="flex items-center gap-2.5">
-                  <span className="text-lg">{section.icon}</span>
-                  <span className="font-semibold text-xs uppercase tracking-wide">
-                    {section.title}
+        {/* Sections */}
+        {Object.entries(sections).map(([key, section]) => (
+          <div key={key}>
+            <button
+              onClick={() => toggleSection(key)}
+              className="flex items-center justify-between w-full px-4 py-2 text-gray-400 hover:text-white transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <span className="text-lg">{section.icon}</span>
+                <span className="font-semibold">{section.title}</span>
+                {section.badge && (
+                  <span className="px-2 py-0.5 text-xs bg-cyan-500/20 text-cyan-400 rounded-full">
+                    {section.badge}
                   </span>
-                  {section.badge && (
-                    <span className="px-2 py-0.5 bg-cyan-500 text-black text-[10px] font-bold rounded-full">
-                      {section.badge}
-                    </span>
-                  )}
-                </div>
-                <span className={`text-xs transition-transform ${collapsed[sectionKey] ? '' : 'rotate-180'}`}>
-                  ▼
-                </span>
-              </button>
-
-              {/* Items de la sección */}
-              {!collapsed[sectionKey] && (
-                <div className="ml-2 space-y-1">
-                  {section.items.map((item) => (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      onClick={() => onClose?.()}
-                      className={`flex items-center gap-2.5 px-3 py-2 rounded-lg transition-all text-sm ${
-                        isActive(item.href)
-                          ? 'bg-gradient-to-r from-cyan-500 to-green-500 text-black font-semibold'
-                          : 'text-gray-400 hover:bg-gray-800 hover:text-white'
-                      }`}
-                    >
-                      <span className="text-base">{item.icon}</span>
-                      <span>{item.name}</span>
-                      {item.badge && (
-                        <span className="ml-auto px-1.5 py-0.5 bg-green-500 text-black text-[10px] font-bold rounded-full">
-                          {item.badge}
-                        </span>
-                      )}
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </div>
-          )
-        })}
-
-        {/* Divider */}
-        <div className="border-t border-gray-800 my-4"></div>
-
-        {/* Accesos rápidos */}
-        <div className="px-3 py-3 bg-gray-800/50 rounded-lg">
-          <p className="text-[10px] text-gray-500 font-semibold mb-2 uppercase tracking-wider">
-            Accesos Rápidos
-          </p>
-          <div className="space-y-1.5">
-            <Link
-              href="/admin/test-scraper"
-              onClick={() => onClose?.()}
-              className="flex items-center gap-2 text-xs text-cyan-400 hover:text-cyan-300 py-1.5 px-2 rounded hover:bg-gray-800 transition-colors"
-            >
-              <span>➕</span> Buscar Leads
-            </Link>
-            <Link
-              href="/admin/sequences"
-              onClick={() => onClose?.()}
-              className="flex items-center gap-2 text-xs text-green-400 hover:text-green-300 py-1.5 px-2 rounded hover:bg-gray-800 transition-colors"
-            >
-              <span>🚀</span> Nueva Secuencia
-            </Link>
-            <Link
-              href="/admin/email-templates"
-              onClick={() => onClose?.()}
-              className="flex items-center gap-2 text-xs text-purple-400 hover:text-purple-300 py-1.5 px-2 rounded hover:bg-gray-800 transition-colors"
-            >
-              <span>✏️</span> Editar Templates
-            </Link>
+                )}
+              </div>
+              <span className={`transform transition-transform ${collapsed[key] ? '' : 'rotate-180'}`}>
+                ▼
+              </span>
+            </button>
+            
+            {!collapsed[key] && (
+              <div className="mt-2 space-y-1">
+                {section.items.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={`flex items-center justify-between gap-3 px-8 py-2 rounded-lg transition-colors ${
+                      isActive(item.href)
+                        ? 'bg-cyan-500/20 text-cyan-400'
+                        : 'text-gray-400 hover:text-white hover:bg-gray-800'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span>{item.icon}</span>
+                      <span className="text-sm">{item.name}</span>
+                    </div>
+                    {item.badge && (
+                      <span className="px-2 py-0.5 text-xs bg-green-500/20 text-green-400 rounded-full">
+                        {item.badge}
+                      </span>
+                    )}
+                  </Link>
+                ))}
+              </div>
+            )}
           </div>
-        </div>
+        ))}
       </nav>
-
-      {/* User info - En flujo normal, al final */}
-      <div className="p-3 border-t border-gray-800 bg-gray-900 flex-shrink-0">
-        <div className="flex items-center gap-3 px-3 py-2 bg-gray-800/50 rounded-lg">
-          <div className="w-9 h-9 bg-gradient-to-r from-cyan-500 to-green-500 rounded-full flex items-center justify-center text-black font-bold text-sm flex-shrink-0">
-            LG
-          </div>
-          <div className="overflow-hidden">
-            <p className="text-sm font-semibold text-white truncate">Luis Granero</p>
-            <p className="text-[10px] text-gray-500">Administrador</p>
-          </div>
-        </div>
-      </div>
     </aside>
   )
 }

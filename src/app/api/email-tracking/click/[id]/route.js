@@ -1,5 +1,5 @@
 // src/app/api/email-tracking/click/[id]/route.js
-import { NextResponse } from 'next/response';
+import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import EmailLog from '@/models/EmailLog';
 import Lead from '@/models/Lead';
@@ -11,7 +11,6 @@ export async function GET(request, { params }) {
     const { searchParams } = new URL(request.url);
     const targetUrl = searchParams.get('url');
     
-    // Validar parámetros
     if (!emailLogId || !/^[0-9a-fA-F]{24}$/.test(emailLogId)) {
       console.log('❌ Invalid emailLogId:', emailLogId);
       return NextResponse.redirect(targetUrl || 'https://luisgranero.com');
@@ -22,10 +21,8 @@ export async function GET(request, { params }) {
       return NextResponse.redirect('https://luisgranero.com');
     }
     
-    // Conectar a DB
     await dbConnect();
     
-    // Buscar EmailLog
     const emailLog = await EmailLog.findById(emailLogId);
     
     if (!emailLog) {
@@ -33,7 +30,6 @@ export async function GET(request, { params }) {
       return NextResponse.redirect(targetUrl);
     }
     
-    // Extraer metadata de la request
     const metadata = extractRequestMetadata(request);
     
     console.log('🖱️ Link clicked:', {
@@ -45,10 +41,8 @@ export async function GET(request, { params }) {
       ip: metadata.ip
     });
     
-    // Registrar click usando el método del modelo
     await emailLog.trackClick(targetUrl, metadata);
     
-    // Actualizar lead con interacción
     if (emailLog.leadId) {
       await Lead.findByIdAndUpdate(emailLog.leadId, {
         $set: {
@@ -65,23 +59,17 @@ export async function GET(request, { params }) {
       });
     }
     
-    // TODO: Enviar notificación en tiempo real
-    // await sendNotification(`🔥 ${emailLog.emailTo} hizo click en tu email!`);
-    
-    // Redirigir al URL original
     return NextResponse.redirect(targetUrl);
     
   } catch (error) {
     console.error('❌ Error tracking click:', error);
     
-    // Redirigir al URL aunque haya error
     const { searchParams } = new URL(request.url);
     const targetUrl = searchParams.get('url') || 'https://luisgranero.com';
     return NextResponse.redirect(targetUrl);
   }
 }
 
-// Permitir OPTIONS para CORS
 export async function OPTIONS() {
   return new Response(null, {
     headers: {

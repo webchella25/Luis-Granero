@@ -1,16 +1,15 @@
 // src/app/api/email-analytics/route.js
-import { NextResponse } from 'next/response';
+import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import EmailLog from '@/models/EmailLog';
 
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
-    const range = searchParams.get('range') || '7d'; // 7d, 30d, all
+    const range = searchParams.get('range') || '7d';
     
     await dbConnect();
     
-    // Calcular fecha de inicio según el rango
     const now = new Date();
     let startDate;
     
@@ -23,16 +22,14 @@ export async function GET(request) {
         break;
       case 'all':
       default:
-        startDate = new Date(0); // Desde el inicio
+        startDate = new Date(0);
     }
     
-    // Query base
     const baseQuery = {
       status: { $in: ['sent', 'delivered', 'opened', 'clicked'] },
       sentAt: { $gte: startDate }
     };
     
-    // Obtener métricas principales
     const [totalSent, totalOpened, totalClicked, recentEmails] = await Promise.all([
       EmailLog.countDocuments(baseQuery),
       EmailLog.countDocuments({ ...baseQuery, opened: true }),
@@ -44,18 +41,15 @@ export async function GET(request) {
         .lean()
     ]);
     
-    // Calcular tasas
     const openRate = totalSent > 0 ? Math.round((totalOpened / totalSent) * 100) : 0;
     const clickRate = totalSent > 0 ? Math.round((totalClicked / totalSent) * 100) : 0;
     const clickToOpenRate = totalOpened > 0 ? Math.round((totalClicked / totalOpened) * 100) : 0;
     
-    // Calcular engagement score
     const engagementScore = Math.min(
       Math.round((openRate * 0.6) + (clickRate * 0.4)),
       100
     );
     
-    // Obtener estadísticas por día
     const dailyStats = await EmailLog.aggregate([
       {
         $match: baseQuery
@@ -91,14 +85,12 @@ export async function GET(request) {
       }
     ]);
     
-    // Top performers (emails con más engagement)
     const topPerformers = await EmailLog.find(baseQuery)
       .sort({ openCount: -1, clickCount: -1 })
       .limit(5)
       .populate('leadId', 'name')
       .lean();
     
-    // Tiempo promedio hasta apertura
     const avgTimeToOpen = await EmailLog.aggregate([
       {
         $match: {
@@ -122,11 +114,11 @@ export async function GET(request) {
       clickRate,
       clickToOpenRate,
       engagementScore,
-      dailyStats: dailyStats.reverse(), // Ordenar cronológicamente
+      dailyStats: dailyStats.reverse(),
       topPerformers,
       avgTimeToOpen: avgTimeToOpen[0]?.avgSeconds 
         ? Math.round(avgTimeToOpen[0].avgSeconds / 60) 
-        : null // En minutos
+        : null
     };
     
     return NextResponse.json({
