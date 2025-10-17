@@ -48,7 +48,7 @@ export default function AdminSidebar({ isOpen, onClose }) {
       title: 'Analytics',
       icon: '📈',
       items: [
-        { name: 'Métricas', href: '/admin/analytics', icon: '📊' },
+        { name: 'Email Analytics', href: '/admin/email-analytics', icon: '📊', badge: 'new' }
         { name: 'Usuarios', href: '/admin/users', icon: '👥' }
       ]
     }
