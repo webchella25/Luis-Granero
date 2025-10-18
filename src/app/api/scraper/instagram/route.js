@@ -3,7 +3,8 @@ import { scrapeInstagramHashtag, getInstagramResults } from '@/lib/scraper/insta
 
 export async function POST(request) {
   try {
-    const { hashtag, maxResults = 20, action = 'start' } = await request.json();
+    const body = await request.json();
+    const { hashtag, maxResults = 20, action = 'start', runId } = body;
     
     if (action === 'start') {
       // Iniciar scraping
@@ -11,21 +12,23 @@ export async function POST(request) {
         return NextResponse.json({ error: 'Hashtag requerido' }, { status: 400 });
       }
       
-      const { runId } = await scrapeInstagramHashtag(hashtag, maxResults);
+      console.log(`🔍 Iniciando scraping de Instagram: #${hashtag}`);
+      
+      const result = await scrapeInstagramHashtag(hashtag, maxResults);
       
       return NextResponse.json({
         success: true,
-        runId,
-        message: 'Scraping iniciado'
+        runId: result.runId,
+        message: 'Scraping iniciado. Usa action=check para verificar el status.'
       });
     } 
     else if (action === 'check') {
       // Verificar status
-      const { runId } = await request.json();
-      
       if (!runId) {
         return NextResponse.json({ error: 'runId requerido' }, { status: 400 });
       }
+      
+      console.log(`📊 Verificando status de run: ${runId}`);
       
       const result = await getInstagramResults(runId);
       
@@ -40,7 +43,7 @@ export async function POST(request) {
         return NextResponse.json({
           success: false,
           status: 'failed',
-          error: result.error
+          error: result.error || 'Unknown error'
         });
       } else {
         return NextResponse.json({
@@ -49,10 +52,15 @@ export async function POST(request) {
           message: 'Scraping en progreso...'
         });
       }
+    } else {
+      return NextResponse.json({ error: 'Action inválido' }, { status: 400 });
     }
     
   } catch (error) {
-    console.error('❌ Error:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error('❌ Error en Instagram scraper:', error);
+    return NextResponse.json({ 
+      success: false,
+      error: error.message 
+    }, { status: 500 });
   }
 }
