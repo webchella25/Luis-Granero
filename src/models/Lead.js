@@ -1,18 +1,63 @@
-// src/models/Lead.js - ACTUALIZADO CON CAMPOS DE TRACKING
 import mongoose from 'mongoose';
 
-const LeadSchema = new mongoose.Schema({
-  // Datos del negocio
-  name: { type: String, required: true },
+const leadSchema = new mongoose.Schema({
+  // Información básica
+  name: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  
+  // Contacto
+  email: {
+    type: String,
+    trim: true,
+    lowercase: true
+  },
+  phone: {
+    type: String,
+    trim: true
+  },
   address: String,
-  phone: String,
+  
+  // Web & Social
   website: String,
+  username: { 
+    type: String, 
+    sparse: true,
+    trim: true
+  }, // Instagram/Twitter username
+  bio: String, // Instagram bio
+  followers: Number, // Instagram followers
+  posts: Number, // Instagram posts count
+  isVerified: Boolean, // Instagram verified
+  profilePicUrl: String, // Instagram profile picture
+  
+  socialMedia: {
+    instagram: String,
+    facebook: String,
+    twitter: String,
+    linkedin: String,
+    youtube: String
+  },
+  
+  // Business info
+  category: String,
   rating: Number,
   reviewCount: Number,
-  category: String,
-  placeId: String,
   
-  // Analisis web
+  // Google Maps specific
+  placeId: {
+    type: String,
+    sparse: true
+  },
+  
+  // Google Search specific
+  seoPosition: Number, // Posición en Google Search
+  domain: String, // Dominio extraído de la URL
+  description: String, // Meta description o snippet
+  
+  // Web analysis
   webAnalysis: {
     score: Number,
     loadTime: Number,
@@ -24,85 +69,80 @@ const LeadSchema = new mongoose.Schema({
     emails: [String]
   },
   
-  // Emails posibles
-  possibleEmails: [String],
-  
-  // Redes sociales
-  socialMedia: {
-    instagram: String,
-    facebook: String,
-    twitter: String,
-    linkedin: String,
-    youtube: String
+  // Lead scoring
+  opportunityScore: {
+    type: Number,
+    default: 50,
+    min: 0,
+    max: 100
   },
   
-  // Score de oportunidad
-  opportunityScore: { type: Number, default: 0 },
-  seoPosition: { type: Number },
+  // Possible emails
+  possibleEmails: [String],
   
-  // Estado del lead
+  // Status & workflow
   status: {
     type: String,
-    enum: ['new', 'contacted', 'interested', 'rejected', 'client'],
+    enum: ['new', 'contacted', 'qualified', 'proposal', 'negotiation', 'won', 'lost', 'nurturing'],
     default: 'new'
   },
   
-  // Historial de contacto
+  // Source tracking
+  source: {
+    type: String,
+    enum: ['google_maps', 'google_search', 'instagram', 'linkedin', 'manual', 'referral', 'other'],
+    default: 'manual'
+  },
+  searchQuery: String, // Query usada para encontrar este lead
+  
+  // Notes & history
+  notes: String,
   contactHistory: [{
-    date: { type: Date, default: Date.now },
-    type: { type: String, enum: ['email', 'phone', 'whatsapp', 'meeting', 'note'] },
+    date: Date,
+    type: {
+      type: String,
+      enum: ['email', 'call', 'meeting', 'message', 'other']
+    },
     notes: String,
-    emailSubject: String,
-    emailContent: String
+    emailSubject: String
   }],
   
-  // Notas
-  notes: String,
+  // Assignment
+  assignedTo: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  },
   
   // Tags
   tags: [String],
   
-  // ===== CAMPOS NUEVOS PARA TRACKING =====
-  
-  // Ultima interaccion con el lead
-  lastInteraction: Date,
-  
-  // Tipo de Ultima interaccion
-  lastInteractionType: {
-    type: String,
-    enum: ['email_sent', 'email_opened', 'email_clicked', 'phone_call', 'whatsapp', 'meeting', 'note']
+  // Timestamps
+  createdAt: {
+    type: Date,
+    default: Date.now
   },
-  
-  // Si el usuario se dio de baja
-  unsubscribed: {
-    type: Boolean,
-    default: false
+  updatedAt: {
+    type: Date,
+    default: Date.now
   },
-  
-  // Si marca el email como spam o pidio o ser contactado
-  doNotContact: {
-    type: Boolean,
-    default: false
-  },
-  
-  // ===== FIN CAMPOS NUEVOS =====
-  
-  // Metadata
-  source: { type: String, default: 'google_maps' },
-  searchQuery: String,
-  createdAt: { type: Date, default: Date.now },
-  updatedAt: { type: Date, default: Date.now }
+  lastContactedAt: Date
 }, {
   timestamps: true
 });
 
 // Indexes
-LeadSchema.index({ name: 'text', address: 'text', category: 'text' });
-LeadSchema.index({ status: 1, opportunityScore: -1 });
-LeadSchema.index({ createdAt: -1 });
-LeadSchema.index({ placeId: 1 }, { unique: true, sparse: true });
-LeadSchema.index({ lastInteraction: -1 });
-LeadSchema.index({ unsubscribed: 1, doNotContact: 1 });
-LeadSchema.index({ seoPosition: 1 });
+leadSchema.index({ email: 1 }, { sparse: true });
+leadSchema.index({ phone: 1 }, { sparse: true });
+leadSchema.index({ placeId: 1 }, { sparse: true });
+leadSchema.index({ username: 1, source: 1 }, { sparse: true }); // Instagram username único por source
+leadSchema.index({ status: 1 });
+leadSchema.index({ opportunityScore: -1 });
+leadSchema.index({ source: 1 });
+leadSchema.index({ createdAt: -1 });
 
-export default mongoose.models.Lead || mongoose.model('Lead', LeadSchema);
+// Virtual para el nombre completo del negocio
+leadSchema.virtual('displayName').get(function() {
+  return this.name || this.username || 'Sin nombre';
+});
+
+export default mongoose.models.Lead || mongoose.model('Lead', leadSchema);
