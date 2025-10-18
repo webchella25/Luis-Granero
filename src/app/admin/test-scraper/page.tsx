@@ -20,23 +20,23 @@ export default function TestScraperPage() {
   
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState([]);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
 
-  // Google Maps scraping (RUTA CORREGIDA)
+  // Google Maps scraping
   const handleGoogleMapsScrape = async () => {
     setLoading(true);
     setError(null);
     setResults([]);
 
     try {
-      const res = await fetch('/api/leads/search', {  // ← RUTA CORRECTA
+      const res = await fetch('/api/leads/search', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           query: category,
           location: location,
           maxResults: maxResults,
-          saveToDb: false  // No guardar aún, solo mostrar
+          saveToDb: false
         })
       });
 
@@ -47,14 +47,14 @@ export default function TestScraperPage() {
       } else {
         setError(data.error || 'Error desconocido');
       }
-    } catch (err) {
-      setError(err.message || 'Error desconocido');
+    } catch (err: any) {
+      setError(err?.message || 'Error desconocido');
     } finally {
       setLoading(false);
     }
   };
 
-  // Google Search scraping (NUEVO)
+  // Google Search scraping
   const handleGoogleSearchScrape = async () => {
     if (!searchQuery.trim()) {
       setError('Por favor ingresa una búsqueda');
@@ -82,15 +82,15 @@ export default function TestScraperPage() {
       } else {
         setError(data.error || 'Error desconocido');
       }
-    } catch (err) {
-      setError(err.message || 'Error desconocido');
+    } catch (err: any) {
+      setError(err?.message || 'Error desconocido');
     } finally {
       setLoading(false);
     }
   };
 
   // Importar leads seleccionados
-  const handleImportLeads = async (selectedLeads) => {
+  const handleImportLeads = async (selectedLeads: any[]) => {
     try {
       const res = await fetch('/api/leads/import', {
         method: 'POST',
@@ -106,8 +106,8 @@ export default function TestScraperPage() {
       } else {
         alert(`❌ Error: ${data.error}`);
       }
-    } catch (err) {
-      alert(`❌ Error: ${err.message}`);
+    } catch (err: any) {
+      alert(`❌ Error: ${err?.message || 'Error desconocido'}`);
     }
   };
 
@@ -190,8 +190,8 @@ export default function TestScraperPage() {
                 type="number"
                 value={maxResults}
                 onChange={(e) => setMaxResults(parseInt(e.target.value))}
-                min="5"
-                max="50"
+                min={5}
+                max={50}
                 className="w-full px-4 py-3 bg-slate-900 border border-gray-700 rounded-lg text-white focus:border-cyan-500 focus:outline-none"
               />
             </div>
@@ -227,7 +227,7 @@ export default function TestScraperPage() {
                 className="w-full px-4 py-3 bg-slate-900 border border-gray-700 rounded-lg text-white focus:border-cyan-500 focus:outline-none"
               />
               <p className="text-gray-500 text-sm mt-2">
-                💡 Ejemplos: "dentista Madrid centro", "tienda ropa Valencia", "arquitecto Barcelona"
+                💡 Ejemplos: &quot;dentista Madrid centro&quot;, &quot;tienda ropa Valencia&quot;, &quot;arquitecto Barcelona&quot;
               </p>
             </div>
 
@@ -281,7 +281,7 @@ export default function TestScraperPage() {
           </div>
 
           <div className="space-y-4">
-            {results.map((lead, index) => (
+            {results.map((lead: any, index: number) => (
               <LeadCard 
                 key={index} 
                 lead={lead} 
@@ -295,7 +295,7 @@ export default function TestScraperPage() {
   );
 }
 
-function LeadCard({ lead, source }) {
+function LeadCard({ lead, source }: { lead: any; source: string }) {
   return (
     <div className="bg-slate-900 border border-gray-700 rounded-lg p-6 hover:border-cyan-500/50 transition-all">
       <div className="flex justify-between items-start mb-4">
@@ -335,15 +335,15 @@ function LeadCard({ lead, source }) {
 
           <div className="flex flex-wrap gap-2">
             {lead.website && (
-  <Link
-    href={lead.website}
-    target="_blank"
-    rel="noopener noreferrer"
-    className="text-cyan-400 hover:text-cyan-300 text-sm"
-  >
-    🌐 {lead.domain || 'Website'}
-  </Link>
-)}
+              <Link
+                href={lead.website}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-cyan-400 hover:text-cyan-300 text-sm"
+              >
+                🌐 {lead.domain || 'Website'}
+              </Link>
+            )}
             
             {lead.phone && (
               <span className="text-green-400 text-sm">📱 {lead.phone}</span>
