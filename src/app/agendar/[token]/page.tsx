@@ -198,13 +198,13 @@ export default function AgendarPage() {
                 Nombre / Empresa *
               </label>
               <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all"
-                placeholder="Tu nombre o empresa"
-              />
+  type="text"
+  value={name}
+  onChange={(e) => setName(e.target.value)}
+  required
+  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all text-gray-900 bg-white"
+  placeholder="Tu nombre o empresa"
+/>
             </div>
 
             {/* Teléfono */}
@@ -213,13 +213,13 @@ export default function AgendarPage() {
                 Teléfono *
               </label>
               <input
-                type="tel"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                required
-                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all"
-                placeholder="+34 600 000 000"
-              />
+  type="tel"
+  value={phone}
+  onChange={(e) => setPhone(e.target.value)}
+  required
+  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all text-gray-900 bg-white"
+  placeholder="+34 600 000 000"
+/>
               <p className="mt-1 text-xs text-gray-500">Te llamaré a este número</p>
             </div>
 
@@ -235,27 +235,27 @@ export default function AgendarPage() {
                   
                   return (
                     <button
-                      key={dateStr}
-                      type="button"
-                      onClick={() => setSelectedDate(dateStr)}
-                      className={`
-                        p-3 rounded-xl border-2 transition-all text-center
-                        ${isSelected 
-                          ? 'border-cyan-500 bg-cyan-50 text-cyan-700 font-semibold' 
-                          : 'border-gray-200 hover:border-cyan-300 hover:bg-gray-50'
-                        }
-                      `}
-                    >
-                      <div className="text-xs text-gray-500 uppercase">
-                        {date.toLocaleDateString('es-ES', { weekday: 'short' })}
-                      </div>
-                      <div className="text-lg font-bold">
-                        {date.getDate()}
-                      </div>
-                      <div className="text-xs text-gray-600">
-                        {date.toLocaleDateString('es-ES', { month: 'short' })}
-                      </div>
-                    </button>
+  key={dateStr}
+  type="button"
+  onClick={() => setSelectedDate(dateStr)}
+  className={`
+    p-3 rounded-xl border-2 transition-all text-center
+    ${isSelected 
+      ? 'border-cyan-500 bg-cyan-50 text-cyan-700 font-semibold' 
+      : 'border-gray-200 hover:border-cyan-300 hover:bg-gray-50 text-gray-900'
+    }
+  `}
+>
+  <div className="text-xs text-gray-500 uppercase">
+    {date.toLocaleDateString('es-ES', { weekday: 'short' })}
+  </div>
+  <div className="text-lg font-bold text-gray-900">
+    {date.getDate()}
+  </div>
+  <div className="text-xs text-gray-600">
+    {date.toLocaleDateString('es-ES', { month: 'short' })}
+  </div>
+</button>
                   )
                 })}
               </div>
@@ -273,19 +273,19 @@ export default function AgendarPage() {
                     
                     return (
                       <button
-                        key={slot}
-                        type="button"
-                        onClick={() => setSelectedTime(slot)}
-                        className={`
-                          py-3 rounded-xl border-2 transition-all font-semibold
-                          ${isSelected 
-                            ? 'border-cyan-500 bg-cyan-500 text-white' 
-                            : 'border-gray-200 hover:border-cyan-300 hover:bg-gray-50'
-                          }
-                        `}
-                      >
-                        {slot}
-                      </button>
+  key={slot}
+  type="button"
+  onClick={() => setSelectedTime(slot)}
+  className={`
+    py-3 rounded-xl border-2 transition-all font-semibold
+    ${isSelected 
+      ? 'border-cyan-500 bg-cyan-500 text-white' 
+      : 'border-gray-200 hover:border-cyan-300 hover:bg-gray-50 text-gray-900'
+    }
+  `}
+>
+  {slot}
+</button>
                     )
                   })}
                 </div>
