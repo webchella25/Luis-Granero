@@ -3,14 +3,21 @@ import axios from 'axios';
 export async function scrapeInstagramHashtag(hashtag, maxResults = 20) {
   const API_TOKEN = process.env.APIFY_API_TOKEN;
   
+  console.log('🔍 Instagram Scraper iniciado');
+  console.log('📌 Hashtag:', hashtag);
+  console.log('🔢 Max results:', maxResults);
+  console.log('🔑 API Token exists:', !!API_TOKEN);
+  
   if (!API_TOKEN) {
-    throw new Error('APIFY_API_TOKEN no configurada');
+    throw new Error('APIFY_API_TOKEN no configurada en variables de entorno');
   }
 
   console.log(`📸 Buscando en Instagram: #${hashtag}`);
   
   try {
     // Iniciar scraping
+    console.log('🚀 Iniciando run en Apify...');
+    
     const runResponse = await axios.post(
       'https://api.apify.com/v2/acts/apify~instagram-scraper/runs',
       {
@@ -31,8 +38,8 @@ export async function scrapeInstagramHashtag(hashtag, maxResults = 20) {
     let results = null;
     let attempts = 0;
     
-    while (attempts < 30) { // Max 30 intentos (60 segundos)
-      await new Promise(resolve => setTimeout(resolve, 2000)); // Esperar 2s
+    while (attempts < 30) {
+      await new Promise(resolve => setTimeout(resolve, 2000));
       
       const statusResponse = await axios.get(
         `https://api.apify.com/v2/actor-runs/${runId}`,
@@ -40,51 +47,58 @@ export async function scrapeInstagramHashtag(hashtag, maxResults = 20) {
       );
       
       const status = statusResponse.data.data.status;
+      console.log(`📊 Intento ${attempts + 1}/30 - Status: ${status}`);
       
       if (status === 'SUCCEEDED') {
-        // Obtener resultados
         const dataResponse = await axios.get(
           `https://api.apify.com/v2/actor-runs/${runId}/dataset/items`,
           { params: { token: API_TOKEN } }
         );
         
         results = dataResponse.data;
+        console.log(`✅ Datos recibidos: ${results.length} items`);
         break;
       } else if (status === 'FAILED') {
-        throw new Error('Apify run failed');
+        const error = statusResponse.data.data.error || 'Unknown error';
+        throw new Error(`Apify run failed: ${error}`);
       }
       
       attempts++;
     }
 
     if (!results) {
-      throw new Error('Timeout esperando resultados de Apify');
+      throw new Error('Timeout esperando resultados de Apify (60 segundos)');
     }
 
     console.log(`✅ ${results.length} perfiles encontrados`);
 
     // Procesar resultados
-    const leads = results.map(profile => ({
-      name: profile.fullName || profile.username,
-      username: profile.username,
-      website: profile.externalUrl || null,
-      bio: profile.biography || '',
-      followers: profile.followersCount || 0,
-      posts: profile.postsCount || 0,
-      isVerified: profile.verified || false,
-      profilePicUrl: profile.profilePicUrl || null,
-      category: profile.category || null,
-      source: 'instagram',
-      searchQuery: hashtag,
+    const leads = results.map(profile => {
+      console.log('📝 Procesando perfil:', profile.username);
       
-      // Calcular opportunity score
-      opportunityScore: calculateInstagramScore(profile)
-    }));
+      return {
+        name: profile.fullName || profile.username,
+        username: profile.username,
+        website: profile.externalUrl || null,
+        bio: profile.biography || '',
+        followers: profile.followersCount || 0,
+        posts: profile.postsCount || 0,
+        isVerified: profile.verified || false,
+        profilePicUrl: profile.profilePicUrl || null,
+        category: profile.category || null,
+        source: 'instagram',
+        searchQuery: hashtag,
+        opportunityScore: calculateInstagramScore(profile)
+      };
+    });
 
+    console.log(`🎯 Leads procesados: ${leads.length}`);
     return leads;
 
   } catch (error) {
-    console.error('❌ Error en Instagram scraping:', error.message);
+    console.error('❌ Error completo:', error);
+    console.error('❌ Error message:', error.message);
+    console.error('❌ Error response:', error.response?.data);
     throw error;
   }
 }
@@ -92,34 +106,23 @@ export async function scrapeInstagramHashtag(hashtag, maxResults = 20) {
 function calculateInstagramScore(profile) {
   let score = 0;
   
-  // Sin link en bio = ALTA oportunidad (necesita web)
   if (!profile.externalUrl) score += 40;
-  
-  // Pocos posts = negocio nuevo o descuidado
   if (profile.postsCount < 50) score += 20;
   else if (profile.postsCount < 100) score += 10;
   
-  // Buenos seguidores = negocio establecido
   if (profile.followersCount > 1000 && profile.followersCount < 10000) {
-    score += 20; // Sweet spot: tiene clientes pero aún es pequeño
+    score += 20;
   } else if (profile.followersCount > 10000) {
-    score += 10; // Ya es grande, menos probabilidad
+    score += 10;
   }
   
-  // Categoría de negocio
   if (profile.category && profile.category.includes('Business')) {
     score += 15;
   }
   
-  // Bio completa = más profesional
   if (profile.biography && profile.biography.length > 50) {
     score += 5;
   }
   
   return Math.min(score, 100);
-}
-
-export async function scrapeInstagramLocation(locationId, maxResults = 20) {
-  // Similar al de hashtag pero con location
-  // Lo implementamos si lo necesitas
 }
