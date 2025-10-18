@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 export default function TestScraperPage() {
   const router = useRouter();
@@ -334,15 +335,15 @@ function LeadCard({ lead, source }) {
 
           <div className="flex flex-wrap gap-2">
             {lead.website && (
-              
-                href={lead.website}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-cyan-400 hover:text-cyan-300 text-sm"
-              >
-                🌐 {lead.domain || 'Website'}
-              </a>
-            )}
+  <Link
+    href={lead.website}
+    target="_blank"
+    rel="noopener noreferrer"
+    className="text-cyan-400 hover:text-cyan-300 text-sm"
+  >
+    🌐 {lead.domain || 'Website'}
+  </Link>
+)}
             
             {lead.phone && (
               <span className="text-green-400 text-sm">📱 {lead.phone}</span>

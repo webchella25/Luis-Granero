@@ -135,6 +135,14 @@ export async function POST(request: Request) {
       highOpportunity: sortedLeads.filter(l => l.opportunityScore >= 70).length
     }
   });
+  
+} catch (error: any) {
+    console.error('❌ Error en scraper:', error);
+    return NextResponse.json(
+      { success: false, error: error.message },
+      { status: 500 }
+    );
+  }
 }
 
 function calculateOpportunityScore(business: any, webAnalysis: any): number {

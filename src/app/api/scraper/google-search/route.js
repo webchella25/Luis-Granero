@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import Lead from '@/models/Lead';
 import { scrapeGoogleSearch, calculateSearchScore } from '@/lib/scraper/googleSearchScraper';
-import { analyzeWebsite } from '@/lib/scraper/webAnalyzer';
+import { analyzeWebsite } from '@/lib/scrapers/websiteAnalyzer';
 import { findAllEmails } from '@/lib/scraper/emailFinder';
 
 export async function POST(request) {
@@ -18,7 +18,6 @@ export async function POST(request) {
     
     console.log(`🔍 Iniciando búsqueda: "${query}"`);
     
-    // 1. Scrapear Google Search
     const searchResults = await scrapeGoogleSearch(query, numResults);
     
     if (searchResults.length === 0) {
@@ -29,14 +28,12 @@ export async function POST(request) {
       });
     }
     
-    // 2. Procesar cada resultado
     const processedLeads = [];
     
     for (const result of searchResults) {
       try {
         console.log(`\n📊 Procesando: ${result.name}`);
         
-        // 2.1 Analizar website
         let webAnalysis = null;
         if (result.website) {
           try {
@@ -47,7 +44,6 @@ export async function POST(request) {
           }
         }
         
-        // 2.2 Buscar emails
         let emails = [];
         if (result.website && result.domain) {
           try {
@@ -58,7 +54,6 @@ export async function POST(request) {
           }
         }
         
-        // 2.3 Calcular score
         const leadData = {
           ...result,
           possibleEmails: emails,
@@ -72,12 +67,10 @@ export async function POST(request) {
         
         processedLeads.push(leadData);
         
-        // Delay para no saturar APIs
         await new Promise(resolve => setTimeout(resolve, 1000));
         
       } catch (error) {
         console.error(`❌ Error procesando ${result.name}:`, error);
-        // Continuar con el siguiente
       }
     }
     
