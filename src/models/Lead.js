@@ -24,7 +24,6 @@ const leadSchema = new mongoose.Schema({
   website: String,
   username: { 
     type: String, 
-    sparse: true,
     trim: true
   }, // Instagram/Twitter username
   bio: String, // Instagram bio
@@ -47,10 +46,7 @@ const leadSchema = new mongoose.Schema({
   reviewCount: Number,
   
   // Google Maps specific
-  placeId: {
-    type: String,
-    sparse: true
-  },
+  placeId: String, // ❌ REMOVIDO index: true
   
   // Google Search specific
   seoPosition: Number, // Posición en Google Search
@@ -130,11 +126,11 @@ const leadSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Indexes
+// ✅ ÍNDICES DEFINIDOS SOLO UNA VEZ AQUÍ
 leadSchema.index({ email: 1 }, { sparse: true });
 leadSchema.index({ phone: 1 }, { sparse: true });
-leadSchema.index({ placeId: 1 }, { sparse: true });
-leadSchema.index({ username: 1, source: 1 }, { sparse: true }); // Instagram username único por source
+leadSchema.index({ placeId: 1 }, { sparse: true }); // ✅ Solo aquí
+leadSchema.index({ username: 1, source: 1 }, { sparse: true });
 leadSchema.index({ status: 1 });
 leadSchema.index({ opportunityScore: -1 });
 leadSchema.index({ source: 1 });
