@@ -1,69 +1,58 @@
 import { NextResponse } from 'next/server';
-import dbConnect from '@/lib/mongodb';
-import Lead from '@/models/Lead';
-import { scrapeInstagramHashtag } from '@/lib/scraper/instagramScraper';
+import { scrapeInstagramHashtag, getInstagramResults } from '@/lib/scraper/instagramScraper';
 
 export async function POST(request) {
   try {
-    const { hashtag, maxResults = 20, saveToDb = false } = await request.json();
+    const { hashtag, maxResults = 20, action = 'start' } = await request.json();
     
-    if (!hashtag) {
-      return NextResponse.json(
-        { error: 'Hashtag es requerido' },
-        { status: 400 }
-      );
-    }
-    
-    console.log(`🔍 Iniciando scraping de Instagram: #${hashtag}`);
-    
-    const leads = await scrapeInstagramHashtag(hashtag, maxResults);
-    
-    if (saveToDb) {
-      await dbConnect();
-      
-      const savedLeads = [];
-      
-      for (const lead of leads) {
-        try {
-          // Verificar si ya existe por username
-          const existingLead = await Lead.findOne({ 
-            username: lead.username,
-            source: 'instagram'
-          });
-          
-          if (existingLead) {
-            console.log(`⚠️ Lead ya existe: @${lead.username}`);
-            continue;
-          }
-          
-          const newLead = await Lead.create(lead);
-          savedLeads.push(newLead);
-          console.log(`✅ Lead guardado: @${newLead.username}`);
-          
-        } catch (error) {
-          console.error(`❌ Error guardando @${lead.username}:`, error);
-        }
+    if (action === 'start') {
+      // Iniciar scraping
+      if (!hashtag) {
+        return NextResponse.json({ error: 'Hashtag requerido' }, { status: 400 });
       }
+      
+      const { runId } = await scrapeInstagramHashtag(hashtag, maxResults);
       
       return NextResponse.json({
         success: true,
-        leads: savedLeads,
-        total: savedLeads.length
+        runId,
+        message: 'Scraping iniciado'
       });
+    } 
+    else if (action === 'check') {
+      // Verificar status
+      const { runId } = await request.json();
+      
+      if (!runId) {
+        return NextResponse.json({ error: 'runId requerido' }, { status: 400 });
+      }
+      
+      const result = await getInstagramResults(runId);
+      
+      if (result.status === 'SUCCEEDED') {
+        return NextResponse.json({
+          success: true,
+          status: 'completed',
+          leads: result.leads,
+          total: result.leads.length
+        });
+      } else if (result.status === 'FAILED') {
+        return NextResponse.json({
+          success: false,
+          status: 'failed',
+          error: result.error
+        });
+      } else {
+        return NextResponse.json({
+          success: true,
+          status: 'running',
+          message: 'Scraping en progreso...'
+        });
+      }
     }
     
-    // Retornar sin guardar (preview)
-    return NextResponse.json({
-      success: true,
-      leads,
-      total: leads.length
-    });
-    
   } catch (error) {
-    console.error('❌ Error en Instagram scraper:', error);
-    return NextResponse.json(
-      { error: error.message },
-      { status: 500 }
-    );
+    console.error('❌ Error:', error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

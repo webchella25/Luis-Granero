@@ -98,40 +98,87 @@ export default function TestScraperPage() {
 
   // Instagram scraping
   const handleInstagramScrape = async () => {
-    if (!instagramHashtag.trim()) {
-      setError('Por favor ingresa un hashtag');
+  if (!instagramHashtag.trim()) {
+    setError('Por favor ingresa un hashtag');
+    return;
+  }
+
+  setLoading(true);
+  setError(null);
+  setResults([]);
+  setSelectedLeads(new Set());
+
+  try {
+    // Iniciar scraping
+    const startRes = await fetch('/api/scraper/instagram', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'start',
+        hashtag: instagramHashtag.replace('#', ''),
+        maxResults: instagramResults
+      })
+    });
+
+    const startData = await startRes.json();
+
+    if (!startData.success) {
+      setError(startData.error || 'Error iniciando búsqueda');
+      setLoading(false);
       return;
     }
 
-    setLoading(true);
-    setError(null);
-    setResults([]);
-    setSelectedLeads(new Set());
+    const runId = startData.runId;
+    console.log('🔄 Scraping iniciado, esperando resultados...');
 
-    try {
-      const res = await fetch('/api/scraper/instagram', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          hashtag: instagramHashtag.replace('#', ''),
-          maxResults: instagramResults,
-          saveToDb: false
-        })
-      });
+    // Polling para verificar status
+    let attempts = 0;
+    const maxAttempts = 30; // 60 segundos máximo
 
-      const data = await res.json();
+    const checkInterval = setInterval(async () => {
+      try {
+        const checkRes = await fetch('/api/scraper/instagram', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'check',
+            runId: runId
+          })
+        });
 
-      if (data.success) {
-        setResults(data.leads);
-      } else {
-        setError(data.error || 'Error desconocido');
+        const checkData = await checkRes.json();
+
+        if (checkData.status === 'completed') {
+          clearInterval(checkInterval);
+          setResults(checkData.leads);
+          setLoading(false);
+          console.log('✅ Resultados obtenidos');
+        } else if (checkData.status === 'failed') {
+          clearInterval(checkInterval);
+          setError(checkData.error || 'Error en el scraping');
+          setLoading(false);
+        } else {
+          console.log('⏳ Esperando resultados...');
+        }
+
+        attempts++;
+        if (attempts >= maxAttempts) {
+          clearInterval(checkInterval);
+          setError('Timeout: El scraping tardó demasiado');
+          setLoading(false);
+        }
+      } catch (err: any) {
+        clearInterval(checkInterval);
+        setError(err?.message || 'Error verificando status');
+        setLoading(false);
       }
-    } catch (err: any) {
-      setError(err?.message || 'Error desconocido');
-    } finally {
-      setLoading(false);
-    }
-  };
+    }, 2000); // Cada 2 segundos
+
+  } catch (err: any) {
+    setError(err?.message || 'Error desconocido');
+    setLoading(false);
+  }
+};
 
   // Toggle selección de un lead
   const toggleLead = (index: number) => {
