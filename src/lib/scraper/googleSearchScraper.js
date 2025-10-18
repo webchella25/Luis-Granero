@@ -1,106 +1,81 @@
-import * as cheerio from 'cheerio';
+import axios from 'axios';
 
 export async function scrapeGoogleSearch(query, numResults = 20) {
-  const API_KEY = process.env.SCRAPERAPI_KEY;
+  const API_KEY = process.env.SERPAPI_KEY;
   
   if (!API_KEY) {
-    throw new Error('SCRAPERAPI_KEY no configurada');
+    throw new Error('SERPAPI_KEY no configurada');
   }
 
-  console.log(`🔍 Buscando en Google: "${query}"`);
-  
-  // URL de Google Search
-  const googleUrl = `https://www.google.com/search?q=${encodeURIComponent(query)}&num=${numResults}&hl=es&gl=es`;
-  
-  // URL de ScraperAPI - IMPORTANTE: usa HTTPS no HTTP
-  const scraperUrl = `https://api.scraperapi.com/?api_key=${API_KEY}&url=${encodeURIComponent(googleUrl)}`;
-  
-  console.log(`🔑 Llamando a ScraperAPI...`);
+  console.log(`🔍 Buscando en Google con SerpAPI: "${query}"`);
   
   try {
-    const response = await fetch(scraperUrl);
+    const response = await axios.get('https://serpapi.com/search.json', {
+      params: {
+        engine: 'google',
+        q: query,
+        num: numResults,
+        hl: 'es',
+        gl: 'es',
+        api_key: API_KEY
+      },
+      timeout: 15000
+    });
+
+    console.log(`✅ SerpAPI response recibida`);
+
+    if (!response.data.organic_results) {
+      console.log('⚠️ No se encontraron resultados');
+      return [];
+    }
+
+    const results = response.data.organic_results.map((result, index) => {
+      // Extraer dominio
+      const domain = extractDomain(result.link);
+      
+      // Buscar rating en el snippet
+      const snippet = result.snippet || '';
+      const ratingMatch = snippet.match(/(\d+[,.]?\d*)\s*★|★\s*(\d+[,.]?\d*)/i);
+      const rating = ratingMatch ? parseFloat((ratingMatch[1] || ratingMatch[2]).replace(',', '.')) : null;
+      
+      // Buscar review count
+      const reviewMatch = snippet.match(/(\d+)\s*(?:reseñas?|opiniones?|reviews?|valoraciones?)/i);
+      const reviewCount = reviewMatch ? parseInt(reviewMatch[1]) : null;
+      
+      // Buscar ubicación
+      const locationMatch = snippet.match(/([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+)*),?\s*España/i);
+      const location = locationMatch ? locationMatch[1] : null;
+      
+      return {
+        name: result.title,
+        website: result.link,
+        domain: domain,
+        description: snippet,
+        seoPosition: result.position || (index + 1),
+        rating: rating,
+        reviewCount: reviewCount,
+        location: location,
+        searchQuery: query,
+        source: 'google_search',
+        foundAt: new Date()
+      };
+    });
+
+    console.log(`✅ ${results.length} resultados encontrados`);
+    return results;
+
+  } catch (error) {
+    console.error('❌ Error en SerpAPI:', error.message);
     
-    console.log(`📊 ScraperAPI Response Status: ${response.status}`);
-    
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`❌ ScraperAPI Error: ${errorText}`);
-      throw new Error(`ScraperAPI error: ${response.status}`);
+    if (error.response?.status === 401) {
+      throw new Error('API Key de SerpAPI inválida');
     }
     
-    const html = await response.text();
-    console.log(`✅ HTML recibido: ${html.length} caracteres`);
+    if (error.response?.status === 429) {
+      throw new Error('Límite de búsquedas alcanzado en SerpAPI');
+    }
     
-    const $ = cheerio.load(html);
-    
-    const results = [];
-    let position = 1;
-    
-    // Seleccionar resultados orgánicos de Google
-    $('.g').each((i, elem) => {
-      try {
-        const $elem = $(elem);
-        
-        // Título
-        const title = $elem.find('h3').first().text().trim();
-        if (!title) return;
-        
-        // URL
-        let url = $elem.find('a').first().attr('href');
-        if (!url || url.startsWith('/search')) return;
-        
-        // Limpiar URL si viene con /url?q=
-        if (url.startsWith('/url?q=')) {
-          url = url.split('/url?q=')[1].split('&')[0];
-        }
-        url = decodeURIComponent(url);
-        
-        // Snippet/Descripción
-        const snippet = $elem.find('.VwiC3b, .yXK7lf, .IsZvec').first().text().trim();
-        
-        // Extraer dominio
-        const domain = extractDomain(url);
-        
-        // Rating (si aparece)
-        const ratingMatch = snippet.match(/(\d+[,.]?\d*)\s*★|★\s*(\d+[,.]?\d*)/i);
-        const rating = ratingMatch ? parseFloat((ratingMatch[1] || ratingMatch[2]).replace(',', '.')) : null;
-        
-        // Review count
-        const reviewMatch = snippet.match(/(\d+)\s*(?:reseñas?|opiniones?|reviews?|valoraciones?)/i);
-        const reviewCount = reviewMatch ? parseInt(reviewMatch[1]) : null;
-        
-        // Ubicación
-        const locationMatch = snippet.match(/([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+)*),?\s*España/i);
-        const location = locationMatch ? locationMatch[1] : null;
-        
-        results.push({
-          name: title,
-          website: url,
-          domain: domain,
-          description: snippet || '',
-          seoPosition: position,
-          rating: rating,
-          reviewCount: reviewCount,
-          location: location,
-          searchQuery: query,
-          source: 'google_search',
-          foundAt: new Date()
-        });
-        
-        position++;
-        
-      } catch (err) {
-        console.error('Error parseando resultado:', err);
-      }
-    });
-    
-    console.log(`✅ ${results.length} resultados encontrados`);
-    
-    return results;
-    
-  } catch (error) {
-    console.error('❌ Error en Google Search scraping:', error);
-    throw error;
+    throw new Error(`Error buscando en Google: ${error.message}`);
   }
 }
 
