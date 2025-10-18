@@ -48,7 +48,7 @@ export default function TestScraperPage() {
         setError(data.error || 'Error desconocido');
       }
     } catch (err) {
-      setError(err.message);
+      setError(err.message || 'Error desconocido');
     } finally {
       setLoading(false);
     }
@@ -83,7 +83,7 @@ export default function TestScraperPage() {
         setError(data.error || 'Error desconocido');
       }
     } catch (err) {
-      setError(err.message);
+      setError(err.message || 'Error desconocido');
     } finally {
       setLoading(false);
     }

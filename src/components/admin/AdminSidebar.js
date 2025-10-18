@@ -40,7 +40,7 @@ export default function AdminSidebar({ isOpen, onClose }) {
         { name: 'Buscar Leads', href: '/admin/test-scraper', icon: '🔍', badge: 'new' },
         { name: 'Gestión de Leads', href: '/admin/leads', icon: '📊' },
         { name: 'Secuencias', href: '/admin/sequences', icon: '🚀', badge: 'new' },
-        { name: 'Templates Email', href: '/admin/email-templates', icon: '📧' },
+        { name: 'Templates Email', href: '/admin/templates', icon: '📧' },
         { name: 'Citas Agendadas', href: '/admin/appointments', icon: '📅' }
       ]
     },
