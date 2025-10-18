@@ -12,7 +12,7 @@ const LeadSchema = new mongoose.Schema({
   category: String,
   placeId: String,
   
-  // Análisis web
+  // Analisis web
   webAnalysis: {
     score: Number,
     loadTime: Number,
@@ -38,6 +38,7 @@ const LeadSchema = new mongoose.Schema({
   
   // Score de oportunidad
   opportunityScore: { type: Number, default: 0 },
+  seoPosition: { type: Number },
   
   // Estado del lead
   status: {
@@ -61,12 +62,12 @@ const LeadSchema = new mongoose.Schema({
   // Tags
   tags: [String],
   
-  // ===== 🆕 CAMPOS NUEVOS PARA TRACKING =====
+  // ===== CAMPOS NUEVOS PARA TRACKING =====
   
-  // Última interacción con el lead
+  // Ultima interaccion con el lead
   lastInteraction: Date,
   
-  // Tipo de última interacción
+  // Tipo de Ultima interaccion
   lastInteractionType: {
     type: String,
     enum: ['email_sent', 'email_opened', 'email_clicked', 'phone_call', 'whatsapp', 'meeting', 'note']
@@ -78,7 +79,7 @@ const LeadSchema = new mongoose.Schema({
     default: false
   },
   
-  // Si marcó el email como spam o pidió no ser contactado
+  // Si marca el email como spam o pidio o ser contactado
   doNotContact: {
     type: Boolean,
     default: false
@@ -100,7 +101,8 @@ LeadSchema.index({ name: 'text', address: 'text', category: 'text' });
 LeadSchema.index({ status: 1, opportunityScore: -1 });
 LeadSchema.index({ createdAt: -1 });
 LeadSchema.index({ placeId: 1 }, { unique: true, sparse: true });
-LeadSchema.index({ lastInteraction: -1 }); // 🆕 Índice para ordenar por última interacción
-LeadSchema.index({ unsubscribed: 1, doNotContact: 1 }); // 🆕 Índice para filtrar usuarios válidos
+LeadSchema.index({ lastInteraction: -1 });
+LeadSchema.index({ unsubscribed: 1, doNotContact: 1 });
+LeadSchema.index({ seoPosition: 1 });
 
 export default mongoose.models.Lead || mongoose.model('Lead', LeadSchema);

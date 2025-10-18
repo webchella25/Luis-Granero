@@ -1,0 +1,112 @@
+import { NextResponse } from 'next/server';
+import dbConnect from '@/lib/mongodb';
+import Lead from '@/models/Lead';
+
+export async function POST(request) {
+  try {
+    const { leads } = await request.json();
+    
+    if (!leads || !Array.isArray(leads) || leads.length === 0) {
+      return NextResponse.json(
+        { error: 'No hay leads para importar' },
+        { status: 400 }
+      );
+    }
+    
+    await dbConnect();
+    
+    console.log(`📥 Importando ${leads.length} leads...`);
+    
+    const imported = [];
+    const skipped = [];
+    
+    for (const leadData of leads) {
+      try {
+        // Verificar si ya existe por placeId (Google Maps) o website (Google Search)
+        const existingLead = await Lead.findOne({
+          $or: [
+            { placeId: leadData.placeId },
+            { website: leadData.website }
+          ].filter(condition => {
+            // Solo incluir condiciones con valores válidos
+            return Object.values(condition)[0];
+          })
+        });
+        
+        if (existingLead) {
+          console.log(`⚠️ Lead ya existe: ${leadData.name}`);
+          skipped.push({
+            name: leadData.name,
+            reason: 'Ya existe en la base de datos'
+          });
+          continue;
+        }
+        
+        // Crear nuevo lead
+        const newLead = await Lead.create({
+          name: leadData.name,
+          address: leadData.address || null,
+          phone: leadData.phone || null,
+          website: leadData.website || null,
+          rating: leadData.rating || null,
+          reviewCount: leadData.reviewCount || null,
+          category: leadData.category || leadData.searchQuery,
+          placeId: leadData.placeId || null,
+          
+          // Web analysis
+          webAnalysis: leadData.webAnalysis || null,
+          
+          // Emails
+          possibleEmails: leadData.possibleEmails || [],
+          
+          // Social media
+          socialMedia: leadData.socialMedia || {},
+          
+          // Scoring
+          opportunityScore: leadData.opportunityScore || 50,
+          
+          // SEO position (solo para Google Search)
+          seoPosition: leadData.seoPosition || null,
+          
+          // Metadata
+          status: 'new',
+          source: leadData.source || 'google_maps',
+          searchQuery: leadData.searchQuery || '',
+          
+          // Timestamps
+          createdAt: new Date(),
+          updatedAt: new Date()
+        });
+        
+        imported.push(newLead);
+        console.log(`✅ Lead importado: ${newLead.name}`);
+        
+      } catch (error) {
+        console.error(`❌ Error importando ${leadData.name}:`, error);
+        skipped.push({
+          name: leadData.name,
+          reason: error.message
+        });
+      }
+    }
+    
+    console.log(`\n📊 Resumen:`);
+    console.log(`   ✅ Importados: ${imported.length}`);
+    console.log(`   ⚠️ Omitidos: ${skipped.length}`);
+    
+    return NextResponse.json({
+      success: true,
+      imported: imported.length,
+      skipped: skipped.length,
+      leads: imported,
+      skippedDetails: skipped
+    });
+    
+  } catch (error) {
+    console.error('❌ Error en importación:', error);
+    return NextResponse.json(
+      { error: error.message },
+      { status: 500 }
+    );
+  }
+}

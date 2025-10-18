@@ -76,61 +76,65 @@ export async function POST(request: Request) {
     const sortedLeads = enrichedLeads.sort((a, b) => b.opportunityScore - a.opportunityScore);
     
     // 3. 💾 Guardar en base de datos
-    let savedCount = 0;
     if (saveToDb) {
-      console.log(`\n💾 Guardando leads en base de datos...`);
-      await connectDB();
+  console.log('\n💾 Guardando leads en base de datos...');
+  
+  await connectDB();
+  
+  const savedLeads = [];
+  
+  for (const lead of sortedLeads) {
+    try {
+      // Verificar si ya existe
+      const existingLead = await Lead.findOne({
+        $or: [
+          { placeId: lead.placeId },
+          { website: lead.website }
+        ].filter(condition => Object.values(condition)[0])
+      });
       
-      for (const lead of sortedLeads) {
-        try {
-          // Usar upsert para evitar duplicados por placeId
-          await Lead.findOneAndUpdate(
-            { placeId: lead.placeId },
-            { 
-              $set: lead,
-              $setOnInsert: { createdAt: new Date() }
-            },
-            { 
-              upsert: true, 
-              new: true,
-              setDefaultsOnInsert: true 
-            }
-          );
-          savedCount++;
-        } catch (error) {
-          console.error(`  ⚠️ Error guardando ${lead.name}:`, error);
-        }
+      if (existingLead) {
+        console.log(`⚠️ Lead ya existe: ${lead.name}`);
+        continue;
       }
       
-      console.log(`✅ ${savedCount}/${sortedLeads.length} leads guardados`);
+      // Guardar nuevo lead
+      const newLead = await Lead.create(lead);
+      savedLeads.push(newLead);
+      console.log(`✅ Lead guardado: ${newLead.name}`);
+      
+    } catch (error) {
+      console.error(`❌ Error guardando ${lead.name}:`, error);
     }
-    
-    console.log(`\n✅ Proceso completado!`);
-    console.log(`📈 Total leads: ${sortedLeads.length}`);
-    console.log(`🎯 Leads alta oportunidad (>70): ${sortedLeads.filter(l => l.opportunityScore > 70).length}`);
-    
-    return NextResponse.json({ 
-      success: true,
-      leads: sortedLeads,
-      stats: {
-        total: sortedLeads.length,
-        withWebsite: sortedLeads.filter(l => l.website).length,
-        withoutWebsite: sortedLeads.filter(l => !l.website).length,
-        highOpportunity: sortedLeads.filter(l => l.opportunityScore > 70).length,
-        saved: savedCount
-      }
-    });
-    
-  } catch (error: any) {
-    console.error('❌ Error en búsqueda de leads:', error);
-    return NextResponse.json(
-      { 
-        success: false,
-        error: error.message || 'Error en el servidor'
-      },
-      { status: 500 }
-    );
   }
+  
+  console.log(`\n📊 ${savedLeads.length} leads guardados de ${sortedLeads.length}`);
+  
+  return NextResponse.json({
+    success: true,
+    leads: savedLeads,
+    total: savedLeads.length,
+    stats: {
+      total: sortedLeads.length,
+      saved: savedLeads.length,
+      skipped: sortedLeads.length - savedLeads.length
+    }
+  });
+} else {
+  // Solo retornar los leads sin guardar (para preview)
+  console.log('\n👀 Retornando leads sin guardar (preview mode)');
+  
+  return NextResponse.json({
+    success: true,
+    leads: sortedLeads,
+    total: sortedLeads.length,
+    stats: {
+      total: sortedLeads.length,
+      withWebsite: sortedLeads.filter(l => l.website).length,
+      withoutWebsite: sortedLeads.filter(l => !l.website).length,
+      highOpportunity: sortedLeads.filter(l => l.opportunityScore >= 70).length
+    }
+  });
 }
 
 function calculateOpportunityScore(business: any, webAnalysis: any): number {

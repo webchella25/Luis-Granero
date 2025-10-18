@@ -136,3 +136,87 @@ export async function findSocialMedia(website) {
     return {};
   }
 }
+
+// Buscar emails con Hunter.io
+export async function findEmailsWithHunter(domain) {
+  const API_KEY = process.env.HUNTER_IO_API_KEY;
+  
+  if (!API_KEY) {
+    console.warn('⚠️ HUNTER_IO_API_KEY no configurada');
+    return [];
+  }
+  
+  try {
+    const url = `https://api.hunter.io/v2/domain-search?domain=${domain}&api_key=${API_KEY}&limit=5`;
+    
+    const response = await fetch(url);
+    const data = await response.json();
+    
+    if (data.data && data.data.emails) {
+      const emails = data.data.emails
+        .filter(e => e.type === 'personal' && e.confidence > 50) // Solo emails con > 50% confianza
+        .map(e => e.value)
+        .slice(0, 3); // Máximo 3 emails
+      
+      console.log(`📧 Hunter.io encontró ${emails.length} emails para ${domain}`);
+      return emails;
+    }
+    
+    return [];
+    
+  } catch (error) {
+    console.error('Error en Hunter.io:', error);
+    return [];
+  }
+}
+
+// Buscar emails directamente en la web (como antes)
+export async function findEmailsInWebsite(website) {
+  try {
+    const response = await fetch(website, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+      },
+      timeout: 5000
+    });
+    
+    const html = await response.text();
+    
+    // Regex para emails
+    const emailRegex = /([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9._-]+)/gi;
+    const foundEmails = html.match(emailRegex) || [];
+    
+    // Filtrar emails no deseados
+    const invalidDomains = [
+      'example.com', 'sentry.io', 'gravatar.com', 
+      'schema.org', 'w3.org', 'google.com',
+      'facebook.com', 'twitter.com', 'instagram.com'
+    ];
+    
+    const validEmails = foundEmails
+      .filter(email => !invalidDomains.some(invalid => email.includes(invalid)))
+      .map(e => e.toLowerCase().trim())
+      .slice(0, 5);
+    
+    return [...new Set(validEmails)]; // Eliminar duplicados
+    
+  } catch (error) {
+    console.error('Error buscando emails en website:', error);
+    return [];
+  }
+}
+
+// Combinar ambos métodos
+export async function findAllEmails(website, domain) {
+  const emails = new Set();
+  
+  // 1. Buscar con Hunter.io
+  const hunterEmails = await findEmailsWithHunter(domain);
+  hunterEmails.forEach(e => emails.add(e));
+  
+  // 2. Buscar en la web
+  const webEmails = await findEmailsInWebsite(website);
+  webEmails.forEach(e => emails.add(e));
+  
+  return Array.from(emails);
+}
