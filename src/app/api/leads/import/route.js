@@ -22,64 +22,52 @@ export async function POST(request) {
     
     for (const leadData of leads) {
       try {
-        // Construir condiciones de búsqueda dinámicamente
-        const searchConditions = [];
+        // ✅ VERIFICACIÓN MEJORADA: por username (Instagram) o placeId/website
+        const queryConditions = [];
         
-        // Para Google Maps
         if (leadData.placeId) {
-          searchConditions.push({ placeId: leadData.placeId });
+          queryConditions.push({ placeId: leadData.placeId });
         }
         
-        // Para Google Search / webs generales
         if (leadData.website) {
-          searchConditions.push({ website: leadData.website });
+          queryConditions.push({ website: leadData.website });
         }
         
-        // Para Instagram (verificar por username + source)
+        // ✅ NUEVO: Verificar por username (Instagram)
         if (leadData.username && leadData.source === 'instagram') {
-          searchConditions.push({ 
+          queryConditions.push({ 
             username: leadData.username,
-            source: 'instagram'
+            source: 'instagram' 
           });
         }
         
-        // Para verificar por email o teléfono
-        if (leadData.email) {
-          searchConditions.push({ email: leadData.email });
-        }
-        
-        if (leadData.phone) {
-          searchConditions.push({ phone: leadData.phone });
-        }
-        
-        // Solo buscar duplicados si hay condiciones válidas
         let existingLead = null;
-        if (searchConditions.length > 0) {
-          existingLead = await Lead.findOne({ $or: searchConditions });
+        if (queryConditions.length > 0) {
+          existingLead = await Lead.findOne({ $or: queryConditions });
         }
         
         if (existingLead) {
-          console.log(`⚠️ Lead ya existe: ${leadData.name || leadData.username}`);
+          console.log(`⚠️ Lead ya existe: ${leadData.name}`);
           skipped.push({
-            name: leadData.name || leadData.username,
+            name: leadData.name,
             reason: 'Ya existe en la base de datos'
           });
           continue;
         }
         
-        // Crear nuevo lead
+        // ✅ CREAR LEAD CON TODOS LOS CAMPOS (incluyendo Instagram)
         const newLead = await Lead.create({
-          // Datos básicos
+          // Información básica
           name: leadData.name,
-          username: leadData.username || null,
           address: leadData.address || null,
           phone: leadData.phone || null,
           website: leadData.website || null,
           
-          // Instagram específico
-          bio: leadData.bio || '',
-          followers: leadData.followers || 0,
-          posts: leadData.posts || 0,
+          // ✅ CAMPOS DE INSTAGRAM (NUEVOS)
+          username: leadData.username || null,
+          bio: leadData.bio || null,
+          followers: leadData.followers || null,
+          posts: leadData.posts || null,
           isVerified: leadData.isVerified || false,
           profilePicUrl: leadData.profilePicUrl || null,
           
@@ -88,9 +76,6 @@ export async function POST(request) {
           reviewCount: leadData.reviewCount || null,
           category: leadData.category || leadData.searchQuery,
           placeId: leadData.placeId || null,
-          seoPosition: leadData.seoPosition || null,
-          domain: leadData.domain || null,
-          description: leadData.description || null,
           
           // Web analysis
           webAnalysis: leadData.webAnalysis || null,
@@ -104,6 +89,11 @@ export async function POST(request) {
           // Scoring
           opportunityScore: leadData.opportunityScore || 50,
           
+          // SEO position (solo para Google Search)
+          seoPosition: leadData.seoPosition || null,
+          domain: leadData.domain || null,
+          description: leadData.description || null,
+          
           // Metadata
           status: 'new',
           source: leadData.source || 'manual',
@@ -115,12 +105,12 @@ export async function POST(request) {
         });
         
         imported.push(newLead);
-        console.log(`✅ Lead importado: ${newLead.name || newLead.username} (@${newLead.username || 'N/A'})`);
+        console.log(`✅ Lead importado: ${newLead.name} (${newLead.source})`);
         
       } catch (error) {
-        console.error(`❌ Error importando ${leadData.name || leadData.username}:`, error);
+        console.error(`❌ Error importando ${leadData.name}:`, error);
         skipped.push({
-          name: leadData.name || leadData.username,
+          name: leadData.name,
           reason: error.message
         });
       }
