@@ -462,23 +462,27 @@ function LeadCard({ lead, source, selected, onToggle }: {
 }) {
   return (
     <div 
-      onClick={onToggle}
-      className={`bg-slate-900 border rounded-lg p-6 transition-all cursor-pointer ${
+      className={`bg-slate-900 border rounded-lg p-6 transition-all ${
         selected 
           ? 'border-cyan-500 shadow-lg shadow-cyan-500/20 bg-slate-800' 
           : 'border-gray-700 hover:border-cyan-500/50'
       }`}
     >
       <div className="flex justify-between items-start mb-4">
-        {/* Checkbox */}
+        {/* Checkbox y contenido */}
         <div className="flex items-start gap-4 flex-1">
-          <input
-            type="checkbox"
-            checked={selected}
-            onChange={onToggle}
-            onClick={(e) => e.stopPropagation()}
-            className="w-5 h-5 mt-1 accent-cyan-500 cursor-pointer flex-shrink-0"
-          />
+          {/* Checkbox clickable */}
+          <div className="flex-shrink-0 mt-1">
+            <input
+              type="checkbox"
+              checked={selected}
+              onChange={(e) => {
+                e.stopPropagation();
+                onToggle();
+              }}
+              className="w-5 h-5 accent-cyan-500 cursor-pointer"
+            />
+          </div>
           
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-2">
@@ -511,10 +515,10 @@ function LeadCard({ lead, source, selected, onToggle }: {
             {/* Instagram specific info */}
             {source === 'instagram' && (
               <div className="flex items-center gap-4 text-sm mb-2">
-                {lead.followers && (
+                {lead.followers > 0 && (
                   <span className="text-gray-400">👥 {lead.followers.toLocaleString()} seguidores</span>
                 )}
-                {lead.posts && (
+                {lead.posts > 0 && (
                   <span className="text-gray-400">📸 {lead.posts} posts</span>
                 )}
                 {lead.isVerified && (
@@ -544,7 +548,7 @@ function LeadCard({ lead, source, selected, onToggle }: {
 
             {/* Bio or Description */}
             {(lead.bio || lead.description) && (
-              <p className="text-gray-300 text-sm mb-3">
+              <p className="text-gray-300 text-sm mb-3 line-clamp-2">
                 {(lead.bio || lead.description).substring(0, 150)}...
               </p>
             )}
@@ -552,15 +556,15 @@ function LeadCard({ lead, source, selected, onToggle }: {
             {/* Contact info */}
             <div className="flex flex-wrap gap-2">
               {lead.website && (
-                <Link
+                
                   href={lead.website}
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={(e) => e.stopPropagation()}
-                  className="text-cyan-400 hover:text-cyan-300 text-sm"
+                  className="text-cyan-400 hover:text-cyan-300 text-sm hover:underline"
                 >
                   🌐 {lead.domain || 'Website'}
-                </Link>
+                </a>
               )}
               
               {lead.phone && (
@@ -571,6 +575,19 @@ function LeadCard({ lead, source, selected, onToggle }: {
                 <span className="text-blue-400 text-sm">
                   📧 {lead.possibleEmails.length} email(s)
                 </span>
+              )}
+
+              {/* Instagram profile link */}
+              {source === 'instagram' && lead.username && (
+                
+                  href={`https://instagram.com/${lead.username}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className="text-pink-400 hover:text-pink-300 text-sm hover:underline"
+                >
+                  📸 Ver perfil
+                </a>
               )}
             </div>
           </div>
