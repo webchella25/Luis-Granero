@@ -57,28 +57,56 @@ export default function EditLeadModal({ lead, onClose, onSuccess }) {
   };
 
   const handleSave = async () => {
-    setSaving(true);
-    try {
-      const res = await fetch(`/api/leads/${lead._id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(editData)
-      });
-
-      if (res.ok) {
-        alert('✅ Lead actualizado correctamente');
-        onSuccess();
-        onClose();
-      } else {
-        alert('❌ Error al actualizar lead');
-      }
-    } catch (error) {
-      console.error('Error updating lead:', error);
-      alert('❌ Error al actualizar lead');
-    } finally {
-      setSaving(false);
+  setSaving(true);
+  try {
+    console.log('💾 Guardando lead con datos:', editData);
+    
+    // ✅ PREPARAR DATOS PARA ENVIAR
+    const dataToSend = {
+      name: editData.name,
+      website: editData.website || null,
+      location: editData.location || editData.address || null,
+      address: editData.location || editData.address || null,
+      notes: editData.notes || null,
+      
+      // ✅ EMAILS
+      possibleEmails: editData.possibleEmails || [],
+      
+      // ✅ TELÉFONOS - Enviar como array
+      phoneNumbers: editData.phoneNumbers || [],
+      
+      // ✅ TAMBIÉN enviar phone por compatibilidad
+      phone: (editData.phoneNumbers && editData.phoneNumbers.length > 0) 
+        ? editData.phoneNumbers[0] 
+        : null
+    };
+    
+    console.log('📤 Enviando:', dataToSend);
+    
+    const res = await fetch(`/api/leads/${lead._id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(dataToSend)
+    });
+    
+    const data = await res.json();
+    
+    if (data.success) {
+      console.log('✅ Lead actualizado correctamente');
+      alert('✅ Lead actualizado correctamente');
+      onSuccess(); // Recargar datos
+      onClose();
+    } else {
+      console.error('❌ Error:', data.error);
+      alert(`❌ Error: ${data.error}`);
     }
-  };
+  } catch (error) {
+    console.error('❌ Error guardando:', error);
+    alert(`❌ Error: ${error.message}`);
+  } finally {
+    setSaving(false);
+  }
+};
 
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
