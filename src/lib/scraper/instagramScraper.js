@@ -10,7 +10,6 @@ export async function scrapeInstagramHashtag(hashtag, maxResults = 20) {
   console.log(`📸 Iniciando búsqueda en Instagram: #${hashtag}`);
   
   try {
-    // SIN WEBHOOK - Versión simplificada
     const runResponse = await axios.post(
       `https://api.apify.com/v2/acts/apify~instagram-scraper/runs?token=${API_TOKEN}`,
       {
@@ -55,35 +54,65 @@ export async function getInstagramResults(runId) {
       );
       
       const posts = dataResponse.data;
-      console.log(`✅ ${posts.length} posts obtenidos`);
+      console.log(`✅ ${posts.length} posts obtenidos de Apify`);
+      
+      // 🔍 DEBUG: Ver estructura del primer post
+      if (posts.length > 0) {
+        console.log('📝 Estructura del primer post:', JSON.stringify(posts[0], null, 2));
+      }
       
       // Extraer perfiles únicos
       const usernames = [...new Set(
         posts
-          .map(post => post.ownerUsername)
+          .map(post => {
+            // Intentar diferentes campos donde puede estar el username
+            const username = post.ownerUsername || 
+                           post.owner?.username || 
+                           post.user?.username ||
+                           post.username;
+            
+            console.log(`🔍 Post username encontrado: ${username}`);
+            return username;
+          })
           .filter(Boolean)
       )];
       
-      console.log(`👥 ${usernames.length} perfiles únicos`);
+      console.log(`👥 ${usernames.length} perfiles únicos encontrados`);
+      console.log(`📋 Usernames:`, usernames);
+      
+      if (usernames.length === 0) {
+        console.warn('⚠️ No se encontraron usernames. Revisa la estructura de datos.');
+        console.log('📦 Muestra de posts:', posts.slice(0, 3));
+      }
       
       const leads = usernames.map(username => {
-        const post = posts.find(p => p.ownerUsername === username);
+        const post = posts.find(p => 
+          p.ownerUsername === username || 
+          p.owner?.username === username ||
+          p.user?.username === username ||
+          p.username === username
+        );
         
-        return {
-          name: post?.ownerFullName || username,
+        const lead = {
+          name: post?.ownerFullName || post?.owner?.fullName || post?.displayName || username,
           username: username,
-          website: null,
-          bio: '',
-          followers: 0,
-          posts: 0,
-          isVerified: false,
-          profilePicUrl: post?.ownerProfilePicUrl || null,
-          category: null,
+          website: post?.externalUrl || post?.owner?.externalUrl || null,
+          bio: post?.biography || post?.owner?.biography || '',
+          followers: post?.followersCount || post?.owner?.followersCount || 0,
+          posts: post?.postsCount || post?.owner?.postsCount || 0,
+          isVerified: post?.verified || post?.owner?.isVerified || false,
+          profilePicUrl: post?.ownerProfilePicUrl || post?.owner?.profilePicUrl || null,
+          category: post?.category || null,
           source: 'instagram',
-          searchQuery: '', // Se añadirá después
+          searchQuery: '', // Se añadirá en el route
           opportunityScore: 70
         };
+        
+        console.log(`✅ Lead procesado: @${username}`, lead);
+        return lead;
       });
+      
+      console.log(`🎯 Total leads procesados: ${leads.length}`);
       
       return { status: 'SUCCEEDED', leads };
       
@@ -94,7 +123,6 @@ export async function getInstagramResults(runId) {
         leads: []
       };
     } else {
-      // RUNNING, READY, etc.
       return { 
         status: 'RUNNING',
         leads: []
