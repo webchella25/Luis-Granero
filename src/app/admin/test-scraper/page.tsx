@@ -556,15 +556,14 @@ function LeadCard({ lead, source, selected, onToggle }: {
             {/* Contact info */}
             <div className="flex flex-wrap gap-2">
               {lead.website && (
-                
+                <Link
                   href={lead.website}
                   target="_blank"
                   rel="noopener noreferrer"
-                  onClick={(e) => e.stopPropagation()}
                   className="text-cyan-400 hover:text-cyan-300 text-sm hover:underline"
                 >
                   🌐 {lead.domain || 'Website'}
-                </a>
+                </Link>
               )}
               
               {lead.phone && (
@@ -579,15 +578,14 @@ function LeadCard({ lead, source, selected, onToggle }: {
 
               {/* Instagram profile link */}
               {source === 'instagram' && lead.username && (
-                
+                <Link
                   href={`https://instagram.com/${lead.username}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  onClick={(e) => e.stopPropagation()}
                   className="text-pink-400 hover:text-pink-300 text-sm hover:underline"
                 >
                   📸 Ver perfil
-                </a>
+                </Link>
               )}
             </div>
           </div>
