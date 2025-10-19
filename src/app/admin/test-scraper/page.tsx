@@ -109,81 +109,25 @@ export default function TestScraperPage() {
   setSelectedLeads(new Set());
 
   try {
-    // PASO 1: Iniciar scraping
-    console.log('🚀 Iniciando scraping...');
-    
-    const startRes = await fetch('/api/scraper/instagram', {
+    const res = await fetch('/api/scraper/instagram', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        action: 'start',
         hashtag: instagramHashtag.replace('#', ''),
         maxResults: instagramResults
       })
     });
 
-    const startData = await startRes.json();
+    const data = await res.json();
 
-    if (!startData.success) {
-      setError(startData.error || 'Error iniciando búsqueda');
-      setLoading(false);
-      return;
+    if (data.success) {
+      setResults(data.leads);
+    } else {
+      setError(data.error || 'Error desconocido');
     }
-
-    const runId = startData.runId;
-    console.log('✅ Scraping iniciado. Run ID:', runId);
-    console.log('⏳ Esperando resultados...');
-
-    // PASO 2: Polling para verificar status
-    let attempts = 0;
-    const maxAttempts = 60; // 2 minutos máximo (60 x 2s)
-
-    const pollResults = async () => {
-      if (attempts >= maxAttempts) {
-        setError('Timeout: El scraping tardó demasiado (>2 minutos)');
-        setLoading(false);
-        return;
-      }
-
-      try {
-        const checkRes = await fetch('/api/scraper/instagram', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            action: 'check',
-            runId: runId
-          })
-        });
-
-        const checkData = await checkRes.json();
-        console.log(`Intento ${attempts + 1}/${maxAttempts} - Status:`, checkData.status);
-
-        if (checkData.status === 'completed') {
-          console.log('✅ Scraping completado!');
-          setResults(checkData.leads);
-          setLoading(false);
-        } else if (checkData.status === 'failed') {
-          console.error('❌ Scraping falló:', checkData.error);
-          setError(checkData.error || 'El scraping falló');
-          setLoading(false);
-        } else {
-          // Aún corriendo, seguir esperando
-          attempts++;
-          setTimeout(pollResults, 2000); // Esperar 2s y volver a intentar
-        }
-      } catch (err: any) {
-        console.error('Error verificando status:', err);
-        setError(err?.message || 'Error verificando status');
-        setLoading(false);
-      }
-    };
-
-    // Iniciar polling después de 3 segundos (darle tiempo a Apify)
-    setTimeout(pollResults, 3000);
-
   } catch (err: any) {
-    console.error('Error general:', err);
     setError(err?.message || 'Error desconocido');
+  } finally {
     setLoading(false);
   }
 };
