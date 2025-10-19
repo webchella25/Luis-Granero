@@ -4,11 +4,12 @@ import dbConnect from '@/lib/mongodb';
 import Sequence from '@/models/Sequence';
 import SequenceEnrollment from '@/models/SequenceEnrollment';
 import EmailLog from '@/models/EmailLog';
+import Lead from '@/models/Lead'; // ← AÑADE ESTA LÍNEA
 
 // GET - Obtener secuencia con stats detalladas
 export async function GET(request, { params }) {
   try {
-    const { id } = await params; // ← FIX: await params
+    const { id } = await params;
     await dbConnect();
     
     const sequence = await Sequence.findById(id);
@@ -22,7 +23,7 @@ export async function GET(request, { params }) {
     
     // Obtener enrollments
     const enrollments = await SequenceEnrollment.find({ sequenceId: id })
-      .populate('leadId')
+      .populate('leadId') // ← Aquí usa Lead, por eso necesita el import
       .sort({ createdAt: -1 });
     
     // Obtener logs de emails
@@ -61,7 +62,7 @@ export async function GET(request, { params }) {
 // PATCH - Actualizar secuencia
 export async function PATCH(request, { params }) {
   try {
-    const { id } = await params; // ← FIX: await params
+    const { id } = await params;
     await dbConnect();
     
     const updates = await request.json();
@@ -96,7 +97,7 @@ export async function PATCH(request, { params }) {
 // DELETE - Eliminar secuencia
 export async function DELETE(request, { params }) {
   try {
-    const { id } = await params; // ← FIX: await params
+    const { id } = await params;
     await dbConnect();
     
     // Pausar todos los enrollments activos
