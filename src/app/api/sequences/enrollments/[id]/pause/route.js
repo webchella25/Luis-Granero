@@ -1,4 +1,4 @@
-// src/app/api/sequences/enrollments/[id]/pause/route.js - NUEVO ARCHIVO
+// src/app/api/sequences/enrollments/[id]/pause/route.js - CORREGIDO ✅
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import SequenceEnrollment from '@/models/SequenceEnrollment';
@@ -6,9 +6,10 @@ import Sequence from '@/models/Sequence';
 
 export async function POST(request, { params }) {
   try {
+    const { id } = await params; // ← FIX: await params
     await dbConnect();
     
-    const enrollment = await SequenceEnrollment.findById(params.id);
+    const enrollment = await SequenceEnrollment.findById(id);
     
     if (!enrollment) {
       return NextResponse.json(

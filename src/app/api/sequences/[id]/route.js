@@ -1,4 +1,4 @@
-// src/app/api/sequences/[id]/route.js - NUEVO ARCHIVO
+// src/app/api/sequences/[id]/route.js - CORREGIDO ✅
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import Sequence from '@/models/Sequence';
@@ -8,9 +8,10 @@ import EmailLog from '@/models/EmailLog';
 // GET - Obtener secuencia con stats detalladas
 export async function GET(request, { params }) {
   try {
+    const { id } = await params; // ← FIX: await params
     await dbConnect();
     
-    const sequence = await Sequence.findById(params.id);
+    const sequence = await Sequence.findById(id);
     
     if (!sequence) {
       return NextResponse.json(
@@ -20,12 +21,12 @@ export async function GET(request, { params }) {
     }
     
     // Obtener enrollments
-    const enrollments = await SequenceEnrollment.find({ sequenceId: params.id })
+    const enrollments = await SequenceEnrollment.find({ sequenceId: id })
       .populate('leadId')
       .sort({ createdAt: -1 });
     
     // Obtener logs de emails
-    const emailLogs = await EmailLog.find({ sequenceId: params.id });
+    const emailLogs = await EmailLog.find({ sequenceId: id });
     
     // Calcular métricas
     const metrics = {
@@ -60,13 +61,14 @@ export async function GET(request, { params }) {
 // PATCH - Actualizar secuencia
 export async function PATCH(request, { params }) {
   try {
+    const { id } = await params; // ← FIX: await params
     await dbConnect();
     
     const updates = await request.json();
     updates.updatedAt = new Date();
     
     const sequence = await Sequence.findByIdAndUpdate(
-      params.id,
+      id,
       updates,
       { new: true }
     );
@@ -94,17 +96,18 @@ export async function PATCH(request, { params }) {
 // DELETE - Eliminar secuencia
 export async function DELETE(request, { params }) {
   try {
+    const { id } = await params; // ← FIX: await params
     await dbConnect();
     
     // Pausar todos los enrollments activos
     await SequenceEnrollment.updateMany(
-      { sequenceId: params.id, status: 'active' },
+      { sequenceId: id, status: 'active' },
       { status: 'paused', pauseReason: 'Secuencia eliminada' }
     );
     
     // Marcar como inactiva
     const sequence = await Sequence.findByIdAndUpdate(
-      params.id,
+      id,
       { isActive: false },
       { new: true }
     );

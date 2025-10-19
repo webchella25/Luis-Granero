@@ -1,4 +1,4 @@
-// src/app/api/sequences/[id]/enroll/route.js - NUEVO ARCHIVO
+// src/app/api/sequences/[id]/enroll/route.js - CORREGIDO ✅
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import Sequence from '@/models/Sequence';
@@ -8,9 +8,10 @@ import Lead from '@/models/Lead';
 
 export async function POST(request, { params }) {
   try {
-    await dbConnect();
-    
+    const { id } = await params; // ← FIX: await params
     const { leadId } = await request.json();
+    
+    await dbConnect();
     
     // Verificar que el lead existe
     const lead = await Lead.findById(leadId);
@@ -22,7 +23,7 @@ export async function POST(request, { params }) {
     }
     
     // Verificar que la secuencia existe
-    const sequence = await Sequence.findById(params.id);
+    const sequence = await Sequence.findById(id);
     if (!sequence) {
       return NextResponse.json(
         { success: false, error: 'Secuencia no encontrada' },
@@ -46,7 +47,7 @@ export async function POST(request, { params }) {
     // Crear enrollment
     const enrollment = await SequenceEnrollment.create({
       leadId,
-      sequenceId: params.id,
+      sequenceId: id,
       currentStep: 0,
       status: 'active',
       startedAt: new Date()
@@ -62,7 +63,7 @@ export async function POST(request, { params }) {
       
       await EmailLog.create({
         leadId,
-        sequenceId: params.id,
+        sequenceId: id,
         enrollmentId: enrollment._id,
         step: i,
         templateId: step.templateId,
