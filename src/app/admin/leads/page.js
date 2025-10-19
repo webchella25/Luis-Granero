@@ -1,4 +1,4 @@
-// src/app/admin/leads/page.js - ARCHIVO COMPLETO
+// src/app/admin/leads/page.js - ARCHIVO COMPLETO CON WHATSAPP DINÁMICO
 'use client'
 
 import { useState, useEffect } from 'react'
@@ -71,20 +71,59 @@ export default function LeadsPage() {
     }
   }
 
-  const generateWhatsAppLink = (lead) => {
-    const message = `Hola! 👋
-
-Soy Luis Granero, desarrollador web.
-
-He visto *${lead.name}* en Google Maps y creo que podría ayudaros a conseguir más clientes online.
-
-¿Te interesaría una llamada de 15 minutos para hablar de vuestra presencia digital?
-
-Un saludo!
-Luis Granero
-www.luisgranero.com`
-
-    return `https://wa.me/${lead.phone.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`
+  // ✅ NUEVA FUNCIÓN QUE CARGA EL TEMPLATE DE WHATSAPP DINÁMICAMENTE
+  const handleWhatsAppClick = async (lead) => {
+    try {
+      // 1. Cargar template de WhatsApp desde la DB
+      const res = await fetch('/api/templates?type=whatsapp');
+      const data = await res.json();
+      
+      if (!data.success || data.templates.length === 0) {
+        alert('❌ No hay templates de WhatsApp configurados. Ve a /admin/templates para crear uno.');
+        return;
+      }
+      
+      // 2. Usar el primer template activo
+      const template = data.templates.find(t => t.isActive) || data.templates[0];
+      
+      // 3. Reemplazar variables en el template
+      let message = template.body;
+      
+      const replacements = {
+        '{{business_name}}': lead.name || '',
+        '{{category}}': lead.category || 'tu negocio',
+        '{{review_count}}': lead.reviewCount || 0,
+        '{{rating}}': lead.rating || 0,
+        '{{phone}}': lead.phone || '',
+        '{{address}}': lead.address || '',
+        '{{website}}': lead.website || '',
+        '{{score}}': lead.opportunityScore || 0
+      };
+      
+      // Reemplazar todas las variables
+      Object.entries(replacements).forEach(([key, value]) => {
+        message = message.replace(new RegExp(key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), String(value));
+      });
+      
+      // 4. Generar link de WhatsApp con el mensaje
+      const phoneClean = lead.phone?.replace(/\D/g, '') || '';
+      
+      if (!phoneClean) {
+        alert('❌ Este lead no tiene teléfono');
+        return;
+      }
+      
+      const whatsappUrl = `https://wa.me/${phoneClean}?text=${encodeURIComponent(message)}`;
+      
+      // 5. Abrir WhatsApp
+      window.open(whatsappUrl, '_blank');
+      
+      console.log(`✅ WhatsApp abierto para ${lead.name}`);
+      
+    } catch (error) {
+      console.error('Error cargando template de WhatsApp:', error);
+      alert('❌ Error al cargar el template de WhatsApp');
+    }
   }
 
   return (
@@ -206,11 +245,45 @@ www.luisgranero.com`
                       <ScoreBadge score={lead.opportunityScore} />
                     </td>
 
-                    {/* Negocio */}
+                    {/* Negocio - CON BADGES DE FUENTE */}
                     <td className="p-4">
                       <div>
-                        <p className="text-gray-900 dark:text-white font-medium">{lead.name}</p>
-                        <p className="text-gray-500 dark:text-gray-400 text-sm">{lead.category}</p>
+                        <div className="flex items-center gap-2 mb-1">
+                          <p className="text-gray-900 dark:text-white font-medium">{lead.name}</p>
+                          
+                          {/* Badge de Instagram */}
+                          {lead.source === 'instagram' && (
+                            <span className="px-2 py-0.5 bg-pink-500/20 text-pink-400 rounded text-xs font-semibold">
+                              📸 Instagram
+                            </span>
+                          )}
+                          
+                          {/* Badge de Google Maps */}
+                          {lead.source === 'google_maps' && (
+                            <span className="px-2 py-0.5 bg-cyan-500/20 text-cyan-400 rounded text-xs font-semibold">
+                              🗺️ Maps
+                            </span>
+                          )}
+                          
+                          {/* Badge de Google Search */}
+                          {lead.source === 'google_search' && (
+                            <span className="px-2 py-0.5 bg-blue-500/20 text-blue-400 rounded text-xs font-semibold">
+                              🔎 Search
+                            </span>
+                          )}
+                        </div>
+                        
+                        {/* Username de Instagram */}
+                        {lead.username && lead.source === 'instagram' && (
+                          <p className="text-pink-400 text-sm">@{lead.username}</p>
+                        )}
+                        
+                        {/* Categoría */}
+                        {lead.category && (
+                          <p className="text-gray-500 dark:text-gray-400 text-sm">{lead.category}</p>
+                        )}
+                        
+                        {/* Rating */}
                         {lead.rating && (
                           <p className="text-yellow-500 text-sm mt-1">
                             ⭐ {lead.rating} ({lead.reviewCount} reseñas)
@@ -273,88 +346,99 @@ www.luisgranero.com`
                     </td>
 
                     {/* Acciones */}
-<td className="p-4">
-  <div className="flex gap-2 items-center">
-    {/* Ver detalles */}
-    <Link
-      href={`/admin/leads/${lead._id}`}
-      className="text-cyan-500 hover:text-cyan-400 text-xl"
-      title="Ver detalles"
-    >
-      👁️
-    </Link>
-    
-    {/* Email */}
-    {lead.possibleEmails && lead.possibleEmails[0] && (
-      <Link
-        href={`/admin/leads/${lead._id}/email`}
-        className="text-blue-500 hover:text-blue-400 text-xl"
-        title="Enviar email"
-      >
-        ✉️
-      </Link>
-    )}
-    
-    {/* WhatsApp */}
-    {lead.phone && (
-      <Link
-        href={generateWhatsAppLink(lead)}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="text-green-500 hover:text-green-400 text-xl"
-        title="WhatsApp"
-      >
-        📱
-      </Link>
-    )}
-    
-    {/* Llamada */}
-    {lead.phone && (
-      <Link
-        href={`tel:${lead.phone}`}
-        className="text-cyan-600 hover:text-cyan-500 text-xl"
-        title="Llamar"
-      >
-        📞
-      </Link>
-    )}
-    
-    {/* Instagram */}
-    {lead.socialMedia && lead.socialMedia.instagram && (
-      <Link
-        href={lead.socialMedia.instagram}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="text-pink-500 hover:text-pink-400 text-xl"
-        title="Instagram"
-      >
-        📷
-      </Link>
-    )}
-    
-    {/* Facebook */}
-    {lead.socialMedia && lead.socialMedia.facebook && (
-      <Link
-        href={lead.socialMedia.facebook}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="text-blue-600 hover:text-blue-500 text-xl"
-        title="Facebook"
-		>
-        👥
-      </Link>
-    )}
-    
-    {/* Eliminar */}
-    <button
-      onClick={() => deleteLead(lead._id)}
-      className="text-red-500 hover:text-red-400 text-xl"
-      title="Eliminar"
-    >
-      🗑️
-    </button>
-  </div>
-</td>
+                    <td className="p-4">
+                      <div className="flex gap-2 items-center">
+                        {/* Ver detalles */}
+                        <Link
+                          href={`/admin/leads/${lead._id}`}
+                          className="text-cyan-500 hover:text-cyan-400 text-xl"
+                          title="Ver detalles"
+                        >
+                          👁️
+                        </Link>
+                        
+                        {/* Email */}
+                        {lead.possibleEmails && lead.possibleEmails[0] && (
+                          <Link
+                            href={`/admin/leads/${lead._id}/email`}
+                            className="text-blue-500 hover:text-blue-400 text-xl"
+                            title="Enviar email"
+                          >
+                            ✉️
+                          </Link>
+                        )}
+                        
+                        {/* ✅ WhatsApp - AHORA USA TEMPLATE DINÁMICO */}
+                        {lead.phone && (
+                          <button
+                            onClick={() => handleWhatsAppClick(lead)}
+                            className="text-green-500 hover:text-green-400 text-xl"
+                            title="WhatsApp"
+                          >
+                            📱
+                          </button>
+                        )}
+                        
+                        {/* Llamada */}
+                        {lead.phone && (
+                          <Link
+                            href={`tel:${lead.phone}`}
+                            className="text-cyan-600 hover:text-cyan-500 text-xl"
+                            title="Llamar"
+                          >
+                            📞
+                          </Link>
+                        )}
+                        
+                        {/* Instagram - Ahora con username */}
+                        {lead.username && lead.source === 'instagram' && (
+                          <Link
+                            href={`https://instagram.com/${lead.username}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-pink-500 hover:text-pink-400 text-xl"
+                            title="Ver Instagram"
+                          >
+                            📷
+                          </Link>
+                        )}
+                        
+                        {/* Instagram desde socialMedia (legacy) */}
+                        {lead.socialMedia && lead.socialMedia.instagram && !lead.username && (
+                          <Link
+                            href={lead.socialMedia.instagram}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-pink-500 hover:text-pink-400 text-xl"
+                            title="Instagram"
+                          >
+                            📷
+                          </Link>
+                        )}
+                        
+                        {/* Facebook */}
+                        {lead.socialMedia && lead.socialMedia.facebook && (
+                          <Link
+                            href={lead.socialMedia.facebook}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:text-blue-500 text-xl"
+                            title="Facebook"
+                          >
+                            👥
+                          </Link>
+                        )}
+                        
+                        {/* Eliminar */}
+                        <button
+                          onClick={() => deleteLead(lead._id)}
+                          className="text-red-500 hover:text-red-400 text-xl"
+                          title="Eliminar"
+                        >
+                          🗑️
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>
