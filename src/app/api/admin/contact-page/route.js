@@ -17,8 +17,8 @@ export async function GET() {
         },
         contactInfo: {
           email: 'luis@luisgranero.com',
-          phone: '+34 698 38 3610'
-          location: 'Valencia, España,'
+          phone: '+34 698 38 3610',
+          location: 'Valencia, España',
           availability: 'Disponible para nuevos proyectos',
           responseTime: '24-48 horas'
         },
