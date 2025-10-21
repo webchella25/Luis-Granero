@@ -1,425 +1,432 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Calculator, Check, TrendingUp, Clock, Gift } from 'lucide-react';
 
-function BudgetCalculator() {
-  const [selections, setSelections] = useState({
-    projectType: '',
-    complexity: '',
-    design: '',
-    features: [],
-    timeline: '',
-    support: ''
+export default function BudgetCalculator() {
+  const [config, setConfig] = useState(null);
+  const [loading, setLoading] = useState(true);
+  
+  const [selectedProject, setSelectedProject] = useState(null);
+  const [selectedFeatures, setSelectedFeatures] = useState([]);
+  const [selectedTimeline, setSelectedTimeline] = useState(null);
+  const [showResult, setShowResult] = useState(false);
+  
+  const [clientInfo, setClientInfo] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    company: '',
+    message: ''
   });
-  const [estimatedPrice, setEstimatedPrice] = useState(0);
-  const [priceRange, setPriceRange] = useState({ min: 0, max: 0 });
-
-  const projectTypes = [
-    { id: 'landing', label: 'Landing Page', basePrice: 1500, icon: '📄' },
-    { id: 'corporate', label: 'Web Corporativa', basePrice: 3500, icon: '🏢' },
-    { id: 'ecommerce', label: 'E-commerce', basePrice: 5000, icon: '🛒' },
-    { id: 'webapp', label: 'Aplicación Web', basePrice: 8000, icon: '💻' },
-    { id: 'dashboard', label: 'Dashboard', basePrice: 6000, icon: '📊' }
-  ];
-
-  const complexityLevels = [
-    { id: 'basic', label: 'Básico', multiplier: 1, desc: 'Funcionalidades estándar' },
-    { id: 'medium', label: 'Intermedio', multiplier: 1.5, desc: 'Funcionalidades personalizadas' },
-    { id: 'advanced', label: 'Avanzado', multiplier: 2.2, desc: 'Lógica compleja y integraciones' }
-  ];
-
-  const designOptions = [
-    { id: 'template', label: 'Basado en template', multiplier: 1, desc: 'Adaptación de diseño existente' },
-    { id: 'custom', label: 'Diseño personalizado', multiplier: 1.3, desc: 'Diseño único desde cero' },
-    { id: 'premium', label: 'Diseño premium', multiplier: 1.6, desc: 'Diseño de alta gama con animaciones' }
-  ];
-
-  const additionalFeatures = [
-    { id: 'cms', label: 'Panel de administración', price: 800 },
-    { id: 'blog', label: 'Blog integrado', price: 600 },
-    { id: 'multilang', label: 'Multi-idioma', price: 900 },
-    { id: 'seo', label: 'SEO avanzado', price: 500 },
-    { id: 'analytics', label: 'Analytics personalizado', price: 400 },
-    { id: 'integrations', label: 'Integraciones API', price: 700 },
-    { id: 'payment', label: 'Pasarelas de pago', price: 1000 },
-    { id: 'membership', label: 'Sistema de usuarios', price: 1200 }
-  ];
-
-  const timelineOptions = [
-    { id: 'rush', label: 'Express (1-2 semanas)', multiplier: 1.5, desc: 'Entrega urgente' },
-    { id: 'normal', label: 'Normal (3-4 semanas)', multiplier: 1, desc: 'Timeline estándar' },
-    { id: 'extended', label: 'Relajado (6+ semanas)', multiplier: 0.9, desc: 'Sin prisa' }
-  ];
-
-  const supportOptions = [
-    { id: 'basic', label: '1 mes incluido', price: 0, desc: 'Soporte básico' },
-    { id: 'extended', label: '3 meses', price: 300, desc: 'Soporte extendido' },
-    { id: 'premium', label: '6 meses', price: 500, desc: 'Soporte premium' },
-    { id: 'annual', label: '12 meses', price: 800, desc: 'Soporte anual' }
-  ];
+  
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
 
   useEffect(() => {
-    calculatePrice();
-  }, [selections]);
+    fetchConfig();
+  }, []);
 
-  const calculatePrice = () => {
-    if (!selections.projectType) {
-      setEstimatedPrice(0);
-      setPriceRange({ min: 0, max: 0 });
+  const fetchConfig = async () => {
+    try {
+      const res = await fetch('/api/admin/contact-page');
+      const data = await res.json();
+      setConfig(data.budgetCalculator);
+      
+      const normalTimeline = data.budgetCalculator.timelines.find(t => t.id === 'normal');
+      if (normalTimeline) {
+        setSelectedTimeline(normalTimeline);
+      }
+    } catch (error) {
+      console.error('Error cargando configuración:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const calculateBudget = () => {
+    if (!selectedProject || !selectedTimeline) return { subtotal: 0, timelineAdjustment: 0, discount: null, total: 0 };
+
+    let subtotal = selectedProject.basePrice;
+    
+    selectedFeatures.forEach(feature => {
+      subtotal += feature.price;
+    });
+
+    const timelineAdjustment = subtotal * (selectedTimeline.multiplier - 1);
+    let total = subtotal + timelineAdjustment;
+
+    let appliedDiscount = null;
+    if (config?.discounts) {
+      const validDiscounts = config.discounts.filter(d => 
+        d.enabled && total >= d.minAmount
+      ).sort((a, b) => b.percentage - a.percentage);
+      
+      if (validDiscounts.length > 0) {
+        appliedDiscount = validDiscounts[0];
+        total = total - (total * appliedDiscount.percentage / 100);
+      }
+    }
+
+    return {
+      subtotal,
+      timelineAdjustment,
+      discount: appliedDiscount,
+      total: Math.round(total)
+    };
+  };
+
+  const budget = calculateBudget();
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!selectedProject || !selectedTimeline) {
+      alert('Por favor selecciona un tipo de proyecto y plazo');
       return;
     }
 
-    const baseProject = projectTypes.find(p => p.id === selections.projectType);
-    let price = baseProject.basePrice;
+    setSending(true);
 
-    // Apply complexity multiplier
-    if (selections.complexity) {
-      const complexity = complexityLevels.find(c => c.id === selections.complexity);
-      price *= complexity.multiplier;
+    try {
+      const res = await fetch('/api/budget-requests', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          clientInfo,
+          budget: {
+            projectType: selectedProject,
+            selectedFeatures,
+            timeline: selectedTimeline,
+            appliedDiscount: budget.discount,
+            subtotal: budget.subtotal,
+            discount: budget.discount ? budget.subtotal * budget.discount.percentage / 100 : 0,
+            timelineAdjustment: budget.timelineAdjustment,
+            total: budget.total
+          },
+          message: clientInfo.message
+        })
+      });
+
+      if (res.ok) {
+        setSent(true);
+        setTimeout(() => {
+          setSent(false);
+          setSelectedProject(null);
+          setSelectedFeatures([]);
+          setClientInfo({ name: '', email: '', phone: '', company: '', message: '' });
+          setShowResult(false);
+        }, 5000);
+      } else {
+        alert('Error al enviar. Inténtalo de nuevo.');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      alert('Error al enviar. Inténtalo de nuevo.');
+    } finally {
+      setSending(false);
     }
-
-    // Apply design multiplier
-    if (selections.design) {
-      const design = designOptions.find(d => d.id === selections.design);
-      price *= design.multiplier;
-    }
-
-    // Add features
-    selections.features.forEach(featureId => {
-      const feature = additionalFeatures.find(f => f.id === featureId);
-      if (feature) price += feature.price;
-    });
-
-    // Apply timeline multiplier
-    if (selections.timeline) {
-      const timeline = timelineOptions.find(t => t.id === selections.timeline);
-      price *= timeline.multiplier;
-    }
-
-    // Add support
-    if (selections.support) {
-      const support = supportOptions.find(s => s.id === selections.support);
-      price += support.price;
-    }
-
-    setEstimatedPrice(Math.round(price));
-    setPriceRange({
-      min: Math.round(price * 0.85),
-      max: Math.round(price * 1.15)
-    });
   };
 
-  const handleSelectionChange = (category, value) => {
-    setSelections(prev => ({ ...prev, [category]: value }));
-  };
+  if (loading) {
+    return (
+      <div className="bg-gray-900/50 backdrop-blur-sm rounded-2xl border border-cyan-500/20 p-8">
+        <div className="flex items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-400"></div>
+        </div>
+      </div>
+    );
+  }
 
-  const handleFeatureToggle = (featureId) => {
-    setSelections(prev => ({
-      ...prev,
-      features: prev.features.includes(featureId)
-        ? prev.features.filter(id => id !== featureId)
-        : [...prev.features, featureId]
-    }));
-  };
-
-  const resetCalculator = () => {
-    setSelections({
-      projectType: '',
-      complexity: '',
-      design: '',
-      features: [],
-      timeline: '',
-      support: ''
-    });
-  };
+  if (!config?.enabled) {
+    return null;
+  }
 
   return (
-    <section className="py-20 bg-black">
+    <section className="py-20 bg-gray-950" id="calculadora">
       <div className="container mx-auto px-4">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl md:text-5xl font-bold gradient-text mb-6">
-              Calculadora de Presupuesto
-            </h2>
-            <p className="text-xl text-gray-400 max-w-3xl mx-auto">
-              Obtén una estimación instantánea del coste de tu proyecto web
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Calculator form */}
-            <div className="lg:col-span-2 space-y-8">
-              {/* Project type */}
-              <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-xl p-6">
-                <h3 className="text-xl font-bold text-white mb-6">1. Tipo de proyecto</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {projectTypes.map((type) => (
-                    <label key={type.id} className="cursor-pointer">
-                      <input
-                        type="radio"
-                        name="projectType"
-                        value={type.id}
-                        onChange={(e) => handleSelectionChange('projectType', e.target.value)}
-                        className="sr-only"
-                      />
-                      <div className={`p-4 rounded-lg border transition-all duration-300 ${
-                        selections.projectType === type.id
-                          ? 'border-cyan-400 bg-cyan-400/10'
-                          : 'border-gray-700 hover:border-gray-600'
-                      }`}>
-                        <div className="flex items-center space-x-3">
-                          <span className="text-2xl">{type.icon}</span>
-                          <div>
-                            <div className="font-semibold text-white">{type.label}</div>
-                            <div className="text-sm text-gray-400">Desde {type.basePrice}€</div>
-                          </div>
-                        </div>
-                      </div>
-                    </label>
-                  ))}
-                </div>
-              </div>
-
-              {/* Complexity */}
-              <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-xl p-6">
-                <h3 className="text-xl font-bold text-white mb-6">2. Complejidad</h3>
-                <div className="space-y-3">
-                  {complexityLevels.map((level) => (
-                    <label key={level.id} className="cursor-pointer">
-                      <input
-                        type="radio"
-                        name="complexity"
-                        value={level.id}
-                        onChange={(e) => handleSelectionChange('complexity', e.target.value)}
-                        className="sr-only"
-                      />
-                      <div className={`p-4 rounded-lg border transition-all duration-300 ${
-                        selections.complexity === level.id
-                          ? 'border-cyan-400 bg-cyan-400/10'
-                          : 'border-gray-700 hover:border-gray-600'
-                      }`}>
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <div className="font-semibold text-white">{level.label}</div>
-                            <div className="text-sm text-gray-400">{level.desc}</div>
-                          </div>
-                          <div className="text-cyan-400 font-bold">×{level.multiplier}</div>
-                        </div>
-                      </div>
-                    </label>
-                  ))}
-                </div>
-              </div>
-
-              {/* Design */}
-              <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-xl p-6">
-                <h3 className="text-xl font-bold text-white mb-6">3. Diseño</h3>
-                <div className="space-y-3">
-                  {designOptions.map((design) => (
-                    <label key={design.id} className="cursor-pointer">
-                      <input
-                        type="radio"
-                        name="design"
-                        value={design.id}
-                        onChange={(e) => handleSelectionChange('design', e.target.value)}
-                        className="sr-only"
-                      />
-                      <div className={`p-4 rounded-lg border transition-all duration-300 ${
-                        selections.design === design.id
-                          ? 'border-cyan-400 bg-cyan-400/10'
-                          : 'border-gray-700 hover:border-gray-600'
-                      }`}>
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <div className="font-semibold text-white">{design.label}</div>
-                            <div className="text-sm text-gray-400">{design.desc}</div>
-                          </div>
-                          <div className="text-cyan-400 font-bold">×{design.multiplier}</div>
-                        </div>
-                      </div>
-                    </label>
-                  ))}
-                </div>
-              </div>
-
-              {/* Features */}
-              <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-xl p-6">
-                <h3 className="text-xl font-bold text-white mb-6">4. Funcionalidades adicionales</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {additionalFeatures.map((feature) => (
-                    <label key={feature.id} className="flex items-center space-x-3 cursor-pointer p-3 rounded-lg hover:bg-gray-800/50 transition-colors">
-                      <input
-                        type="checkbox"
-                        checked={selections.features.includes(feature.id)}
-                        onChange={() => handleFeatureToggle(feature.id)}
-                        className="sr-only"
-                      />
-                      <div className={`w-5 h-5 rounded border-2 transition-colors ${
-                        selections.features.includes(feature.id)
-                          ? 'bg-cyan-400 border-cyan-400'
-                          : 'border-gray-600 hover:border-gray-500'
-                      }`}>
-                        {selections.features.includes(feature.id) && (
-                          <svg className="w-3 h-3 text-black mx-auto mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                          </svg>
-                        )}
-                      </div>
-                      <div className="flex-1">
-                        <span className="text-white">{feature.label}</span>
-                        <span className="text-cyan-400 ml-2">+{feature.price}€</span>
-                      </div>
-                    </label>
-                  ))}
-                </div>
-              </div>
-
-              {/* Timeline */}
-              <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-xl p-6">
-                <h3 className="text-xl font-bold text-white mb-6">5. Timeline</h3>
-                <div className="space-y-3">
-                  {timelineOptions.map((timeline) => (
-                    <label key={timeline.id} className="cursor-pointer">
-                      <input
-                        type="radio"
-                        name="timeline"
-                        value={timeline.id}
-                        onChange={(e) => handleSelectionChange('timeline', e.target.value)}
-                        className="sr-only"
-                      />
-                      <div className={`p-4 rounded-lg border transition-all duration-300 ${
-                        selections.timeline === timeline.id
-                          ? 'border-cyan-400 bg-cyan-400/10'
-                          : 'border-gray-700 hover:border-gray-600'
-                      }`}>
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <div className="font-semibold text-white">{timeline.label}</div>
-                            <div className="text-sm text-gray-400">{timeline.desc}</div>
-                          </div>
-                          <div className="text-cyan-400 font-bold">×{timeline.multiplier}</div>
-                        </div>
-                      </div>
-                    </label>
-                  ))}
-                </div>
-              </div>
-
-              {/* Support */}
-              <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-xl p-6">
-                <h3 className="text-xl font-bold text-white mb-6">6. Soporte técnico</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {supportOptions.map((support) => (
-                    <label key={support.id} className="cursor-pointer">
-                      <input
-                        type="radio"
-                        name="support"
-                        value={support.id}
-                        onChange={(e) => handleSelectionChange('support', e.target.value)}
-                        className="sr-only"
-                      />
-                      <div className={`p-4 rounded-lg border transition-all duration-300 ${
-                        selections.support === support.id
-                          ? 'border-cyan-400 bg-cyan-400/10'
-                          : 'border-gray-700 hover:border-gray-600'
-                      }`}>
-                        <div className="text-center">
-                          <div className="font-semibold text-white">{support.label}</div>
-                          <div className="text-sm text-gray-400">{support.desc}</div>
-                          <div className="text-cyan-400 font-bold">
-                            {support.price === 0 ? 'Incluido' : `+${support.price}€`}
-                          </div>
-                        </div>
-                      </div>
-                    </label>
-                  ))}
-                </div>
+        <div className="max-w-5xl mx-auto">
+          <div className="bg-gray-900/50 backdrop-blur-sm rounded-2xl border border-cyan-500/20 p-8">
+            <div className="flex items-center gap-3 mb-6">
+              <Calculator className="w-8 h-8 text-cyan-400" />
+              <div>
+                <h3 className="text-2xl font-bold text-white">{config.title}</h3>
+                <p className="text-gray-400">{config.subtitle}</p>
               </div>
             </div>
 
-            {/* Price estimate */}
-            <div className="lg:col-span-1">
-              <div className="sticky top-8 space-y-6">
-                {/* Price display */}
-                <div className="bg-gradient-to-br from-gray-900/80 to-gray-800/80 backdrop-blur-sm border border-cyan-500/30 rounded-2xl p-8 text-center">
-                  <h3 className="text-xl font-bold text-white mb-6">Estimación del proyecto</h3>
-                  
-                  {estimatedPrice > 0 ? (
-                    <>
-                      <div className="mb-6">
-                        <div className="text-4xl font-bold gradient-text mb-2">
-                          {estimatedPrice.toLocaleString()}€
-                        </div>
-                        <div className="text-sm text-gray-400">
-                          Rango: {priceRange.min.toLocaleString()}€ - {priceRange.max.toLocaleString()}€
-                        </div>
-                      </div>
-
-                      <div className="space-y-4 mb-6">
-                        <div className="text-left">
-                          <h4 className="font-semibold text-white mb-3">Incluye:</h4>
-                          <div className="space-y-2 text-sm">
-                            <div className="flex items-center space-x-2">
-                              <span className="text-green-400">✓</span>
-                              <span className="text-gray-300">Desarrollo completo</span>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <span className="text-green-400">✓</span>
-                              <span className="text-gray-300">Diseño responsive</span>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <span className="text-green-400">✓</span>
-                              <span className="text-gray-300">SEO básico</span>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <span className="text-green-400">✓</span>
-                              <span className="text-gray-300">Testing completo</span>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <span className="text-green-400">✓</span>
-                              <span className="text-gray-300">Documentación</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="space-y-3">
-                        <button className="w-full py-3 px-6 bg-gradient-to-r from-cyan-400 to-green-400 text-black font-bold rounded-lg hover:shadow-xl hover:shadow-cyan-400/25 transition-all duration-300">
-                          Solicitar presupuesto detallado
-                        </button>
-                        <button 
-                          onClick={resetCalculator}
-                          className="w-full py-2 px-6 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors"
-                        >
-                          Reiniciar calculadora
-                        </button>
-                      </div>
-                    </>
-                  ) : (
-                    <div className="text-gray-400">
-                      <div className="text-6xl mb-4">💻</div>
-                      <p>Selecciona las opciones para ver la estimación</p>
-                    </div>
-                  )}
-                </div>
-
-                {/* Info box */}
-                <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-xl p-6">
-                  <h4 className="font-bold text-white mb-3">ℹ️ Información importante</h4>
-                  <div className="space-y-2 text-sm text-gray-400">
-                    <p>• Esta es una estimación orientativa</p>
-                    <p>• El precio final puede variar según requisitos específicos</p>
-                    <p>• Incluye consulta gratuita de 30 minutos</p>
-                    <p>• Sin compromiso hasta firma de contrato</p>
+            <AnimatePresence mode="wait">
+              {sent ? (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  className="text-center py-12"
+                >
+                  <div className="inline-flex items-center justify-center w-16 h-16 bg-green-500/20 rounded-full mb-4">
+                    <Check className="w-8 h-8 text-green-400" />
                   </div>
-                </div>
-              </div>
-            </div>
+                  <h4 className="text-2xl font-bold text-white mb-2">¡Presupuesto Enviado!</h4>
+                  <p className="text-gray-400">Te contactaré en 24-48 horas</p>
+                </motion.div>
+              ) : (
+                <>
+                  {/* Paso 1: Tipo de Proyecto */}
+                  <div className="mb-8">
+                    <h4 className="text-lg font-semibold text-white mb-4">
+                      1. Tipo de Proyecto
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                      {config.projectTypes?.sort((a, b) => a.order - b.order).map((type) => (
+                        <button
+                          key={type.id}
+                          onClick={() => setSelectedProject(type)}
+                          className={`p-4 rounded-xl border-2 transition-all text-left ${
+                            selectedProject?.id === type.id
+                              ? 'border-cyan-400 bg-cyan-500/10'
+                              : 'border-gray-700 hover:border-cyan-500/50'
+                          }`}
+                        >
+                          <div className="font-semibold text-white mb-1">{type.name}</div>
+                          <div className="text-sm text-gray-400 mb-2">{type.description}</div>
+                          <div className="text-cyan-400 font-bold">{type.basePrice}€</div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Paso 2: Características */}
+                  {selectedProject && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="mb-8"
+                    >
+                      <h4 className="text-lg font-semibold text-white mb-4">
+                        2. Características Adicionales
+                      </h4>
+                      
+                      {['frontend', 'backend', 'seo', 'extra'].map(category => {
+                        const categoryFeatures = config.features?.filter(f => f.category === category).sort((a, b) => a.order - b.order);
+                        if (!categoryFeatures || categoryFeatures.length === 0) return null;
+                        
+                        return (
+                          <div key={category} className="mb-6">
+                            <h5 className="text-md font-medium text-cyan-400 mb-3 capitalize">
+                              {category === 'frontend' ? 'Frontend' : 
+                               category === 'backend' ? 'Backend' :
+                               category === 'seo' ? 'SEO' : 'Extras'}
+                            </h5>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                              {categoryFeatures.map((feature) => {
+                                const isSelected = selectedFeatures.some(f => f.id === feature.id);
+                                return (
+                                  <button
+                                    key={feature.id}
+                                    onClick={() => {
+                                      if (isSelected) {
+                                        setSelectedFeatures(selectedFeatures.filter(f => f.id !== feature.id));
+                                      } else {
+                                        setSelectedFeatures([...selectedFeatures, feature]);
+                                      }
+                                    }}
+                                    className={`p-3 rounded-lg border transition-all text-left flex items-start gap-3 ${
+                                      isSelected
+                                        ? 'border-cyan-400 bg-cyan-500/10'
+                                        : 'border-gray-700 hover:border-cyan-500/50'
+                                    }`}
+                                  >
+                                    <div className={`mt-1 w-5 h-5 rounded flex items-center justify-center flex-shrink-0 ${
+                                      isSelected ? 'bg-cyan-400' : 'border-2 border-gray-600'
+                                    }`}>
+                                      {isSelected && <Check className="w-3 h-3 text-gray-900" />}
+                                    </div>
+                                    <div className="flex-1">
+                                      <div className="flex items-center justify-between mb-1">
+                                        <span className="font-medium text-white">{feature.name}</span>
+                                        <span className="text-cyan-400 font-semibold">
+                                          {feature.price > 0 ? `+${feature.price}€` : 'Incluido'}
+                                        </span>
+                                      </div>
+                                      <div className="text-xs text-gray-400">{feature.description}</div>
+                                    </div>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </motion.div>
+                  )}
+
+                  {/* Paso 3: Plazo */}
+                  {selectedProject && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="mb-8"
+                    >
+                      <h4 className="text-lg font-semibold text-white mb-4">
+                        3. Plazo de Entrega
+                      </h4>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        {config.timelines?.sort((a, b) => a.order - b.order).map((timeline) => (
+                          <button
+                            key={timeline.id}
+                            onClick={() => setSelectedTimeline(timeline)}
+                            className={`p-4 rounded-xl border-2 transition-all text-center ${
+                              selectedTimeline?.id === timeline.id
+                                ? 'border-cyan-400 bg-cyan-500/10'
+                                : 'border-gray-700 hover:border-cyan-500/50'
+                            }`}
+                          >
+                            <Clock className="w-6 h-6 text-cyan-400 mx-auto mb-2" />
+                            <div className="font-semibold text-white mb-1">{timeline.name}</div>
+                            <div className="text-xs text-gray-400 mb-2">{timeline.description}</div>
+                            {timeline.multiplier !== 1 && (
+                              <div className={`text-sm font-bold ${
+                                timeline.multiplier > 1 ? 'text-orange-400' : 'text-green-400'
+                              }`}>
+                                {timeline.multiplier > 1 ? '+' : ''}{((timeline.multiplier - 1) * 100).toFixed(0)}%
+                              </div>
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
+
+                  {/* Resumen */}
+                  {selectedProject && selectedTimeline && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="bg-gray-800/50 rounded-xl p-6 mb-8"
+                    >
+                      <h4 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                        <TrendingUp className="w-5 h-5 text-cyan-400" />
+                        Resumen del Presupuesto
+                      </h4>
+                      
+                      <div className="space-y-2 mb-4">
+                        <div className="flex justify-between text-gray-300">
+                          <span>Base ({selectedProject.name})</span>
+                          <span>{selectedProject.basePrice}€</span>
+                        </div>
+                        
+                        {selectedFeatures.map(feature => (
+                          <div key={feature.id} className="flex justify-between text-gray-400 text-sm">
+                            <span>+ {feature.name}</span>
+                            <span>{feature.price}€</span>
+                          </div>
+                        ))}
+                        
+                        {budget.timelineAdjustment !== 0 && (
+                          <div className={`flex justify-between text-sm ${
+                            budget.timelineAdjustment > 0 ? 'text-orange-400' : 'text-green-400'
+                          }`}>
+                            <span>Ajuste plazo ({selectedTimeline.name})</span>
+                            <span>{budget.timelineAdjustment > 0 ? '+' : ''}{Math.round(budget.timelineAdjustment)}€</span>
+                          </div>
+                        )}
+                        
+                        {budget.discount && (
+                          <div className="flex justify-between text-green-400 text-sm">
+                            <span className="flex items-center gap-1">
+                              <Gift className="w-4 h-4" />
+                              {budget.discount.name} (-{budget.discount.percentage}%)
+                            </span>
+                            <span>-{Math.round(budget.subtotal * budget.discount.percentage / 100)}€</span>
+                          </div>
+                        )}
+                        
+                        <div className="border-t border-gray-700 pt-3 mt-3">
+                          <div className="flex justify-between items-center">
+                            <span className="text-xl font-bold text-white">Total Estimado</span>
+                            <span className="text-3xl font-bold text-cyan-400">{budget.total}€</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() => setShowResult(true)}
+                        className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-semibold py-3 rounded-lg hover:from-cyan-600 hover:to-blue-600 transition-all"
+                      >
+                        Solicitar Presupuesto Detallado
+                      </button>
+                    </motion.div>
+                  )}
+
+                  {/* Formulario */}
+                  {showResult && (
+                    <motion.form
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      onSubmit={handleSubmit}
+                      className="space-y-4"
+                    >
+                      <h4 className="text-lg font-semibold text-white mb-4">
+                        4. Tus Datos de Contacto
+                      </h4>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <input
+                          type="text"
+                          placeholder="Nombre *"
+                          required
+                          value={clientInfo.name}
+                          onChange={(e) => setClientInfo({...clientInfo, name: e.target.value})}
+                          className="px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:border-cyan-400 focus:outline-none"
+                        />
+                        <input
+                          type="email"
+                          placeholder="Email *"
+                          required
+                          value={clientInfo.email}
+                          onChange={(e) => setClientInfo({...clientInfo, email: e.target.value})}
+                          className="px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:border-cyan-400 focus:outline-none"
+                        />
+                        <input
+                          type="tel"
+                          placeholder="Teléfono"
+                          value={clientInfo.phone}
+                          onChange={(e) => setClientInfo({...clientInfo, phone: e.target.value})}
+                          className="px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:border-cyan-400 focus:outline-none"
+                        />
+                        <input
+                          type="text"
+                          placeholder="Empresa"
+                          value={clientInfo.company}
+                          onChange={(e) => setClientInfo({...clientInfo, company: e.target.value})}
+                          className="px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:border-cyan-400 focus:outline-none"
+                        />
+                      </div>
+                      
+                      <textarea
+                        placeholder="Cuéntame más sobre tu proyecto..."
+                        rows={4}
+                        value={clientInfo.message}
+                        onChange={(e) => setClientInfo({...clientInfo, message: e.target.value})}
+                        className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:border-cyan-400 focus:outline-none resize-none"
+                      />
+                      
+                      <button
+                        type="submit"
+                        disabled={sending}
+                        className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-bold py-4 rounded-lg hover:from-cyan-600 hover:to-blue-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {sending ? 'Enviando...' : `Enviar Solicitud (${budget.total}€)`}
+                      </button>
+                    </motion.form>
+                  )}
+                </>
+              )}
+            </AnimatePresence>
           </div>
         </div>
       </div>
     </section>
   );
 }
-
-export default BudgetCalculator;

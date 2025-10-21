@@ -1,151 +1,98 @@
-// src/app/api/admin/contact-page/route.js
-import { NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import dbConnect from '@/lib/mongodb'
-import ContactPage from '@/models/ContactPage'
+import { NextResponse } from 'next/server';
+import connectDB from '@/lib/mongodb';
+import ContactPage from '@/models/ContactPage';
 
 export async function GET() {
   try {
-    await dbConnect()
+    await connectDB();
     
-    let contactPage = await ContactPage.findOne()
+    let contactPage = await ContactPage.findOne();
     
     if (!contactPage) {
-      // Crear página por defecto
-      contactPage = new ContactPage({
+      contactPage = await ContactPage.create({
         hero: {
-          title: "Hablemos de tu proyecto",
-          subtitle: "¿Tienes una idea increíble?",
-          description: "Cuéntame tu proyecto y te ayudo a hacerlo realidad con desarrollo web personalizado."
-        },
-        contactMethods: [
-          {
-            icon: "💬",
-            title: "Consulta Gratuita",
-            description: "30 minutos para analizar tu proyecto sin compromiso",
-            action: "Agendar llamada",
-            link: "#",
-            highlight: true
-          },
-          {
-            icon: "💻",
-            title: "Presupuesto Express",
-            description: "Calculadora automática para proyectos estándar",
-            action: "Calcular precio",
-            link: "#calculadora",
-            highlight: false
-          },
-          {
-            icon: "📧",
-            title: "Contacto Directo",
-            description: "Escríbeme directamente con los detalles",
-            action: "Enviar mensaje",
-            link: "#formulario",
-            highlight: false
-          }
-        ],
-        calculator: {
-          enabled: true,
-          title: "Calculadora de Presupuestos",
-          description: "Obtén una estimación instantánea para tu proyecto",
-          services: [
-            {
-              name: "Landing Page",
-              basePrice: 1500,
-              priceRange: { min: 1200, max: 2500 },
-              options: [
-                { name: "Diseño básico", price: 0, description: "Plantilla adaptada" },
-                { name: "Diseño personalizado", price: 500, description: "Diseño único" },
-                { name: "Animaciones", price: 300, description: "Efectos y transiciones" }
-              ]
-            },
-            {
-              name: "E-commerce",
-              basePrice: 3500,
-              priceRange: { min: 3000, max: 8000 },
-              options: [
-                { name: "Hasta 50 productos", price: 0, description: "Catálogo básico" },
-                { name: "Hasta 500 productos", price: 1000, description: "Catálogo medio" },
-                { name: "Productos ilimitados", price: 2000, description: "Catálogo grande" },
-                { name: "Multiple warehouses", price: 1500, description: "Gestión avanzada" }
-              ]
-            },
-            {
-              name: "Aplicación Web",
-              basePrice: 4500,
-              priceRange: { min: 4000, max: 12000 },
-              options: [
-                { name: "Dashboard básico", price: 0, description: "Funcionalidades core" },
-                { name: "Dashboard avanzado", price: 2000, description: "Analytics y reportes" },
-                { name: "API integrations", price: 1500, description: "Servicios externos" },
-                { name: "User management", price: 1000, description: "Roles y permisos" }
-              ]
-            }
-          ],
-          addons: [
-            { name: "SEO Avanzado", price: 800, description: "Optimización técnica completa", category: "seo" },
-            { name: "Multiidioma", price: 600, description: "Soporte para varios idiomas", category: "features" },
-            { name: "Panel Admin", price: 1200, description: "CMS personalizado", category: "admin" },
-            { name: "Integración CRM", price: 900, description: "Conexión con HubSpot/Salesforce", category: "integrations" },
-            { name: "App Móvil (PWA)", price: 1800, description: "Versión móvil nativa", category: "mobile" },
-            { name: "Soporte 24/7", price: 200, description: "Por mes", category: "support" }
-          ],
-          multipliers: [
-            { name: "Urgente (entrega en 2 semanas)", factor: 1.5, description: "50% extra" },
-            { name: "Premium support (6 meses)", factor: 1.2, description: "20% extra" },
-            { name: "Código fuente + docs", factor: 1.1, description: "10% extra" }
-          ]
+          title: '¿Listo para llevar tu proyecto al siguiente nivel?',
+          subtitle: 'Hablemos de tu idea',
+          description: 'Cuéntame tu proyecto y te ayudaré a convertirlo en realidad.'
         },
         contactInfo: {
-          email: "hola@luisgranero.com",
-          phone: "+34 XXX XXX XXX",
-          location: "España",
-          availability: "Disponible para nuevos proyectos",
-          responseTime: "24 horas",
-          languages: ["Español", "Inglés"]
+          email: 'luis@luisgranero.com',
+          phone: '+34 698 38 3610'
+          location: 'Valencia, España,'
+          availability: 'Disponible para nuevos proyectos',
+          responseTime: '24-48 horas'
+        },
+        socialLinks: [
+          { platform: 'GitHub', url: 'https://github.com/luisgranero', icon: 'github' },
+          { platform: 'LinkedIn', url: 'https://linkedin.com/in/luisgranero', icon: 'linkedin' }
+        ],
+        budgetCalculator: {
+          enabled: true,
+          title: 'Calculadora de Presupuesto',
+          subtitle: 'Obtén una estimación instantánea',
+          projectTypes: [
+            { id: 'landing', name: 'Landing Page', basePrice: 800, description: 'Página única optimizada', icon: 'file-text', order: 1 },
+            { id: 'web-corporativa', name: 'Web Corporativa', basePrice: 1500, description: 'Sitio completo', icon: 'briefcase', order: 2 },
+            { id: 'ecommerce', name: 'E-commerce', basePrice: 3000, description: 'Tienda online', icon: 'shopping-cart', order: 3 },
+            { id: 'web-app', name: 'Aplicación Web', basePrice: 4000, description: 'SPA/PWA personalizada', icon: 'code', order: 4 }
+          ],
+          features: [
+            { id: 'responsive', name: 'Diseño Responsive', price: 0, description: 'Incluido', category: 'frontend', order: 1 },
+            { id: 'animations', name: 'Animaciones', price: 300, description: 'Framer Motion', category: 'frontend', order: 2 },
+            { id: 'dark-mode', name: 'Dark Mode', price: 200, description: 'Tema oscuro', category: 'frontend', order: 3 },
+            { id: 'auth', name: 'Autenticación', price: 600, description: 'Login/Registro', category: 'backend', order: 4 },
+            { id: 'cms', name: 'Panel Admin', price: 800, description: 'CMS personalizado', category: 'backend', order: 5 },
+            { id: 'seo-advanced', name: 'SEO Avanzado', price: 500, description: 'Schema markup', category: 'seo', order: 6 }
+          ],
+          timelines: [
+            { id: 'flexible', name: 'Flexible (4-6 semanas)', multiplier: 0.9, days: 35, description: 'Sin urgencia', order: 1 },
+            { id: 'normal', name: 'Normal (2-3 semanas)', multiplier: 1.0, days: 18, description: 'Estándar', order: 2 },
+            { id: 'urgente', name: 'Urgente (1 semana)', multiplier: 1.5, days: 7, description: 'Prioridad máxima', order: 3 }
+          ],
+          discounts: [
+            { id: 'first-project', name: 'Primer Proyecto', percentage: 10, minAmount: 1000, description: 'Nuevos clientes', enabled: true },
+            { id: 'large-project', name: 'Proyecto Grande', percentage: 15, minAmount: 5000, description: 'Proyectos +5000€', enabled: true }
+          ]
+        },
+        seo: {
+          title: 'Contacto - Luis Granero',
+          description: 'Hablemos de tu proyecto web',
+          keywords: ['contacto', 'presupuesto web', 'freelance']
         }
-      })
-      
-      await contactPage.save()
+      });
     }
     
-    return NextResponse.json({ contactPage })
+    return NextResponse.json(contactPage);
+    
   } catch (error) {
-    console.error('Error fetching contact page:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    console.error('Error fetching contact page:', error);
+    return NextResponse.json({ error: 'Error al cargar' }, { status: 500 });
   }
 }
 
-export async function POST(request) {
+export async function PUT(request) {
   try {
-    const session = await getServerSession()
+    await connectDB();
+    const body = await request.json();
     
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    await dbConnect()
+    let contactPage = await ContactPage.findOne();
     
-    const data = await request.json()
-    
-    let contactPage = await ContactPage.findOne()
-    
-    if (contactPage) {
-      // Actualizar existente
-      Object.assign(contactPage, data)
-      await contactPage.save()
+    if (!contactPage) {
+      contactPage = new ContactPage(body);
     } else {
-      // Crear nuevo
-      contactPage = new ContactPage(data)
-      await contactPage.save()
+      Object.assign(contactPage, body);
     }
     
-    return NextResponse.json({ 
-      message: 'Contact page updated successfully', 
-      contactPage 
-    })
+    await contactPage.save();
+    
+    return NextResponse.json({
+      success: true,
+      message: 'Actualizado correctamente',
+      data: contactPage
+    });
+    
   } catch (error) {
-    console.error('Error saving contact page:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    console.error('Error updating:', error);
+    return NextResponse.json({ error: 'Error al actualizar' }, { status: 500 });
   }
 }
