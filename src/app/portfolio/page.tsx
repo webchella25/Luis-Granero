@@ -6,14 +6,13 @@ import ProjectsGrid from '../../components/portfolio/ProjectsGrid';
 import TechnologiesUsed from '../../components/portfolio/TechnologiesUsed';
 import ClientTestimonials from '../../components/portfolio/ClientTestimonials';
 
-// ✅ AÑADIR ESTO
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 // Función para obtener proyectos
 async function getPortfolioData() {
   try {
-    const baseUrl = process.env.NEXTAUTH_URL || 'https://luisgranero.com';
+    const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
     const res = await fetch(`${baseUrl}/api/public/projects`, {
       cache: 'no-store',
     });
@@ -23,7 +22,8 @@ async function getPortfolioData() {
       return [];
     }
     
-    return res.json();
+    const data = await res.json();
+    return Array.isArray(data) ? data : [];
   } catch (error) {
     console.error('Error fetching portfolio data:', error);
     return [];
@@ -33,14 +33,13 @@ async function getPortfolioData() {
 // Función para obtener configuración del portfolio
 async function getPortfolioSettings() {
   try {
-    const baseUrl = process.env.NEXTAUTH_URL || 'https://luisgranero.com';
+    const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
     const res = await fetch(`${baseUrl}/api/public/portfolio/settings`, {
       cache: 'no-store',
     });
     
     if (!res.ok) {
       console.error('Portfolio settings fetch failed:', res.status);
-      // ✅ Devolver objeto PLANO, no { content: {} }
       return {
         hero: { 
           title: "Portfolio", 
@@ -60,35 +59,39 @@ async function getPortfolioSettings() {
     
     const data = await res.json();
     
-    // ✅ CRÍTICO: Devolver data.content si existe, o objeto vacío limpio
+    // La API devuelve { content: {...} }, extraemos content
     return data?.content || {
       hero: { 
         title: "Portfolio", 
         subtitle: "Casos de éxito en desarrollo web", 
         description: "" 
       },
-      stats: {},
+      stats: {
+        totalProjects: 0,
+        clientSatisfaction: "98%"
+      },
       categories: [],
       valuePropositions: []
     };
     
   } catch (error) {
     console.error('Error fetching portfolio settings:', error);
-    // ✅ Devolver objeto PLANO
     return {
       hero: { 
         title: "Portfolio", 
         subtitle: "Casos de éxito en desarrollo web", 
         description: "" 
       },
-      stats: {},
+      stats: {
+        totalProjects: 0,
+        clientSatisfaction: "98%"
+      },
       categories: [],
       valuePropositions: []
     };
   }
 }
 
-// Interface corregida para Next.js 15
 interface PortfolioPageProps {
   params: Promise<{ [key: string]: string | string[] }>
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
@@ -124,6 +127,9 @@ export default async function PortfolioPage({ searchParams }: PortfolioPageProps
     getPortfolioData(),
     getPortfolioSettings()
   ]);
+
+  console.log('📊 Portfolio Page - Projects:', projects.length);
+  console.log('📊 Portfolio Page - Settings:', portfolioSettings);
 
   return (
     <main className="min-h-screen bg-black">
