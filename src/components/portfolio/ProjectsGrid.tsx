@@ -56,73 +56,30 @@ export default function ProjectsGrid({ projects = [] }: Props) {
         project.category?.toLowerCase() === selectedCategory.toLowerCase()
       );
 
-  // Proyectos de fallback si no hay datos del admin
-  const defaultProjects: Project[] = [
-    {
-      _id: '1',
-      title: "E-commerce Avanzado",
-      description: "Plataforma completa de comercio electrónico con gestión de inventarios, múltiples métodos de pago y analytics en tiempo real.",
-      technologies: ["Next.js", "Node.js", "MongoDB", "Stripe"],
-      category: "E-commerce",
-      status: "En producción",
-      metrics: {
-        performance: "98/100",
-        conversions: "+35%",
-        loadTime: "1.2s"
-      },
-      features: [
-        "Gestión avanzada de inventarios",
-        "Múltiples pasarelas de pago",
-        "Dashboard administrativo",
-        "Analytics en tiempo real",
-        "SEO optimizado"
-      ],
-      slug: "ecommerce-avanzado",
-      year: "2024"
-    },
-    {
-      _id: '2',
-      title: "Dashboard Corporativo",
-      description: "Sistema de gestión empresarial con visualización de datos, reportes automatizados y integración con APIs externas.",
-      technologies: ["React", "TypeScript", "Express", "PostgreSQL"],
-      category: "Dashboard",
-      status: "En desarrollo",
-      metrics: {
-        performance: "96/100",
-        users: "500+",
-        dataPoints: "10M+"
-      },
-      features: [
-        "Visualización de datos en tiempo real",
-        "Reportes automatizados",
-        "Integración con múltiples APIs",
-        "Gestión de usuarios y roles",
-        "Exportación de datos"
-      ],
-      slug: "dashboard-corporativo",
-      year: "2024"
-    }
-  ];
-
-  const displayProjects = projects.length > 0 ? filteredProjects : defaultProjects;
-
+  // MOSTRAR MENSAJE SI NO HAY PROYECTOS
   if (projects.length === 0) {
     return (
-      <section className="py-20 bg-gray-950">
+      <section id="projects" className="py-20 bg-gray-950">
         <div className="container mx-auto px-4">
           <div className="text-center">
             <h2 className="text-4xl md:text-5xl font-bold gradient-text mb-6">
               Portfolio
             </h2>
             <p className="text-xl text-gray-400 mb-12">
-              Proyectos en desarrollo. Próximamente casos de estudio detallados.
+              Próximamente casos de estudio detallados de proyectos reales.
             </p>
             
-            {/* Mostrar proyectos de ejemplo */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-4xl mx-auto">
-              {defaultProjects.map((project) => (
-                <ProjectCard key={project._id} project={project} />
-              ))}
+            <div className="max-w-md mx-auto bg-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-xl p-8">
+              <div className="text-6xl mb-4">📂</div>
+              <p className="text-gray-300 mb-6">
+                Actualmente no hay proyectos publicados en el portfolio.
+              </p>
+              <Link
+                href="/contacto"
+                className="inline-block px-8 py-4 bg-gradient-to-r from-cyan-400 to-green-400 text-black font-bold rounded-lg hover:shadow-xl hover:shadow-cyan-400/25 transition-all duration-300 transform hover:scale-105"
+              >
+                Conversemos sobre tu proyecto
+              </Link>
             </div>
           </div>
         </div>
@@ -131,7 +88,7 @@ export default function ProjectsGrid({ projects = [] }: Props) {
   }
 
   return (
-    <section className="py-20 bg-gray-950">
+    <section id="projects" className="py-20 bg-gray-950">
       <div className="container mx-auto px-4">
         <div className="text-center mb-12">
           <h2 className="text-4xl md:text-5xl font-bold gradient-text mb-6">
@@ -162,11 +119,19 @@ export default function ProjectsGrid({ projects = [] }: Props) {
         )}
 
         {/* Projects grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {displayProjects.map((project) => (
-            <ProjectCard key={project._id} project={project} />
-          ))}
-        </div>
+        {filteredProjects.length > 0 ? (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {filteredProjects.map((project) => (
+              <ProjectCard key={project._id} project={project} />
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-12">
+            <p className="text-xl text-gray-400">
+              No hay proyectos en esta categoría aún.
+            </p>
+          </div>
+        )}
 
         {/* CTA */}
         <div className="text-center mt-16">
