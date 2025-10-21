@@ -8,14 +8,14 @@ import Appointment from '@/models/Appointment';
 import nodemailer from 'nodemailer';
 import crypto from 'crypto';
 
-// Configurar Brevo transporter
+// Configurar transporter
 const transporter = nodemailer.createTransport({
-  host: process.env.BREVO_SMTP_HOST || 'smtp-relay.brevo.com',
-  port: parseInt(process.env.BREVO_SMTP_PORT) || 587,
+  host: 'smtp-relay.brevo.com',
+  port: 587,
   secure: false,
   auth: {
-    user: process.env.BREVO_SMTP_USER,
-    pass: process.env.BREVO_SMTP_PASS
+    user: '97fd27001@smtp-brevo.com',
+    pass: 'KTcWQIh2szOLS34N'
   }
 });
 

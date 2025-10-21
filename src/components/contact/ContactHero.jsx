@@ -226,26 +226,26 @@ function ContactHero() {
           {/* BOTONES DE ACCIÓN PRINCIPALES */}
           <div className="flex flex-col sm:flex-row gap-6 justify-center items-center mb-12">
             <Link
-              href="#contact-form"
-              className="group relative px-12 py-6 bg-gradient-to-r from-cyan-500 to-green-500 text-black font-black text-2xl rounded-2xl hover:shadow-2xl hover:shadow-cyan-500/50 transition-all duration-300 transform hover:scale-110 hover:-translate-y-3"
-            >
-              <span className="relative z-10 flex items-center">
-                <span className="mr-4 text-3xl group-hover:rotate-12 transition-transform">🚀</span>
-                Empezar proyecto
-                <span className="ml-4 group-hover:translate-x-2 transition-transform text-3xl">→</span>
-              </span>
-              <div className="absolute inset-0 bg-gradient-to-r from-green-500 to-cyan-500 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            </Link>
-            
-            <Link
-              href="#budget-calculator"
-              className="group px-12 py-6 border-3 border-purple-400/50 text-purple-400 hover:bg-purple-400/10 hover:border-purple-400 font-bold text-2xl rounded-2xl transition-all duration-300 transform hover:scale-110 hover:-translate-y-3"
-            >
-              <span className="flex items-center">
-                <span className="mr-4 text-3xl group-hover:scale-125 transition-transform">💰</span>
-                Calcular presupuesto
-              </span>
-            </Link>
+  href="#formulario"
+  className="group relative px-12 py-6 bg-gradient-to-r from-cyan-500 to-green-500 text-black font-black text-2xl rounded-2xl hover:shadow-2xl hover:shadow-cyan-500/50 transition-all duration-300 transform hover:scale-110 hover:-translate-y-3"
+>
+  <span className="relative z-10 flex items-center">
+    <span className="mr-4 text-3xl group-hover:rotate-12 transition-transform">🚀</span>
+    Empezar proyecto
+    <span className="ml-4 group-hover:translate-x-2 transition-transform text-3xl">→</span>
+  </span>
+  <div className="absolute inset-0 bg-gradient-to-r from-green-500 to-cyan-500 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+</Link>
+
+<Link
+  href="#calculadora"
+  className="group px-12 py-6 border-3 border-purple-400/50 text-purple-400 hover:bg-purple-400/10 hover:border-purple-400 font-bold text-2xl rounded-2xl transition-all duration-300 transform hover:scale-110 hover:-translate-y-3"
+>
+  <span className="flex items-center">
+    <span className="mr-4 text-3xl group-hover:scale-125 transition-transform">💰</span>
+    Calcular presupuesto
+  </span>
+</Link>
           </div>
 
           {/* PROCESO VISUAL */}
