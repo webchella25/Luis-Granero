@@ -4,7 +4,6 @@ import mongoose from 'mongoose'
 const PageSchema = new mongoose.Schema({
   slug: {
     type: String,
-    required: true,
     unique: true
   },
   title: {

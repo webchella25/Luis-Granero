@@ -28,23 +28,29 @@ async function getPortfolioData() {
 // Función para obtener configuración del portfolio
 async function getPortfolioSettings() {
   try {
-    const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+    const baseUrl = process.env.NEXTAUTH_URL || 'https://luisgranero.com';
     const res = await fetch(`${baseUrl}/api/public/portfolio/settings`, {
       cache: 'no-store',
+      next: { revalidate: 0 }
     });
     
     if (!res.ok) {
-      throw new Error('Error fetching portfolio settings');
+      console.error('Portfolio settings fetch failed:', res.status);
+      return {
+        hero: { title: "Portfolio", subtitle: "", description: "" },
+        stats: {}
+      };
     }
     
     const data = await res.json();
-    
-    // ✅ Devolver solo el contenido, no el wrapper
     return data.content || {};
     
   } catch (error) {
-    console.error('Error:', error);
-    return {}; // ✅ Devolver objeto vacío en caso de error
+    console.error('Error fetching portfolio settings:', error);
+    return {
+      hero: { title: "Portfolio", subtitle: "", description: "" },
+      stats: {}
+    };
   }
 }
 
