@@ -71,7 +71,7 @@ function HeroSection() {
   }
 
   return (
-    <section className="min-h-screen flex items-center justify-center bg-black relative overflow-hidden">
+    <section className="min-h-screen flex items-center justify-center bg-black relative overflow-hidden pt-20">
       
       {/* BACKGROUND EFFECTS ÉPICOS */}
       <div className="absolute inset-0">
