@@ -1,8 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
 
 function ContactForm() {
+  const [settings, setSettings] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -16,6 +18,13 @@ function ContactForm() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/settings/public')
+      .then(res => res.json())
+      .then(data => setSettings(data))
+      .catch(err => console.error('Error cargando settings:', err));
+  }, []);
 
   const projectTypes = [
     { id: 'landing', label: 'Landing Page', icon: '📄' },
@@ -69,16 +78,34 @@ function ContactForm() {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    try {
+      const res = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      });
 
-    setIsSubmitting(false);
-    setIsSubmitted(true);
+      if (res.ok) {
+        setIsSubmitted(true);
+      } else {
+        alert('Error al enviar. Inténtalo de nuevo.');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      alert('Error al enviar. Inténtalo de nuevo.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (isSubmitted) {
+    const phone = settings?.site?.phone || '+34 XXX XXX XXX';
+    const whatsapp = settings?.site?.whatsapp || phone.replace(/\s/g, '');
+    const phoneClean = phone.replace(/\s/g, '');
+    const whatsappClean = whatsapp.replace(/\+/g, '').replace(/\s/g, '');
+    
     return (
-      <section className="py-20 bg-gray-950">
+      <section className="py-20 bg-gray-950" id="formulario">
         <div className="container mx-auto px-4">
           <div className="max-w-2xl mx-auto text-center">
             <div className="bg-gradient-to-r from-gray-900/50 to-gray-800/50 backdrop-blur-sm border border-green-500/30 rounded-2xl p-8">
@@ -91,9 +118,22 @@ function ContactForm() {
                 Si es urgente, también puedes llamarme directamente.
               </p>
               <div className="space-y-4">
-                <div className="flex items-center justify-center space-x-4 text-sm text-gray-400">
+                <div className="flex flex-col md:flex-row items-center justify-center gap-4 text-sm text-gray-400">
                   <span>📧 Respuesta por email: 2-4h</span>
-                  <span>📞 Llamada urgente: +34 XXX XXX XXX</span>
+                  <Link 
+                    href={`tel:${phoneClean}`}
+                    className="text-cyan-400 hover:text-cyan-300 transition-colors"
+                  >
+                    📞 Llamada urgente: {phone}
+                  </Link>
+                  <Link
+                    href={`https://wa.me/${whatsappClean}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-green-400 hover:text-green-300 transition-colors"
+                  >
+                    💬 WhatsApp
+                  </Link>
                 </div>
                 <button 
                   onClick={() => setIsSubmitted(false)}
@@ -110,7 +150,7 @@ function ContactForm() {
   }
 
   return (
-    <section className="py-20 bg-gray-950">
+    <section className="py-20 bg-gray-950" id="formulario">
       <div className="container mx-auto px-4">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-12">
@@ -127,47 +167,32 @@ function ContactForm() {
             <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-xl p-8">
               <h3 className="text-xl font-bold text-white mb-6">Información de contacto</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-semibold text-white mb-2">
-                    Nombre *
-                  </label>
-                  <input
-                    type="text"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-cyan-400 transition-colors"
-                    placeholder="Tu nombre"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-white mb-2">
-                    Email *
-                  </label>
-                  <input
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-cyan-400 transition-colors"
-                    placeholder="tu@email.com"
-                    required
-                  />
-                </div>
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-semibold text-white mb-2">
-                    Empresa / Proyecto
-                  </label>
-                  <input
-                    type="text"
-                    name="company"
-                    value={formData.company}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-cyan-400 transition-colors"
-                    placeholder="Nombre de tu empresa o proyecto"
-                  />
-                </div>
+                <input
+                  type="text"
+                  name="name"
+                  placeholder="Nombre completo *"
+                  required
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  className="px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:border-cyan-400 focus:outline-none"
+                />
+                <input
+                  type="email"
+                  name="email"
+                  placeholder="Email *"
+                  required
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  className="px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:border-cyan-400 focus:outline-none"
+                />
+                <input
+                  type="text"
+                  name="company"
+                  placeholder="Empresa (opcional)"
+                  value={formData.company}
+                  onChange={handleInputChange}
+                  className="px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:border-cyan-400 focus:outline-none md:col-span-2"
+                />
               </div>
             </div>
 
@@ -184,13 +209,13 @@ function ContactForm() {
                       onChange={handleInputChange}
                       className="sr-only"
                     />
-                    <div className={`p-4 rounded-lg border transition-all duration-300 text-center ${
+                    <div className={`p-4 rounded-lg border-2 transition-all duration-300 text-center ${
                       formData.projectType === type.id
                         ? 'border-cyan-400 bg-cyan-400/10'
                         : 'border-gray-700 hover:border-gray-600'
                     }`}>
-                      <div className="text-2xl mb-2">{type.icon}</div>
-                      <div className="text-sm font-semibold text-white">{type.label}</div>
+                      <div className="text-3xl mb-2">{type.icon}</div>
+                      <div className="font-semibold text-white text-sm">{type.label}</div>
                     </div>
                   </label>
                 ))}
@@ -200,9 +225,9 @@ function ContactForm() {
             {/* Budget */}
             <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-xl p-8">
               <h3 className="text-xl font-bold text-white mb-6">Presupuesto estimado</h3>
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {budgetRanges.map((range) => (
-                  <label key={range.id} className="cursor-pointer">
+                  <label key={range.id} className="cursor-pointer block">
                     <input
                       type="radio"
                       name="budget"
@@ -215,17 +240,8 @@ function ContactForm() {
                         ? 'border-cyan-400 bg-cyan-400/10'
                         : 'border-gray-700 hover:border-gray-600'
                     }`}>
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <div className="font-semibold text-white">{range.label}</div>
-                          <div className="text-sm text-gray-400">{range.desc}</div>
-                        </div>
-                        <div className={`w-4 h-4 rounded-full border-2 transition-colors ${
-                          formData.budget === range.id
-                            ? 'border-cyan-400 bg-cyan-400'
-                            : 'border-gray-600'
-                        }`}></div>
-                      </div>
+                      <div className="font-semibold text-white mb-1">{range.label}</div>
+                      <div className="text-sm text-gray-400">{range.desc}</div>
                     </div>
                   </label>
                 ))}
@@ -234,7 +250,7 @@ function ContactForm() {
 
             {/* Timeline */}
             <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-xl p-8">
-              <h3 className="text-xl font-bold text-white mb-6">Timeline deseado</h3>
+              <h3 className="text-xl font-bold text-white mb-6">¿Cuándo necesitas el proyecto?</h3>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {timelines.map((timeline) => (
                   <label key={timeline.id} className="cursor-pointer">
@@ -245,13 +261,13 @@ function ContactForm() {
                       onChange={handleInputChange}
                       className="sr-only"
                     />
-                    <div className={`p-4 rounded-lg border transition-all duration-300 text-center ${
+                    <div className={`p-4 rounded-lg border-2 transition-all duration-300 text-center ${
                       formData.timeline === timeline.id
                         ? 'border-cyan-400 bg-cyan-400/10'
                         : 'border-gray-700 hover:border-gray-600'
                     }`}>
-                      <div className="text-2xl mb-2">{timeline.icon}</div>
-                      <div className="text-sm font-semibold text-white">{timeline.label}</div>
+                      <div className="text-3xl mb-2">{timeline.icon}</div>
+                      <div className="font-semibold text-white text-sm">{timeline.label}</div>
                     </div>
                   </label>
                 ))}
@@ -260,28 +276,17 @@ function ContactForm() {
 
             {/* Features */}
             <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-xl p-8">
-              <h3 className="text-xl font-bold text-white mb-6">Funcionalidades deseadas</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <h3 className="text-xl font-bold text-white mb-6">Funcionalidades requeridas</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {features.map((feature) => (
-                  <label key={feature.id} className="flex items-center space-x-3 cursor-pointer">
+                  <label key={feature.id} className="flex items-center cursor-pointer group">
                     <input
                       type="checkbox"
                       checked={formData.features.includes(feature.id)}
                       onChange={() => handleFeatureChange(feature.id)}
-                      className="sr-only"
+                      className="w-5 h-5 text-cyan-400 rounded focus:ring-cyan-400 focus:ring-offset-gray-900"
                     />
-                    <div className={`w-5 h-5 rounded border-2 transition-colors ${
-                      formData.features.includes(feature.id)
-                        ? 'bg-cyan-400 border-cyan-400'
-                        : 'border-gray-600 hover:border-gray-500'
-                    }`}>
-                      {formData.features.includes(feature.id) && (
-                        <svg className="w-3 h-3 text-black mx-auto mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
-                      )}
-                    </div>
-                    <span className="text-gray-300">{feature.label}</span>
+                    <span className="ml-3 text-white group-hover:text-cyan-400 transition-colors">{feature.label}</span>
                   </label>
                 ))}
               </div>
@@ -292,18 +297,18 @@ function ContactForm() {
               <h3 className="text-xl font-bold text-white mb-6">Descripción del proyecto</h3>
               <textarea
                 name="description"
+                placeholder="Cuéntame en detalle qué necesitas..."
+                rows={6}
                 value={formData.description}
                 onChange={handleInputChange}
-                rows={6}
-                className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-cyan-400 transition-colors resize-none"
-                placeholder="Cuéntame más detalles sobre tu proyecto: objetivos, funcionalidades específicas, referencias, etc."
+                className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:border-cyan-400 focus:outline-none resize-none"
               />
             </div>
 
             {/* Priority */}
             <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-xl p-8">
               <h3 className="text-xl font-bold text-white mb-6">Prioridad</h3>
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {[
                   { id: 'low', label: 'Normal', desc: 'Respuesta en 24-48h' },
                   { id: 'normal', label: 'Urgente', desc: 'Respuesta en 2-4h' },
@@ -314,6 +319,7 @@ function ContactForm() {
                       type="radio"
                       name="priority"
                       value={priority.id}
+                      checked={formData.priority === priority.id}
                       onChange={handleInputChange}
                       className="sr-only"
                     />
