@@ -118,7 +118,7 @@ export default function PortfolioHero({ data, projectCount = 0 }: PortfolioHeroP
           {/* Code greeting */}
           <div className="flex items-center justify-center space-x-2 text-cyan-400 mb-8 font-mono text-sm md:text-base">
             <span className="opacity-50">{'>'}</span>
-            <span className="animate-typing">console.log("Bienvenido al portfolio")</span>
+            <span className="animate-typing">console.log(&quot;Bienvenido al portfolio&quot;)</span>
             <span className="animate-blink">_</span>
           </div>
 
@@ -176,9 +176,9 @@ export default function PortfolioHero({ data, projectCount = 0 }: PortfolioHeroP
             })}
           </div>
 
-          {/* CTA Buttons */}
+          {/* CTA Buttons - TODOS con Link */}
           <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
-            
+            <Link
               href="#projects"
               className="group relative px-10 py-5 bg-gradient-to-r from-purple-600/20 to-cyan-600/20 border-2 border-purple-500/30 text-purple-400 font-bold text-xl rounded-2xl hover:from-purple-600/40 hover:to-cyan-600/40 hover:border-purple-500/60 transition-all duration-300 transform hover:scale-110 hover:-translate-y-2"
             >
@@ -187,7 +187,7 @@ export default function PortfolioHero({ data, projectCount = 0 }: PortfolioHeroP
                 Ver proyectos
                 <span className="ml-3 group-hover:translate-x-2 transition-transform text-2xl">→</span>
               </span>
-            </a>
+            </Link>
             
             <Link
               href="/contacto"
