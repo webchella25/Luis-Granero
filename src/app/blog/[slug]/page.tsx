@@ -5,6 +5,10 @@ import Footer from '../../../components/layout/Footer';
 import BlogPost from '../../../components/blog/BlogPost';
 import RelatedPosts from '../../../components/blog/RelatedPosts';
 
+// ✅ AÑADIR ESTO - Forzar renderizado dinámico
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 // Función para obtener un post por slug
 async function getPostBySlug(slug: string) {
   try {

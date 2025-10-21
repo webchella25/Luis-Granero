@@ -7,6 +7,10 @@ import BlogGrid from '../../components/blog/BlogGrid';
 import BlogCategories from '../../components/blog/BlogCategories';
 import NewsletterSignup from '../../components/blog/NewsletterSignup';
 
+// ✅ AÑADIR ESTO - Forzar renderizado dinámico
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 // ✅ Función corregida con tipos explícitos
 async function getBlogData(searchParams: Record<string, any> = {}) {
   try {
