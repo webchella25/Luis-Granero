@@ -6,6 +6,7 @@ import Link from 'next/link'
 export default function AdminPortfolio() {
   const [projects, setProjects] = useState([])
   const [loading, setLoading] = useState(true)
+  const [deleting, setDeleting] = useState(null)
 
   useEffect(() => {
     fetchProjects()
@@ -22,6 +23,31 @@ export default function AdminPortfolio() {
       console.error('Error fetching projects:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const deleteProject = async (slug) => {
+    if (!confirm('¿Estás seguro de eliminar este proyecto? Esta acción no se puede deshacer.')) {
+      return
+    }
+
+    setDeleting(slug)
+    try {
+      const response = await fetch(`/api/admin/projects/${slug}`, {
+        method: 'DELETE'
+      })
+
+      if (response.ok) {
+        setProjects(projects.filter(p => p.slug !== slug))
+        alert('✅ Proyecto eliminado correctamente')
+      } else {
+        alert('❌ Error al eliminar proyecto')
+      }
+    } catch (error) {
+      console.error('Error deleting project:', error)
+      alert('❌ Error al eliminar proyecto')
+    } finally {
+      setDeleting(null)
     }
   }
 
@@ -121,7 +147,7 @@ export default function AdminPortfolio() {
         ) : projects.length > 0 ? (
           <div className="divide-y divide-gray-200 dark:divide-gray-700">
             {projects.map(project => (
-              <div key={project._id} className="p-6 hover:bg-gray-50 dark:hover:bg-gray-700/50">
+              <div key={project._id || project.slug} className="p-6 hover:bg-gray-50 dark:hover:bg-gray-700/50">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-4">
                     <span className="text-2xl">{project.image || '🚀'}</span>
@@ -145,11 +171,19 @@ export default function AdminPortfolio() {
                     </span>
                     
                     <Link
-  href={`/admin/portfolio/${project.slug}/edit`}
-  className="text-cyan-600 hover:text-cyan-700 dark:text-cyan-400"
->
-  Editar
-</Link>
+                      href={`/admin/portfolio/${project.slug}/edit`}
+                      className="text-cyan-600 hover:text-cyan-700 dark:text-cyan-400 font-medium"
+                    >
+                      Editar
+                    </Link>
+                    
+                    <button
+                      onClick={() => deleteProject(project.slug)}
+                      disabled={deleting === project.slug}
+                      className="text-red-600 hover:text-red-700 dark:text-red-400 font-medium disabled:opacity-50"
+                    >
+                      {deleting === project.slug ? 'Eliminando...' : 'Eliminar'}
+                    </button>
                   </div>
                 </div>
               </div>

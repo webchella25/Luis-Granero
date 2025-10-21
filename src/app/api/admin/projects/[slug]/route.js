@@ -1,4 +1,4 @@
-// src/app/api/admin/projects/[slug]/route.js - NUEVA API
+// src/app/api/admin/projects/[slug]/route.js
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
@@ -14,13 +14,17 @@ export async function GET(request, { params }) {
 
     await connectDB()
     
-    const project = await Project.findOne({ slug: params.slug })
+    const project = await Project.findOne({ slug: params.slug }).lean()
     
     if (!project) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 })
     }
     
-    return NextResponse.json(project)
+    // Convertir _id a string
+    return NextResponse.json({
+      ...project,
+      _id: project._id.toString()
+    })
   } catch (error) {
     console.error('Error fetching project:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
@@ -42,13 +46,19 @@ export async function PUT(request, { params }) {
       { slug: params.slug },
       { ...data, updatedAt: new Date() },
       { new: true }
-    )
+    ).lean()
     
     if (!project) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 })
     }
     
-    return NextResponse.json({ success: true, project })
+    return NextResponse.json({ 
+      success: true, 
+      project: {
+        ...project,
+        _id: project._id.toString()
+      }
+    })
   } catch (error) {
     console.error('Error updating project:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
@@ -64,18 +74,17 @@ export async function DELETE(request, { params }) {
 
     await connectDB()
     
-    // Soft delete - marca como inactivo en lugar de eliminar
-    const project = await Project.findOneAndUpdate(
-      { slug: params.slug },
-      { isActive: false, deletedAt: new Date() },
-      { new: true }
-    )
+    // Eliminar permanentemente
+    const project = await Project.findOneAndDelete({ slug: params.slug })
     
     if (!project) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 })
     }
     
-    return NextResponse.json({ success: true, message: 'Project deleted successfully' })
+    return NextResponse.json({ 
+      success: true, 
+      message: 'Project deleted successfully' 
+    })
   } catch (error) {
     console.error('Error deleting project:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
