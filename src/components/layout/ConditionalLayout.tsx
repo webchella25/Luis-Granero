@@ -11,10 +11,24 @@ interface ConditionalLayoutProps {
 export default function ConditionalLayout({ children }: ConditionalLayoutProps) {
   const pathname = usePathname()
   
-  // Si es una ruta admin, no renderizar Header/Footer
-  if (pathname?.startsWith('/admin')) {
+  // Lista de rutas que ya manejan su propio layout
+  const hasOwnLayout = [
+    '/blog',
+    '/portfolio',
+    '/servicios',
+    '/contacto',
+    '/admin'
+  ].some(route => pathname?.startsWith(route))
+  
+  // Si la ruta maneja su propio layout, solo renderizar children
+  if (hasOwnLayout) {
     return <>{children}</>
   }
+  
+  // Para rutas como homepage que no tienen Header/Footer explícito
+  // podrías añadirlos aquí si es necesario
+  return <>{children}</>
+}
   
   // Para todas las otras rutas, usar Header/Footer normal
   return (
