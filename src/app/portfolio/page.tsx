@@ -37,10 +37,14 @@ async function getPortfolioSettings() {
       throw new Error('Error fetching portfolio settings');
     }
     
-    return res.json();
+    const data = await res.json();
+    
+    // ✅ Devolver solo el contenido, no el wrapper
+    return data.content || {};
+    
   } catch (error) {
     console.error('Error:', error);
-    return { content: {} };
+    return {}; // ✅ Devolver objeto vacío en caso de error
   }
 }
 
