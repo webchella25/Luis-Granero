@@ -9,7 +9,6 @@ export default function AdminBudgetCalculator() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState('config');
-  const [activeFilter, setActiveFilter] = useState('all');
 
   useEffect(() => {
     fetchData();
@@ -31,42 +30,6 @@ export default function AdminBudgetCalculator() {
       console.error('Error:', error);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const fetchDataWithFilter = async (status) => {
-    try {
-      const url = status && status !== 'all' 
-        ? `/api/budget-requests?status=${status}` 
-        : '/api/budget-requests';
-      
-      const res = await fetch(url);
-      const data = await res.json();
-      setBudgets(data.budgets || []);
-    } catch (error) {
-      console.error('Error:', error);
-    }
-  };
-
-  const deleteBudget = async (budgetId) => {
-    if (!confirm('¿Eliminar este presupuesto? Esta acción no se puede deshacer.')) {
-      return;
-    }
-
-    try {
-      const res = await fetch(`/api/budget-requests?id=${budgetId}`, {
-        method: 'DELETE'
-      });
-
-      if (res.ok) {
-        setBudgets(budgets.filter(b => b._id !== budgetId));
-        alert('✅ Presupuesto eliminado');
-      } else {
-        alert('❌ Error al eliminar');
-      }
-    } catch (error) {
-      console.error('Error:', error);
-      alert('❌ Error al eliminar');
     }
   };
 
@@ -162,6 +125,7 @@ export default function AdminBudgetCalculator() {
     }
   };
 
+  // FUNCIONES PARA PLAZOS (NUEVO)
   const addTimeline = () => {
     setConfig({
       ...config,
@@ -387,7 +351,7 @@ export default function AdminBudgetCalculator() {
             </section>
           ))}
 
-          {/* Plazos de Entrega */}
+          {/* PLAZOS DE ENTREGA (NUEVO) */}
           <section className="bg-gray-800/50 rounded-xl p-6">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-2">
@@ -461,19 +425,16 @@ export default function AdminBudgetCalculator() {
         </div>
       )}
 
-      {/* Requests Tab */}
+{/* Requests Tab */}
       {activeTab === 'requests' && (
         <div className="space-y-6">
-          {/* Filtros */}
+          {/* Filtros y Estadísticas */}
           <div className="bg-gray-800/50 rounded-xl p-6">
-            <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mb-4">
               <button
-                onClick={() => {
-                  setActiveFilter('all');
-                  fetchData();
-                }}
+                onClick={() => fetchData()}
                 className={`p-3 rounded-lg text-center transition-all ${
-                  activeFilter === 'all'
+                  !activeFilter || activeFilter === 'all'
                     ? 'bg-cyan-500/20 text-cyan-400 border-2 border-cyan-400'
                     : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
                 }`}
