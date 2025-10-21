@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Calculator, Plus, Trash2, Save } from 'lucide-react';
+import { Calculator, Plus, Trash2, Save, Clock } from 'lucide-react';
 
 export default function AdminBudgetCalculator() {
   const [config, setConfig] = useState(null);
@@ -121,6 +121,42 @@ export default function AdminBudgetCalculator() {
       setConfig({
         ...config,
         features: config.features.filter(f => f.id !== id)
+      });
+    }
+  };
+
+  // FUNCIONES PARA PLAZOS (NUEVO)
+  const addTimeline = () => {
+    setConfig({
+      ...config,
+      timelines: [
+        ...config.timelines,
+        {
+          id: `timeline-${Date.now()}`,
+          name: 'Nuevo Plazo',
+          multiplier: 1.0,
+          days: 14,
+          description: 'Descripción',
+          order: config.timelines.length + 1
+        }
+      ]
+    });
+  };
+
+  const updateTimeline = (id, field, value) => {
+    setConfig({
+      ...config,
+      timelines: config.timelines.map(t =>
+        t.id === id ? { ...t, [field]: value } : t
+      )
+    });
+  };
+
+  const deleteTimeline = (id) => {
+    if (confirm('¿Eliminar este plazo?')) {
+      setConfig({
+        ...config,
+        timelines: config.timelines.filter(t => t.id !== id)
       });
     }
   };
@@ -314,6 +350,78 @@ export default function AdminBudgetCalculator() {
               </div>
             </section>
           ))}
+
+          {/* PLAZOS DE ENTREGA (NUEVO) */}
+          <section className="bg-gray-800/50 rounded-xl p-6">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-2">
+                <Clock className="w-6 h-6 text-cyan-400" />
+                <h2 className="text-xl font-bold text-white">Plazos de Entrega</h2>
+              </div>
+              <button
+                onClick={addTimeline}
+                className="flex items-center gap-2 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 px-4 py-2 rounded-lg"
+              >
+                <Plus className="w-4 h-4" />
+                Añadir Plazo
+              </button>
+            </div>
+            <div className="space-y-4">
+              {config.timelines?.sort((a, b) => a.order - b.order).map((timeline) => (
+                <div key={timeline.id} className="bg-gray-900/50 rounded-lg p-4">
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                    <input
+                      type="text"
+                      value={timeline.name}
+                      onChange={(e) => updateTimeline(timeline.id, 'name', e.target.value)}
+                      className="px-3 py-2 bg-gray-800 border border-gray-700 rounded text-white"
+                      placeholder="Nombre (ej: Normal, Urgente)"
+                    />
+                    <input
+                      type="number"
+                      step="0.1"
+                      value={timeline.multiplier}
+                      onChange={(e) => updateTimeline(timeline.id, 'multiplier', parseFloat(e.target.value))}
+                      className="px-3 py-2 bg-gray-800 border border-gray-700 rounded text-white"
+                      placeholder="Multiplicador (ej: 1.5)"
+                    />
+                    <input
+                      type="number"
+                      value={timeline.days}
+                      onChange={(e) => updateTimeline(timeline.id, 'days', parseInt(e.target.value))}
+                      className="px-3 py-2 bg-gray-800 border border-gray-700 rounded text-white"
+                      placeholder="Días"
+                    />
+                    <input
+                      type="number"
+                      value={timeline.order}
+                      onChange={(e) => updateTimeline(timeline.id, 'order', parseInt(e.target.value))}
+                      className="px-3 py-2 bg-gray-800 border border-gray-700 rounded text-white"
+                      placeholder="Orden"
+                    />
+                  </div>
+                  <div className="flex gap-4 items-center">
+                    <input
+                      type="text"
+                      value={timeline.description}
+                      onChange={(e) => updateTimeline(timeline.id, 'description', e.target.value)}
+                      className="flex-1 px-3 py-2 bg-gray-800 border border-gray-700 rounded text-white"
+                      placeholder="Descripción (ej: Sin urgencia, mejor precio)"
+                    />
+                    <button
+                      onClick={() => deleteTimeline(timeline.id)}
+                      className="text-red-400 hover:text-red-300"
+                    >
+                      <Trash2 className="w-5 h-5" />
+                    </button>
+                  </div>
+                  <div className="mt-2 text-sm text-gray-400">
+                    💡 Multiplicador: 0.9 = -10%, 1.0 = normal, 1.5 = +50%
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
         </div>
       )}
 
