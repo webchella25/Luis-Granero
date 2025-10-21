@@ -1,4 +1,4 @@
-// src/components/admin/AdminSidebar.jsx - ACTUALIZADO CON EMAIL ANALYTICS
+// src/components/admin/AdminSidebar.js
 'use client'
 
 import { useState } from 'react'
@@ -29,6 +29,7 @@ export default function AdminSidebar({ isOpen, onClose }) {
         { name: 'Portfolio', href: '/admin/portfolio', icon: '💼' },
         { name: 'Proyectos', href: '/admin/projects', icon: '🚀' },
         { name: 'Contactos', href: '/admin/contacts', icon: '📧' },
+        { name: 'Calculadora', href: '/admin/calculator', icon: '🧮', badge: 'new' }, // ← AÑADIDO AQUÍ
         { name: 'Configuración', href: '/admin/settings', icon: '⚙️' }
       ]
     },
