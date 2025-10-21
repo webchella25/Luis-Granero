@@ -28,7 +28,7 @@ export default function ConditionalLayout({ children }: ConditionalLayoutProps) 
   // Para rutas como homepage que no tienen Header/Footer explícito
   // podrías añadirlos aquí si es necesario
   return <>{children}</>
-}
+
   
   // Para todas las otras rutas, usar Header/Footer normal
   return (
