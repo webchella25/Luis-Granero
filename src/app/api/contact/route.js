@@ -50,12 +50,13 @@ export async function POST(request) {
     await connectDB();
     const data = await request.json();
     
-    // Validación básica
-    if (!data.name || !data.email || !data.message) {
-      return Response.json({ 
-        error: 'Faltan campos requeridos: nombre, email y mensaje son obligatorios' 
-      }, { status: 400 });
-    }
+    // Validación básica - aceptar "message" O "description"
+const message = data.message || data.description;
+if (!data.name || !data.email || !message) {
+  return Response.json({ 
+    error: 'Faltan campos requeridos: nombre, email y mensaje son obligatorios' 
+  }, { status: 400 });
+}
     
     // Extraer metadata
     const metadata = {
@@ -77,14 +78,14 @@ export async function POST(request) {
         company: data.company || '',
         website: data.website || ''
       },
-      project: {
-        type: data.projectType || 'No especificado',
-        budget: data.budget || '',
-        timeline: data.timeline || '',
-        description: data.message,
-        technologies: data.technologies || [],
-        features: data.features || []
-      },
+project: {
+  type: data.projectType || 'No especificado',
+  budget: data.budget || '',
+  timeline: data.timeline || '',
+  description: data.message || data.description,  // ← Aceptar ambos
+  technologies: data.technologies || [],
+  features: data.features || []
+},
       source: data.source || 'Website Form',
       metadata,
       status: 'new',
@@ -107,7 +108,7 @@ export async function POST(request) {
         status: 'new',
         priority: 'high',
         opportunityScore: 85, // Alto score para formulario web
-        notes: data.message,
+        notes: data.message || data.description,
         metadata: {
           company: data.company,
           website: data.website,
