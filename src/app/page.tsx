@@ -1,5 +1,7 @@
 // src/app/page.tsx
 import { Suspense } from 'react';
+import Header from '@/components/layout/Header';
+import Footer from '@/components/layout/Footer';
 import HeroSection from '@/components/hero/HeroSection';
 import ServicesPreview from '@/components/home/ServicesPreview';
 import TechStackStats from '@/components/home/TechStackStats';
@@ -24,36 +26,42 @@ function SectionSkeleton() {
   );
 }
 
-// Componente principal de la HomePage SIMPLIFICADO
+// Componente principal de la HomePage
 export default function HomePage() {
   return (
-    <main className="min-h-screen bg-black pt-16"> {/* pt-16 para el header fijo */}
+    <main className="min-h-screen bg-black">
       
-      {/* Hero Section - Más minimalista */}
+      {/* Header */}
+      <Header />
+      
+      {/* Hero Section */}
       <Suspense fallback={<SectionSkeleton />}>
         <HeroSection />
       </Suspense>
 
-      {/* Services Preview - Solo 3 servicios principales */}
+      {/* Services Preview */}
       <Suspense fallback={<SectionSkeleton />}>
         <ServicesPreview />
       </Suspense>
 
-      {/* Tech Stack + Stats - Combinados */}
+      {/* Tech Stack + Stats */}
       <Suspense fallback={<SectionSkeleton />}>
         <TechStackStats />
       </Suspense>
 
-      {/* Contact CTA - Más directo */}
+      {/* Contact CTA */}
       <Suspense fallback={<SectionSkeleton />}>
         <ContactCTA />
       </Suspense>
+
+      {/* Footer */}
+      <Footer />
 
     </main>
   );
 }
 
-// Metadata estática por ahora
+// Metadata estática
 export const metadata = {
   title: 'Luis Granero - Desarrollador Full Stack',
   description: 'Transformo ideas en aplicaciones web modernas y soluciones personalizadas. Especializado en React, Next.js y arquitecturas escalables.',

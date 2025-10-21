@@ -1,4 +1,4 @@
-// src/app/portfolio/page.tsx - Versión corregida para Next.js 15
+// src/app/portfolio/page.tsx
 import Header from '../../components/layout/Header';
 import Footer from '../../components/layout/Footer';
 import PortfolioHero from '../../components/portfolio/PortfolioHero';
@@ -6,21 +6,26 @@ import ProjectsGrid from '../../components/portfolio/ProjectsGrid';
 import TechnologiesUsed from '../../components/portfolio/TechnologiesUsed';
 import ClientTestimonials from '../../components/portfolio/ClientTestimonials';
 
+// ✅ AÑADIR ESTO
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 // Función para obtener proyectos
 async function getPortfolioData() {
   try {
-    const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+    const baseUrl = process.env.NEXTAUTH_URL || 'https://luisgranero.com';
     const res = await fetch(`${baseUrl}/api/public/projects`, {
       cache: 'no-store',
     });
     
     if (!res.ok) {
-      throw new Error('Error fetching portfolio data');
+      console.error('Error fetching portfolio data:', res.status);
+      return [];
     }
     
     return res.json();
   } catch (error) {
-    console.error('Error:', error);
+    console.error('Error fetching portfolio data:', error);
     return [];
   }
 }
@@ -31,30 +36,59 @@ async function getPortfolioSettings() {
     const baseUrl = process.env.NEXTAUTH_URL || 'https://luisgranero.com';
     const res = await fetch(`${baseUrl}/api/public/portfolio/settings`, {
       cache: 'no-store',
-      next: { revalidate: 0 }
     });
     
     if (!res.ok) {
       console.error('Portfolio settings fetch failed:', res.status);
+      // ✅ Devolver objeto PLANO, no { content: {} }
       return {
-        hero: { title: "Portfolio", subtitle: "", description: "" },
-        stats: {}
+        hero: { 
+          title: "Portfolio", 
+          subtitle: "Casos de éxito en desarrollo web", 
+          description: "Proyectos profesionales con tecnologías modernas" 
+        },
+        stats: {
+          totalProjects: 0,
+          featuredProjects: 0,
+          technologies: 0,
+          clientSatisfaction: "98%"
+        },
+        categories: [],
+        valuePropositions: []
       };
     }
     
     const data = await res.json();
-    return data.content || {};
+    
+    // ✅ CRÍTICO: Devolver data.content si existe, o objeto vacío limpio
+    return data?.content || {
+      hero: { 
+        title: "Portfolio", 
+        subtitle: "Casos de éxito en desarrollo web", 
+        description: "" 
+      },
+      stats: {},
+      categories: [],
+      valuePropositions: []
+    };
     
   } catch (error) {
     console.error('Error fetching portfolio settings:', error);
+    // ✅ Devolver objeto PLANO
     return {
-      hero: { title: "Portfolio", subtitle: "", description: "" },
-      stats: {}
+      hero: { 
+        title: "Portfolio", 
+        subtitle: "Casos de éxito en desarrollo web", 
+        description: "" 
+      },
+      stats: {},
+      categories: [],
+      valuePropositions: []
     };
   }
 }
 
-// ✅ Interface corregida para Next.js 15
+// Interface corregida para Next.js 15
 interface PortfolioPageProps {
   params: Promise<{ [key: string]: string | string[] }>
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
@@ -66,7 +100,7 @@ export async function generateMetadata({ searchParams }: PortfolioPageProps) {
   
   return {
     title: 'Portfolio - Luis Granero | Casos de Éxito en Desarrollo Web',
-    description: `Explora mis ${projects.length} proyectos de desarrollo web: e-commerce, aplicaciones personalizadas, dashboards y más. Casos de estudio con código y resultados reales.`,
+    description: `Explora mis ${projects.length || 25} proyectos de desarrollo web: e-commerce, aplicaciones personalizadas, dashboards y más. Casos de estudio con código y resultados reales.`,
     keywords: [
       'portfolio desarrollo web',
       'casos de éxito',
@@ -77,22 +111,13 @@ export async function generateMetadata({ searchParams }: PortfolioPageProps) {
     ],
     openGraph: {
       title: 'Portfolio - Luis Granero | Casos de Éxito en Desarrollo Web',
-      description: `${projects.length} proyectos reales con métricas y tecnologías detalladas`,
-      type: 'website',
-      images: [
-        {
-          url: '/images/portfolio-og.jpg',
-          width: 1200,
-          height: 630,
-          alt: 'Portfolio de Luis Granero - Desarrollador Web'
-        }
-      ]
+      description: `${projects.length || 25} proyectos reales con métricas y tecnologías detalladas`,
+      type: 'website'
     }
   };
 }
 
 export default async function PortfolioPage({ searchParams }: PortfolioPageProps) {
-  // ✅ Await searchParams
   const resolvedSearchParams = await searchParams;
   
   const [projects, portfolioSettings] = await Promise.all([
@@ -104,7 +129,7 @@ export default async function PortfolioPage({ searchParams }: PortfolioPageProps
     <main className="min-h-screen bg-black">
       <Header />
       <PortfolioHero 
-        data={portfolioSettings.content} 
+        data={portfolioSettings}
         projectCount={projects.length} 
       />
       <ProjectsGrid projects={projects} />
