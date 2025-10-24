@@ -1,4 +1,4 @@
-// src/components/admin/AdminSidebar.js
+// src/components/admin/AdminSidebar.js - VERSION OPTIMIZADA
 'use client'
 
 import { useState } from 'react'
@@ -27,10 +27,10 @@ export default function AdminSidebar({ isOpen, onClose }) {
       items: [
         { name: 'Blog', href: '/admin/blog', icon: '📝' },
         { name: 'Portfolio', href: '/admin/portfolio', icon: '💼' },
-        { name: 'Proyectos', href: '/admin/projects', icon: '🚀' },
-        { name: 'Contactos', href: '/admin/contacts', icon: '📧' },
-        { name: 'Calculadora', href: '/admin/calculator', icon: '🧮', badge: 'new' }, // ← AÑADIDO AQUÍ
-        { name: 'Configuración', href: '/admin/settings', icon: '⚙️' }
+        // 🗑️ ELIMINADO: { name: 'Proyectos', href: '/admin/projects', icon: '🚀' },
+        { name: 'Mensajes', href: '/admin/messages', icon: '📬' }, // ← RENOMBRADO de "Contactos"
+        { name: 'Calculadora', href: '/admin/calculator', icon: '🧮', badge: 'new' },
+        { name: 'Configuracion', href: '/admin/settings', icon: '⚙️' }
       ]
     },
     crm: {
@@ -39,7 +39,7 @@ export default function AdminSidebar({ isOpen, onClose }) {
       badge: 'PRO',
       items: [
         { name: 'Buscar Leads', href: '/admin/test-scraper', icon: '🔍', badge: 'new' },
-        { name: 'Gestión de Leads', href: '/admin/leads', icon: '📊' },
+        { name: 'Gestion de Leads', href: '/admin/leads', icon: '📊' },
         { name: 'Secuencias', href: '/admin/sequences', icon: '🚀', badge: 'new' },
         { name: 'Templates Email', href: '/admin/templates', icon: '📧' },
         { name: 'Citas Agendadas', href: '/admin/appointments', icon: '📅' }
@@ -50,7 +50,7 @@ export default function AdminSidebar({ isOpen, onClose }) {
       icon: '📈',
       items: [
         { name: 'Email Analytics', href: '/admin/email-analytics', icon: '📊', badge: 'new' },
-        { name: 'Métricas', href: '/admin/analytics', icon: '📈' },
+        { name: 'Metricas', href: '/admin/analytics', icon: '📈' },
         { name: 'Usuarios', href: '/admin/users', icon: '👥' }
       ]
     }
@@ -136,10 +136,10 @@ export default function AdminSidebar({ isOpen, onClose }) {
                   >
                     <div className="flex items-center gap-2">
                       <span>{item.icon}</span>
-                      <span className="text-sm">{item.name}</span>
+                      <span>{item.name}</span>
                     </div>
                     {item.badge && (
-                      <span className="px-2 py-0.5 text-xs bg-green-500/20 text-green-400 rounded-full">
+                      <span className="px-2 py-0.5 text-xs bg-cyan-500/20 text-cyan-400 rounded-full">
                         {item.badge}
                       </span>
                     )}
