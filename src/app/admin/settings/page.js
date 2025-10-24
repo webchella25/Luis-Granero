@@ -48,15 +48,15 @@ export default function AdminSettings() {
   const [message, setMessage] = useState({ type: '', text: '' })
 
   const tabs = [
-    { id: 'site', label: 'Sitio Web', icon: '??' },
-    { id: 'social', label: 'Redes Sociales', icon: '??' },
-    { id: 'analytics', label: 'Analytics', icon: '??' },
-    { id: 'seo', label: 'SEO', icon: '??' },
-    { id: 'email', label: 'Email', icon: '??' },
-    { id: 'maintenance', label: 'Mantenimiento', icon: '??' }
+    { id: 'site', label: 'Sitio Web', icon: 'üåê' },
+    { id: 'social', label: 'Redes Sociales', icon: 'üì±' },
+    { id: 'analytics', label: 'Analytics', icon: 'üìä' },
+    { id: 'seo', label: 'SEO', icon: 'üîç' },
+    { id: 'email', label: 'Email', icon: 'üìß' },
+    { id: 'maintenance', label: 'Mantenimiento', icon: 'üîß' }
   ]
 
-  // Cargar configuraci®Æn al montar el componente
+  // Cargar configuraci√≥n al montar el componente
   useEffect(() => {
     loadSettings()
   }, [])
@@ -73,7 +73,7 @@ export default function AdminSettings() {
       }
     } catch (error) {
       console.error('Error loading settings:', error)
-      showMessage('error', 'Error al cargar la configuraci®Æn')
+      showMessage('error', 'Error al cargar la configuraci√≥n')
     } finally {
       setIsLoading(false)
     }
@@ -93,13 +93,13 @@ export default function AdminSettings() {
       const data = await response.json()
       
       if (response.ok) {
-        showMessage('success', '? Configuraci®Æn guardada exitosamente')
+        showMessage('success', '‚úÖ Configuraci√≥n guardada exitosamente')
       } else {
-        showMessage('error', `? Error: ${data.error || 'No se pudo guardar'}`)
+        showMessage('error', `‚ùå Error: ${data.error || 'No se pudo guardar'}`)
       }
     } catch (error) {
       console.error('Error saving settings:', error)
-      showMessage('error', '? Error al guardar la configuraci®Æn')
+      showMessage('error', '‚ùå Error al guardar la configuraci√≥n')
     } finally {
       setIsSaving(false)
     }
@@ -123,7 +123,7 @@ export default function AdminSettings() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-white text-xl">Cargando configuraci®Æn...</div>
+        <div className="text-white text-xl">Cargando configuraci√≥n...</div>
       </div>
     )
   }
@@ -132,8 +132,8 @@ export default function AdminSettings() {
     <div className="max-w-6xl mx-auto">
       <div className="mb-8 flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-white">Configuraci®Æn</h1>
-          <p className="text-gray-400">Administra la configuraci®Æn global de tu sitio</p>
+          <h1 className="text-2xl font-bold text-white">Configuraci√≥n</h1>
+          <p className="text-gray-400">Administra la configuraci√≥n global de tu sitio</p>
         </div>
         <button
           onClick={handleSave}
@@ -178,10 +178,10 @@ export default function AdminSettings() {
         {/* Content */}
         <div className="lg:col-span-3">
           <div className="bg-gray-800 rounded-lg p-6">
-            {/* Configuraci®Æn del sitio */}
+            {/* Configuraci√≥n del sitio */}
             {activeTab === 'site' && (
               <div className="space-y-6">
-                <h3 className="text-lg font-medium text-white">Informaci®Æn del Sitio</h3>
+                <h3 className="text-lg font-medium text-white">Informaci√≥n del Sitio</h3>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
@@ -222,7 +222,7 @@ export default function AdminSettings() {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Tel®¶fono
+                      Tel√©fono
                     </label>
                     <input
                       type="tel"
@@ -234,7 +234,7 @@ export default function AdminSettings() {
 
                   <div className="md:col-span-2">
                     <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Direcci®Æn
+                      Direcci√≥n
                     </label>
                     <input
                       type="text"
@@ -359,7 +359,7 @@ export default function AdminSettings() {
             {/* SEO */}
             {activeTab === 'seo' && (
               <div className="space-y-6">
-                <h3 className="text-lg font-medium text-white">Configuraci®Æn SEO</h3>
+                <h3 className="text-lg font-medium text-white">Configuraci√≥n SEO</h3>
                 
                 <div className="space-y-4">
                   <div>
@@ -370,7 +370,7 @@ export default function AdminSettings() {
                       rows={3}
                       value={settings.seo.defaultMetaDescription}
                       onChange={(e) => updateSetting('seo', 'defaultMetaDescription', e.target.value)}
-                      placeholder="Descripci®Æn predeterminada para SEO"
+                      placeholder="Descripci√≥n predeterminada para SEO"
                       className="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
                     />
                   </div>
@@ -403,7 +403,7 @@ export default function AdminSettings() {
             {/* Email */}
             {activeTab === 'email' && (
               <div className="space-y-6">
-                <h3 className="text-lg font-medium text-white">Configuraci®Æn de Email</h3>
+                <h3 className="text-lg font-medium text-white">Configuraci√≥n de Email</h3>
                 
                 <div className="space-y-4">
                   <div>
@@ -457,7 +457,7 @@ export default function AdminSettings() {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Contrase?a SMTP
+                      Contrase√±a SMTP
                     </label>
                     <input
                       type="password"
@@ -503,14 +503,14 @@ export default function AdminSettings() {
                     <div className="bg-yellow-600 bg-opacity-20 border border-yellow-600 rounded-md p-4">
                       <div className="flex">
                         <div className="flex-shrink-0">
-                          <span className="text-yellow-400 text-xl">??</span>
+                          <span className="text-yellow-400 text-xl">‚ö†Ô∏è</span>
                         </div>
                         <div className="ml-3">
                           <h3 className="text-sm font-medium text-yellow-400">
                             Modo Mantenimiento Activo
                           </h3>
                           <div className="mt-2 text-sm text-yellow-300">
-                            Tu sitio web est®¢ en modo mantenimiento. Los visitantes ver®¢n el mensaje configurado.
+                            Tu sitio web est√° en modo mantenimiento. Los visitantes ver√°n el mensaje configurado.
                           </div>
                         </div>
                       </div>
