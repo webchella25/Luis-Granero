@@ -8,14 +8,17 @@ import EmailLog from '@/models/EmailLog';
 import Lead from '@/models/Lead';
 
 // PATCH - Actualizar estado de una cita
-export async function PATCH(request: Request, { params }: { params: { id: string } }) {
+export async function PATCH(
+  request: Request,
+  context: { params: Promise<{ id: string }> }
+) {
   try {
     const session = await getServerSession();
     if (!session) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
 
-    const { id } = params;
+    const { id } = await context.params; // ✅ await params
     const body = await request.json();
     const { status } = body;
 
@@ -78,14 +81,17 @@ export async function PATCH(request: Request, { params }: { params: { id: string
 }
 
 // DELETE - Eliminar una cita
-export async function DELETE(request: Request, { params }: { params: { id: string } }) {
+export async function DELETE(
+  request: Request,
+  context: { params: Promise<{ id: string }> }
+) {
   try {
     const session = await getServerSession();
     if (!session) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
 
-    const { id } = params;
+    const { id } = await context.params; // ✅ await params
 
     await connectDB();
 
