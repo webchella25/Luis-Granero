@@ -1,4 +1,4 @@
-// src/app/api/cron/send-scheduled-emails/route.js - CORREGIDO
+// src/app/api/cron/send-scheduled-emails/route.js - VERSIÓN CORREGIDA CON TRACKING
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import EmailLog from '@/models/EmailLog';
@@ -9,6 +9,7 @@ import Sequence from '@/models/Sequence';
 import Appointment from '@/models/Appointment';
 import nodemailer from 'nodemailer';
 import crypto from 'crypto';
+import { prepareEmailForTracking } from '@/lib/email/tracking'; // ✅ AÑADIDO
 
 // Configurar transporter
 const transporter = nodemailer.createTransport({
@@ -125,81 +126,75 @@ async function handleRequest(request) {
         
         const lead = emailLog.leadId;
         
-        if (!lead || !lead.possibleEmails?.[0]) {
+        if (!lead || !lead.possibleEmails?.length) {
           console.log(`❌ Lead sin email`);
           await EmailLog.findByIdAndUpdate(emailLog._id, {
             status: 'failed',
-            error: 'Lead sin email'
+            error: 'Lead sin email válido'
           });
           failed++;
           continue;
         }
         
-        // Crear magic link
+        // Crear magic link para agendar llamada
         const magicToken = crypto.randomBytes(32).toString('hex');
         const tokenExpiration = new Date();
-        tokenExpiration.setDate(tokenExpiration.getDate() + 30);
+        tokenExpiration.setDate(tokenExpiration.getDate() + 7);
         
-        await Appointment.create({
-          leadId: lead._id,
-          token: magicToken,
-          tokenExpiresAt: tokenExpiration,
-          name: lead.name,
-          phone: lead.phone || lead.phoneNumbers?.[0],
-          email: lead.possibleEmails[0],
-          status: 'pending'
-        });
+        try {
+          await Appointment.create({
+            leadId: lead._id,
+            token: magicToken,
+            tokenExpiresAt: tokenExpiration,
+            name: lead.name,
+            email: lead.possibleEmails[0],
+            phone: lead.phoneNumbers?.[0] || '',
+            status: 'pending',
+            source: 'email_sequence'
+          });
+        } catch (appointmentError) {
+          console.log('⚠️ Error creando appointment:', appointmentError.message);
+        }
         
-        const magicLink = `https://www.luisgranero.com/agendar/${magicToken}`;
+        const magicLink = `${process.env.NEXTAUTH_URL || 'https://luisgranero.com'}/agendar/${magicToken}`;
         
         // Reemplazar shortcodes
-        const subject = replaceShortcodes(template.subject, lead, magicLink);
-        const body = replaceShortcodes(template.body, lead, magicLink);
+        const subject = replaceShortcodes(
+          typeof template.subject === 'function' ? template.subject() : template.subject,
+          lead,
+          magicLink
+        );
         
-        // Convertir a HTML
-        const htmlBody = body
-          .split('\n')
-          .map(line => {
-            if (line.trim().startsWith('━')) return '<hr style="border: 1px solid #ddd; margin: 20px 0;">';
-            if (line.includes(magicLink)) {
-              return `<p style="text-align: center; margin: 20px 0;">
-                <a href="${magicLink}" style="background: #06b6d4; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: bold;">
-                  👉 Agendar Llamada Gratuita
-                </a>
-              </p>`;
-            }
-            return line ? `<p style="margin: 10px 0;">${line}</p>` : '<br>';
-          })
-          .join('');
+        let htmlBody = replaceShortcodes(
+          template.htmlBody 
+            ? (typeof template.htmlBody === 'function' ? template.htmlBody(lead, magicLink) : template.htmlBody)
+            : template.body,
+          lead,
+          magicLink
+        );
         
-        // Enviar email
-        const info = await transporter.sendMail({
-          from: `${process.env.EMAIL_FROM_NAME || 'Luis Granero'} <${process.env.EMAIL_FROM || process.env.SMTP_USER}>`,
+        // ✅ AÑADIR TRACKING AL HTML
+        const trackedHtml = prepareEmailForTracking(htmlBody, emailLog._id.toString());
+        
+        console.log(`📧 Enviando email a ${lead.name} (${lead.possibleEmails[0]})`);
+        console.log(`🔍 Tracking añadido - EmailLog ID: ${emailLog._id}`);
+        
+        // Enviar email CON TRACKING
+        await transporter.sendMail({
+          from: `${process.env.EMAIL_FROM_NAME || 'Luis Granero'} <${process.env.SMTP_USER}>`,
           to: lead.possibleEmails[0],
           subject: subject,
-          text: body,
-          html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-              ${htmlBody}
-              <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
-              <p style="color: #666; font-size: 13px; text-align: center;">
-                <strong>Luis Granero</strong><br>
-                Desarrollo Web Profesional<br>
-                🌐 www.luisgranero.com<br>
-                📧 ${process.env.EMAIL_FROM || 'luis@luisgranero.dev'}<br>
-                📱 698 38 36 10
-              </p>
-            </div>
-          `
+          html: trackedHtml, // ✅ USAR trackedHtml en lugar de htmlBody
+          headers: {
+            'X-Email-Log-ID': emailLog._id.toString(),
+            'X-Lead-ID': lead._id.toString()
+          }
         });
-        
-        console.log(`✅ Email enviado a ${lead.name}`);
         
         // Actualizar EmailLog
         await EmailLog.findByIdAndUpdate(emailLog._id, {
           status: 'sent',
           sentAt: new Date(),
-          messageId: info.messageId,
           subject: subject
         });
         
@@ -209,7 +204,7 @@ async function handleRequest(request) {
           lastEmailSent: new Date()
         });
         
-        // Añadir a historial
+        // Añadir a historial del lead
         await Lead.findByIdAndUpdate(lead._id, {
           status: 'contacted',
           $push: {
@@ -222,7 +217,7 @@ async function handleRequest(request) {
           }
         });
         
-        // Verificar si es último paso
+        // Verificar si es último paso de la secuencia
         const sequence = emailLog.sequenceId;
         if (sequence && emailLog.step >= sequence.steps.length - 1) {
           await SequenceEnrollment.findByIdAndUpdate(enrollment._id, {
@@ -247,11 +242,11 @@ async function handleRequest(request) {
           status: 'sent'
         });
         
-        // Delay 1 segundo entre emails
+        // Delay 1 segundo entre emails para no saturar
         await new Promise(resolve => setTimeout(resolve, 1000));
         
       } catch (error) {
-        console.error(`❌ Error:`, error);
+        console.error(`❌ Error enviando email:`, error);
         
         await EmailLog.findByIdAndUpdate(emailLog._id, {
           status: 'failed',
@@ -281,7 +276,7 @@ async function handleRequest(request) {
     });
     
   } catch (error) {
-    console.error('❌ Error en cron:', error);
+    console.error('❌ Error en cron job:', error);
     return NextResponse.json(
       { success: false, error: error.message },
       { status: 500 }
