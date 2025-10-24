@@ -296,13 +296,14 @@ function ContactForm() {
             <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-xl p-8">
               <h3 className="text-xl font-bold text-white mb-6">Descripción del proyecto</h3>
               <textarea
-                name="description"
-                placeholder="Cuéntame en detalle qué necesitas..."
-                rows={6}
-                value={formData.description}
-                onChange={handleInputChange}
-                className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:border-cyan-400 focus:outline-none resize-none"
-              />
+  name="description"
+  placeholder="Cuéntame en detalle qué necesitas..."
+  rows={6}
+  required
+  value={formData.description}
+  onChange={handleInputChange}
+  className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:border-cyan-400 focus:outline-none resize-none"
+/>
             </div>
 
             {/* Priority */}
