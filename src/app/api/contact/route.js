@@ -1,4 +1,6 @@
-// src/app/api/contact/route.js
+// src/app/api/contact/route.js - VERSIÓN CORREGIDA
+// Reemplaza TODA la función POST por esta versión
+
 import connectDB from '@/lib/mongodb';
 import Contact from '@/models/Contact';
 import Lead from '@/models/Lead';
@@ -18,6 +20,51 @@ const transporter = nodemailer.createTransport({
     pass: 'KTcWQIh2szOLS34N'
   }
 });
+
+// ✅ MAPEOS PARA CONVERTIR VALORES DEL FORMULARIO A VALORES DEL MODELO
+const PROJECT_TYPE_MAP = {
+  'landing': 'Desarrollo Web',
+  'corporate': 'Desarrollo Web',
+  'ecommerce': 'E-commerce',
+  'webapp': 'Aplicación Web',
+  'dashboard': 'Aplicación Web',
+  'other': 'Otro'
+};
+
+const BUDGET_MAP = {
+  'starter': '1,000€ - 3,000€',
+  'business': '3,000€ - 7,000€',
+  'enterprise': '7,000€ - 15,000€',
+  'custom': '> 15,000€'
+};
+
+const TIMELINE_MAP = {
+  'asap': 'Urgente (1-2 semanas)',
+  '1month': 'Pronto (1 mes)',
+  '2months': 'Medio plazo (2-3 meses)',
+  'flexible': 'Flexible'
+};
+
+const STATUS_MAP = {
+  'new': 'nuevo',
+  'read': 'contactado',
+  'replied': 'contactado',
+  'archived': 'cerrado_perdido'
+};
+
+const PRIORITY_MAP = {
+  'low': 'baja',
+  'normal': 'media',
+  'medium': 'media',
+  'high': 'alta',
+  'urgent': 'urgente'
+};
+
+const SOURCE_MAP = {
+  'Website Form': 'Website',
+  'Budget Calculator': 'Website',
+  'Contact Form': 'Website'
+};
 
 // Función para reemplazar shortcodes
 function replaceShortcodes(text, data, magicLink = '') {
@@ -50,13 +97,13 @@ export async function POST(request) {
     await connectDB();
     const data = await request.json();
     
-    // Validación básica - aceptar "message" O "description"
-const message = data.message || data.description;
-if (!data.name || !data.email || !message) {
-  return Response.json({ 
-    error: 'Faltan campos requeridos: nombre, email y mensaje son obligatorios' 
-  }, { status: 400 });
-}
+    // Validación básica
+    const message = data.message || data.description;
+    if (!data.name || !data.email || !message) {
+      return Response.json({ 
+        error: 'Faltan campos requeridos: nombre, email y mensaje son obligatorios' 
+      }, { status: 400 });
+    }
     
     // Extraer metadata
     const metadata = {
@@ -69,7 +116,15 @@ if (!data.name || !data.email || !message) {
     
     console.log('📝 Procesando nuevo contacto:', data.name);
     
-    // 1. GUARDAR EN CONTACT (Tabla original)
+    // ✅ MAPEAR VALORES DEL FORMULARIO A VALORES DEL MODELO
+    const mappedProjectType = PROJECT_TYPE_MAP[data.projectType] || 'Otro';
+    const mappedBudget = BUDGET_MAP[data.budget] || 'A consultar';
+    const mappedTimeline = TIMELINE_MAP[data.timeline] || 'Flexible';
+    const mappedStatus = STATUS_MAP[data.status] || 'nuevo';
+    const mappedPriority = PRIORITY_MAP[data.priority] || 'alta';
+    const mappedSource = SOURCE_MAP[data.source] || 'Website';
+    
+    // 1. GUARDAR EN CONTACT
     const contact = await Contact.create({
       personal: {
         name: data.name,
@@ -78,23 +133,23 @@ if (!data.name || !data.email || !message) {
         company: data.company || '',
         website: data.website || ''
       },
-project: {
-  type: data.projectType || 'No especificado',
-  budget: data.budget || '',
-  timeline: data.timeline || '',
-  description: data.message || data.description,  // ← Aceptar ambos
-  technologies: data.technologies || [],
-  features: data.features || []
-},
-      source: data.source || 'Website Form',
+      project: {
+        type: mappedProjectType,
+        budget: mappedBudget,
+        timeline: mappedTimeline,
+        description: message,
+        technologies: data.technologies || [],
+        features: data.features || []
+      },
+      source: mappedSource,
       metadata,
-      status: 'new',
-      priority: 'high' // Formulario web = prioridad alta
+      status: mappedStatus,
+      priority: mappedPriority
     });
     
     console.log('✅ Contact guardado:', contact._id);
     
-    // 2. CREAR LEAD EN EL CRM (para tracking avanzado)
+    // 2. CREAR LEAD EN EL CRM
     let lead;
     try {
       lead = await Lead.create({
@@ -107,8 +162,8 @@ project: {
         source: 'Website Form',
         status: 'new',
         priority: 'high',
-        opportunityScore: 85, // Alto score para formulario web
-        notes: data.message || data.description,
+        opportunityScore: 85,
+        notes: message,
         metadata: {
           company: data.company,
           website: data.website,
@@ -122,7 +177,7 @@ project: {
         contactHistory: [{
           date: new Date(),
           type: 'form_submission',
-          notes: `Formulario web completado: ${data.projectType || 'Consulta general'}`
+          notes: `Formulario web completado: ${mappedProjectType}`
         }]
       });
       
@@ -131,12 +186,12 @@ project: {
       console.error('⚠️ Error creando lead (continuando):', leadError.message);
     }
     
-    // 3. CREAR MAGIC LINK para agendar llamada
+    // 3. CREAR MAGIC LINK
     let magicLink = '';
     try {
       const magicToken = crypto.randomBytes(32).toString('hex');
       const tokenExpiration = new Date();
-      tokenExpiration.setDate(tokenExpiration.getDate() + 7); // 7 días
+      tokenExpiration.setDate(tokenExpiration.getDate() + 7);
       
       const appointment = await Appointment.create({
         leadId: lead?._id,
@@ -155,19 +210,17 @@ project: {
       console.error('⚠️ Error creando appointment (continuando):', appointmentError.message);
     }
     
-    // 4. BUSCAR PLANTILLAS DE EMAIL (si existen)
+    // 4. BUSCAR PLANTILLAS
     let notificationTemplate;
     let confirmationTemplate;
     
     try {
-      // Plantilla para notificación al admin
       notificationTemplate = await EmailTemplate.findOne({
         templateId: 'notification_new_lead',
         type: 'email',
         isActive: true
       });
       
-      // Plantilla para confirmación al cliente
       confirmationTemplate = await EmailTemplate.findOne({
         templateId: 'client_confirmation',
         type: 'email',
@@ -182,124 +235,33 @@ project: {
       console.error('⚠️ Error buscando plantillas:', templateError.message);
     }
     
-    // 5. ENVIAR EMAIL DE NOTIFICACIÓN A TI (con plantilla o hardcoded)
+    // 5. ENVIAR EMAIL DE NOTIFICACIÓN
     let notificationEmailLog;
     try {
       let notificationSubject;
       let notificationBody;
       
       if (notificationTemplate) {
-        // Usar plantilla si existe
         notificationSubject = replaceShortcodes(notificationTemplate.subject, data, magicLink);
         notificationBody = replaceShortcodes(notificationTemplate.body, data, magicLink);
       } else {
-        // Hardcoded si no hay plantilla
-        notificationSubject = `🔔 Nuevo Lead: ${data.name} - ${data.projectType || 'Consulta General'}`;
+        notificationSubject = `🔔 Nuevo Lead: ${data.name} - ${mappedProjectType}`;
         notificationBody = `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #f9fafb;">
-            <div style="background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%); padding: 30px; border-radius: 10px 10px 0 0;">
-              <h1 style="color: white; margin: 0; font-size: 24px;">🚀 Nuevo Cliente Potencial</h1>
-              <p style="color: white; margin: 10px 0 0 0; opacity: 0.9;">Desde formulario web - luisgranero.com</p>
-            </div>
-            
-            <div style="background: white; padding: 30px; border-radius: 0 0 10px 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-              <h2 style="color: #1f2937; border-bottom: 2px solid #06b6d4; padding-bottom: 10px;">
-                📋 Información del Cliente
-              </h2>
-              
-              <table style="width: 100%; margin: 20px 0; border-collapse: collapse;">
-                <tr style="background: #f3f4f6;">
-                  <td style="padding: 12px; font-weight: bold; width: 35%;">Nombre:</td>
-                  <td style="padding: 12px;">${data.name}</td>
-                </tr>
-                <tr>
-                  <td style="padding: 12px; font-weight: bold; background: #f3f4f6;">Email:</td>
-                  <td style="padding: 12px;">
-                    <a href="mailto:${data.email}" style="color: #06b6d4; font-weight: 600;">${data.email}</a>
-                  </td>
-                </tr>
-                <tr style="background: #f3f4f6;">
-                  <td style="padding: 12px; font-weight: bold;">Teléfono:</td>
-                  <td style="padding: 12px;">
-                    ${data.phone ? `<a href="tel:${data.phone}" style="color: #10b981;">${data.phone}</a>` : 'No proporcionado'}
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding: 12px; font-weight: bold; background: #f3f4f6;">Empresa:</td>
-                  <td style="padding: 12px;">${data.company || 'No proporcionado'}</td>
-                </tr>
-                ${data.website ? `
-                <tr style="background: #f3f4f6;">
-                  <td style="padding: 12px; font-weight: bold;">Website:</td>
-                  <td style="padding: 12px;"><a href="${data.website}" target="_blank" style="color: #06b6d4;">${data.website}</a></td>
-                </tr>
-                ` : ''}
-              </table>
-              
-              <h3 style="color: #1f2937; border-bottom: 2px solid #10b981; padding-bottom: 10px; margin-top: 30px;">
-                💼 Detalles del Proyecto
-              </h3>
-              <table style="width: 100%; margin: 20px 0; border-collapse: collapse;">
-                <tr style="background: #f3f4f6;">
-                  <td style="padding: 12px; font-weight: bold; width: 35%;">Tipo de Proyecto:</td>
-                  <td style="padding: 12px;">${data.projectType || 'No especificado'}</td>
-                </tr>
-                <tr>
-                  <td style="padding: 12px; font-weight: bold; background: #f3f4f6;">Presupuesto:</td>
-                  <td style="padding: 12px;">${data.budget || 'No especificado'}</td>
-                </tr>
-                <tr style="background: #f3f4f6;">
-                  <td style="padding: 12px; font-weight: bold;">Timeline:</td>
-                  <td style="padding: 12px;">${data.timeline || 'No especificado'}</td>
-                </tr>
-              </table>
-              
-              <h3 style="color: #1f2937; border-bottom: 2px solid #f59e0b; padding-bottom: 10px; margin-top: 30px;">
-                💬 Mensaje del Cliente
-              </h3>
-              <div style="background: #fffbeb; padding: 20px; border-left: 4px solid #f59e0b; border-radius: 5px; margin: 20px 0;">
-                <p style="color: #92400e; margin: 0; line-height: 1.6; white-space: pre-wrap;">${data.message}</p>
-              </div>
-              
-              ${data.technologies && data.technologies.length > 0 ? `
-                <h3 style="color: #1f2937; margin-top: 30px;">⚙️ Tecnologías solicitadas:</h3>
-                <p style="color: #6b7280;">${data.technologies.join(', ')}</p>
-              ` : ''}
-              
-              <div style="margin-top: 40px; padding-top: 30px; border-top: 2px solid #e5e7eb; text-align: center;">
-                <a href="mailto:${data.email}" style="display: inline-block; background: #06b6d4; color: white; padding: 16px 32px; text-decoration: none; border-radius: 8px; font-weight: bold; margin: 5px; box-shadow: 0 4px 6px rgba(6, 182, 212, 0.3);">
-                  📧 Responder por Email
-                </a>
-                
-                ${data.phone ? `
-                  <a href="tel:${data.phone}" style="display: inline-block; background: #10b981; color: white; padding: 16px 32px; text-decoration: none; border-radius: 8px; font-weight: bold; margin: 5px; box-shadow: 0 4px 6px rgba(16, 185, 129, 0.3);">
-                    📞 Llamar Ahora
-                  </a>
-                  <a href="https://wa.me/${data.phone.replace(/\D/g, '')}" target="_blank" style="display: inline-block; background: #25D366; color: white; padding: 16px 32px; text-decoration: none; border-radius: 8px; font-weight: bold; margin: 5px; box-shadow: 0 4px 6px rgba(37, 211, 102, 0.3);">
-                    💬 WhatsApp
-                  </a>
-                ` : ''}
-              </div>
-              
-              ${lead ? `
-                <div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin-top: 30px; text-align: center;">
-                  <a href="${process.env.NEXTAUTH_URL || 'https://luisgranero.com'}/admin/leads/${lead._id}" style="color: #06b6d4; text-decoration: none; font-weight: 600;">
-                    👉 Ver en CRM →
-                  </a>
-                </div>
-              ` : ''}
-            </div>
-            
-            <div style="text-align: center; margin-top: 20px; padding: 20px; background: white; border-radius: 8px;">
-              <p style="color: #6b7280; font-size: 13px; margin: 5px 0;">
-                <strong>Metadata:</strong> IP: ${metadata.ipAddress} | Fecha: ${new Date().toLocaleString('es-ES')}
-              </p>
-            </div>
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h1>🚀 Nuevo Cliente Potencial</h1>
+            <p><strong>Nombre:</strong> ${data.name}</p>
+            <p><strong>Email:</strong> ${data.email}</p>
+            <p><strong>Teléfono:</strong> ${data.phone || 'No proporcionado'}</p>
+            <p><strong>Empresa:</strong> ${data.company || 'No proporcionado'}</p>
+            <p><strong>Proyecto:</strong> ${mappedProjectType}</p>
+            <p><strong>Presupuesto:</strong> ${mappedBudget}</p>
+            <p><strong>Timeline:</strong> ${mappedTimeline}</p>
+            <p><strong>Mensaje:</strong></p>
+            <p>${message}</p>
           </div>
         `;
       }
       
-      // Crear EmailLog
       notificationEmailLog = await EmailLog.create({
         leadId: lead?._id,
         emailTo: process.env.EMAIL_NOTIFICATION_TO || 'luis@luisgranero.com',
@@ -310,7 +272,6 @@ project: {
         templateId: notificationTemplate?.templateId || 'hardcoded_notification'
       });
       
-      // Enviar email
       await transporter.sendMail({
         from: `"Formulario Web - Luis Granero" <${process.env.EMAIL_FROM || 'luis@luisgranero.com'}>`,
         to: process.env.EMAIL_NOTIFICATION_TO || 'luis@luisgranero.com',
@@ -319,7 +280,6 @@ project: {
         html: notificationBody
       });
       
-      // Actualizar EmailLog
       await EmailLog.findByIdAndUpdate(notificationEmailLog._id, {
         status: 'sent',
         sentAt: new Date()
@@ -337,128 +297,29 @@ project: {
       }
     }
     
-    // 6. ENVIAR EMAIL DE CONFIRMACIÓN AL CLIENTE (con plantilla o hardcoded)
+    // 6. ENVIAR EMAIL DE CONFIRMACIÓN AL CLIENTE
     let confirmationEmailLog;
     try {
       let confirmationSubject;
       let confirmationBody;
       
       if (confirmationTemplate) {
-        // Usar plantilla si existe
         confirmationSubject = replaceShortcodes(confirmationTemplate.subject, data, magicLink);
         confirmationBody = replaceShortcodes(confirmationTemplate.body, data, magicLink);
       } else {
-        // Hardcoded si no hay plantilla
         confirmationSubject = '✅ He recibido tu mensaje - Luis Granero';
         confirmationBody = `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-            <div style="background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%); padding: 30px; border-radius: 10px 10px 0 0; text-align: center;">
-              <h1 style="color: white; margin: 0; font-size: 28px;">👋 ¡Hola ${data.name.split(' ')[0]}!</h1>
-            </div>
-            
-            <div style="background: white; padding: 40px; border-radius: 0 0 10px 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-              <p style="color: #1f2937; font-size: 18px; line-height: 1.6; margin-top: 0;">
-                Gracias por contactarme. <strong>He recibido tu mensaje</strong> y me pondré en contacto contigo en las próximas <strong style="color: #06b6d4;">2-4 horas</strong>.
-              </p>
-              
-              <div style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); padding: 25px; border-radius: 10px; margin: 30px 0; border-left: 4px solid #06b6d4;">
-                <h3 style="color: #0369a1; margin-top: 0; font-size: 18px;">📋 Resumen de tu consulta:</h3>
-                <table style="width: 100%;">
-                  <tr>
-                    <td style="color: #0c4a6e; padding: 8px 0; font-weight: 600;">Proyecto:</td>
-                    <td style="color: #374151; padding: 8px 0;">${data.projectType || 'Consulta general'}</td>
-                  </tr>
-                  <tr>
-                    <td style="color: #0c4a6e; padding: 8px 0; font-weight: 600;">Presupuesto:</td>
-                    <td style="color: #374151; padding: 8px 0;">${data.budget || 'A consultar'}</td>
-                  </tr>
-                  ${data.timeline ? `
-                  <tr>
-                    <td style="color: #0c4a6e; padding: 8px 0; font-weight: 600;">Timeline:</td>
-                    <td style="color: #374151; padding: 8px 0;">${data.timeline}</td>
-                  </tr>
-                  ` : ''}
-                </table>
-              </div>
-              
-              ${magicLink ? `
-                <div style="background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); padding: 25px; border-radius: 10px; margin: 30px 0; border-left: 4px solid #10b981; text-align: center;">
-                  <h3 style="color: #065f46; margin-top: 0;">📅 ¿Prefieres agendar una llamada?</h3>
-                  <p style="color: #047857; margin: 15px 0;">Elige el mejor momento para ti (sin compromiso):</p>
-                  <a href="${magicLink}" style="display: inline-block; background: #10b981; color: white; padding: 16px 32px; text-decoration: none; border-radius: 8px; font-weight: bold; margin: 10px 0; box-shadow: 0 4px 6px rgba(16, 185, 129, 0.3);">
-                    📞 Agendar Llamada Gratuita (15 min)
-                  </a>
-                  <p style="color: #6b7280; font-size: 13px; margin: 10px 0 0 0;">Este link es válido por 7 días</p>
-                </div>
-              ` : ''}
-              
-              <h3 style="color: #1f2937; border-bottom: 2px solid #e5e7eb; padding-bottom: 10px;">
-                💡 Mientras tanto...
-              </h3>
-              
-              <div style="display: grid; gap: 15px; margin: 20px 0;">
-                <div style="background: #f9fafb; padding: 20px; border-radius: 8px; border-left: 3px solid #06b6d4;">
-                  <strong style="color: #1f2937; display: block; margin-bottom: 8px;">🎨 Revisa mi portfolio</strong>
-                  <p style="color: #6b7280; margin: 0; line-height: 1.6;">
-                    Descubre proyectos similares al tuyo y cómo he ayudado a otros clientes.
-                  </p>
-                  <a href="https://luisgranero.com/portfolio" style="color: #06b6d4; text-decoration: none; font-weight: 600; display: inline-block; margin-top: 10px;">
-                    Ver portfolio →
-                  </a>
-                </div>
-                
-                <div style="background: #f9fafb; padding: 20px; border-radius: 8px; border-left: 3px solid #10b981;">
-                  <strong style="color: #1f2937; display: block; margin-bottom: 8px;">📚 Lee casos de éxito</strong>
-                  <p style="color: #6b7280; margin: 0; line-height: 1.6;">
-                    Testimonios reales y resultados medibles de clientes satisfechos.
-                  </p>
-                  <a href="https://luisgranero.com/portfolio" style="color: #10b981; text-decoration: none; font-weight: 600; display: inline-block; margin-top: 10px;">
-                    Ver casos de éxito →
-                  </a>
-                </div>
-              </div>
-              
-              <div style="background: #fef3c7; border: 2px solid #fbbf24; padding: 20px; border-radius: 10px; margin: 30px 0;">
-                <p style="color: #92400e; margin: 0; line-height: 1.6; font-size: 15px;">
-                  <strong>⚡ ¿Es urgente?</strong><br>
-                  Si necesitas hablar conmigo cuanto antes:
-                </p>
-                <div style="text-align: center; margin-top: 15px;">
-                  <a href="tel:+34698383610" style="display: inline-block; background: #10b981; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; margin: 5px;">
-                    📞 +34 698 38 36 10
-                  </a>
-                  <a href="https://wa.me/34698383610" target="_blank" style="display: inline-block; background: #25D366; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; margin: 5px;">
-                    💬 WhatsApp
-                  </a>
-                </div>
-              </div>
-              
-              <div style="border-top: 2px solid #e5e7eb; padding-top: 30px; margin-top: 40px;">
-                <p style="color: #374151; line-height: 1.6; margin: 0;">
-                  Saludos,<br>
-                  <strong style="color: #1f2937; font-size: 18px;">Luis Granero</strong><br>
-                  <span style="color: #6b7280;">Desarrollador Web Freelance</span>
-                </p>
-                
-                <div style="margin-top: 20px;">
-                  <a href="https://luisgranero.com" style="color: #06b6d4; text-decoration: none; margin-right: 15px;">🌐 luisgranero.com</a>
-                  <a href="mailto:luis@luisgranero.com" style="color: #06b6d4; text-decoration: none; margin-right: 15px;">📧 Email</a>
-                  <a href="https://linkedin.com/in/luisgranero" style="color: #06b6d4; text-decoration: none;">💼 LinkedIn</a>
-                </div>
-              </div>
-            </div>
-            
-            <div style="text-align: center; margin-top: 20px;">
-              <p style="color: #9ca3af; font-size: 12px; line-height: 1.5;">
-                Este email fue enviado en respuesta a tu solicitud de contacto desde luisgranero.com<br>
-                Si no realizaste esta solicitud, puedes ignorar este mensaje.
-              </p>
-            </div>
+            <h1>👋 ¡Hola ${data.name.split(' ')[0]}!</h1>
+            <p>Gracias por contactarme. He recibido tu mensaje y te responderé en las próximas 2-4 horas.</p>
+            <p><strong>Resumen de tu consulta:</strong></p>
+            <p>Proyecto: ${mappedProjectType}</p>
+            <p>Presupuesto: ${mappedBudget}</p>
+            <p>Timeline: ${mappedTimeline}</p>
           </div>
         `;
       }
       
-      // Crear EmailLog
       confirmationEmailLog = await EmailLog.create({
         leadId: lead?._id,
         emailTo: data.email,
@@ -469,7 +330,6 @@ project: {
         templateId: confirmationTemplate?.templateId || 'hardcoded_confirmation'
       });
       
-      // Enviar email
       await transporter.sendMail({
         from: `"Luis Granero" <${process.env.EMAIL_FROM || 'luis@luisgranero.com'}>`,
         to: data.email,
@@ -477,7 +337,6 @@ project: {
         html: confirmationBody
       });
       
-      // Actualizar EmailLog
       await EmailLog.findByIdAndUpdate(confirmationEmailLog._id, {
         status: 'sent',
         sentAt: new Date()
@@ -495,7 +354,7 @@ project: {
       }
     }
     
-    // 7. ACTUALIZAR LEAD con email enviado
+    // 7. ACTUALIZAR LEAD
     if (lead) {
       try {
         await Lead.findByIdAndUpdate(lead._id, {
@@ -508,7 +367,7 @@ project: {
             contactHistory: {
               date: new Date(),
               type: 'email',
-              notes: 'Emails de bienvenida enviados (notificación + confirmación)'
+              notes: 'Emails enviados (notificación + confirmación)'
             }
           }
         });
