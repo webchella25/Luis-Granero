@@ -173,14 +173,18 @@ export default function LeadsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
             📊 Gestión de Leads
           </h1>
           <p className="text-gray-600 dark:text-gray-400 mt-1">
-            {pagination.total} leads totales • Página {pagination.current} de {pagination.pages}
+            {/* ✅ CONTADOR DINÁMICO SEGÚN FILTRO */}
+            {activeTab === 'all' 
+              ? `${pagination.total} leads totales` 
+              : `${getCountForStatus(activeTab)} leads en "${tabs.find(t => t.status === activeTab)?.label}"`
+            } • Página {pagination.current} de {pagination.pages}
           </p>
         </div>
         

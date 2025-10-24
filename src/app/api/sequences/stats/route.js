@@ -1,8 +1,9 @@
-// src/app/api/sequences/stats/route.js - NUEVO
+// src/app/api/sequences/stats/route.js - VERSIÓN CORREGIDA
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import dbConnect from '@/lib/mongodb';
 import Sequence from '@/models/Sequence';
+import SequenceEnrollment from '@/models/SequenceEnrollment';
 import EmailLog from '@/models/EmailLog';
 
 export async function GET(request) {
@@ -14,16 +15,12 @@ export async function GET(request) {
 
     await dbConnect();
 
-    const [
-      totalSequences,
-      activeSequences,
-      emailsSent,
-      emailsOpened
-    ] = await Promise.all([
-      Sequence.countDocuments(),
+    // Contar secuencias y enrollments activos
+    const [totalSequences, activeEnrollments, emailsSent, emailsOpened] = await Promise.all([
       Sequence.countDocuments({ isActive: true }),
+      SequenceEnrollment.countDocuments({ status: 'active' }),
       EmailLog.countDocuments({ status: 'sent' }),
-      EmailLog.countDocuments({ opened: true })
+      EmailLog.countDocuments({ opened: true }) // ✅ Esto está bien
     ]);
 
     const openRate = emailsSent > 0 
@@ -34,7 +31,7 @@ export async function GET(request) {
       success: true,
       stats: {
         total: totalSequences,
-        active: activeSequences,
+        active: activeEnrollments, // ✅ Número de enrollments activos, no secuencias
         emailsSent,
         openRate
       }

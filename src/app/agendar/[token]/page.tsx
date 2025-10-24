@@ -42,32 +42,63 @@ export default function AgendarPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setSubmitting(true)
+    setLoading(true)
 
     try {
+      // 1. Crear/actualizar el appointment usando la ruta correcta
       const res = await fetch('/api/agendar/confirm', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          token: params.token,
-          date: selectedDate,
-          time: selectedTime,
+          token,
           name,
-          phone
+          phone,
+          date: selectedDate,
+          time: selectedTime
         })
       })
 
       const data = await res.json()
 
-      if (data.success) {
-        setSuccess(true)
-      } else {
-        alert(data.error || 'Error al agendar')
+      if (!res.ok) {
+        throw new Error(data.error || 'Error al agendar')
       }
-    } catch (error) {
-      alert('Error al agendar. Inténtalo de nuevo.')
+
+      // ✅ 2. NUEVO: Pausar secuencias activas del lead
+      // Primero necesitamos obtener el leadId del appointment
+      if (data.success) {
+        try {
+          // Obtener el appointment completo para sacar el leadId
+          const validateRes = await fetch(`/api/agendar/validate/${token}`);
+          const validateData = await validateRes.json();
+          
+          if (validateData.valid && validateData.lead?._id) {
+            const pauseRes = await fetch('/api/sequences/pause-for-lead', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                leadId: validateData.lead._id,
+                reason: 'Llamada agendada'
+              })
+            });
+
+            const pauseData = await pauseRes.json();
+            
+            if (pauseData.success) {
+              console.log(`✅ ${pauseData.pausedCount || 0} secuencias pausadas`);
+            }
+          }
+        } catch (pauseError) {
+          console.error('Error pausando secuencias:', pauseError);
+          // No fallar si esto da error, el appointment ya se creó
+        }
+      }
+
+      setSuccess(true)
+    } catch (error: any) {
+      setError(error.message || 'Error al agendar la llamada')
     } finally {
-      setSubmitting(false)
+      setLoading(false)
     }
   }
 
