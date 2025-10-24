@@ -1,4 +1,4 @@
-// src/app/agendar/[token]/page.tsx
+// src/app/agendar/[token]/page.tsx - VERSIÓN COMPLETA CORREGIDA
 'use client'
 
 import { useState, useEffect } from 'react'
@@ -6,6 +6,7 @@ import { useParams } from 'next/navigation'
 
 export default function AgendarPage() {
   const params = useParams()
+  const token = params.token as string // ✅ Extraer token aquí
   const [lead, setLead] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [selectedDate, setSelectedDate] = useState('')
@@ -22,7 +23,7 @@ export default function AgendarPage() {
 
   const validateToken = async () => {
     try {
-      const res = await fetch(`/api/agendar/validate/${params.token}`)
+      const res = await fetch(`/api/agendar/validate/${token}`)
       const data = await res.json()
       
       if (data.valid) {
@@ -42,19 +43,19 @@ export default function AgendarPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setLoading(true)
+    setSubmitting(true)
 
     try {
-      // 1. Crear/actualizar el appointment usando la ruta correcta
+      // 1. Crear/actualizar el appointment
       const res = await fetch('/api/agendar/confirm', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          token,
-          name,
-          phone,
+          token, // ✅ Ahora token está definido
           date: selectedDate,
-          time: selectedTime
+          time: selectedTime,
+          name,
+          phone
         })
       })
 
@@ -65,28 +66,21 @@ export default function AgendarPage() {
       }
 
       // ✅ 2. NUEVO: Pausar secuencias activas del lead
-      // Primero necesitamos obtener el leadId del appointment
-      if (data.success) {
+      if (data.success && lead?._id) {
         try {
-          // Obtener el appointment completo para sacar el leadId
-          const validateRes = await fetch(`/api/agendar/validate/${token}`);
-          const validateData = await validateRes.json();
-          
-          if (validateData.valid && validateData.lead?._id) {
-            const pauseRes = await fetch('/api/sequences/pause-for-lead', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                leadId: validateData.lead._id,
-                reason: 'Llamada agendada'
-              })
-            });
+          const pauseRes = await fetch('/api/sequences/pause-for-lead', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              leadId: lead._id,
+              reason: 'Llamada agendada'
+            })
+          });
 
-            const pauseData = await pauseRes.json();
-            
-            if (pauseData.success) {
-              console.log(`✅ ${pauseData.pausedCount || 0} secuencias pausadas`);
-            }
+          const pauseData = await pauseRes.json();
+          
+          if (pauseData.success) {
+            console.log(`✅ ${pauseData.pausedCount || 0} secuencias pausadas`);
           }
         } catch (pauseError) {
           console.error('Error pausando secuencias:', pauseError);
@@ -97,8 +91,9 @@ export default function AgendarPage() {
       setSuccess(true)
     } catch (error: any) {
       setError(error.message || 'Error al agendar la llamada')
+      alert('Error al agendar. Inténtalo de nuevo.')
     } finally {
-      setLoading(false)
+      setSubmitting(false)
     }
   }
 
@@ -229,13 +224,13 @@ export default function AgendarPage() {
                 Nombre / Empresa *
               </label>
               <input
-  type="text"
-  value={name}
-  onChange={(e) => setName(e.target.value)}
-  required
-  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all text-gray-900 bg-white"
-  placeholder="Tu nombre o empresa"
-/>
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all text-gray-900 bg-white"
+                placeholder="Tu nombre o empresa"
+              />
             </div>
 
             {/* Teléfono */}
@@ -244,13 +239,13 @@ export default function AgendarPage() {
                 Teléfono *
               </label>
               <input
-  type="tel"
-  value={phone}
-  onChange={(e) => setPhone(e.target.value)}
-  required
-  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all text-gray-900 bg-white"
-  placeholder="+34 600 000 000"
-/>
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                required
+                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all text-gray-900 bg-white"
+                placeholder="+34 600 000 000"
+              />
               <p className="mt-1 text-xs text-gray-500">Te llamaré a este número</p>
             </div>
 
@@ -266,27 +261,27 @@ export default function AgendarPage() {
                   
                   return (
                     <button
-  key={dateStr}
-  type="button"
-  onClick={() => setSelectedDate(dateStr)}
-  className={`
-    p-3 rounded-xl border-2 transition-all text-center
-    ${isSelected 
-      ? 'border-cyan-500 bg-cyan-50 text-cyan-700 font-semibold' 
-      : 'border-gray-200 hover:border-cyan-300 hover:bg-gray-50 text-gray-900'
-    }
-  `}
->
-  <div className="text-xs text-gray-500 uppercase">
-    {date.toLocaleDateString('es-ES', { weekday: 'short' })}
-  </div>
-  <div className="text-lg font-bold text-gray-900">
-    {date.getDate()}
-  </div>
-  <div className="text-xs text-gray-600">
-    {date.toLocaleDateString('es-ES', { month: 'short' })}
-  </div>
-</button>
+                      key={dateStr}
+                      type="button"
+                      onClick={() => setSelectedDate(dateStr)}
+                      className={`
+                        p-3 rounded-xl border-2 transition-all text-center
+                        ${isSelected 
+                          ? 'border-cyan-500 bg-cyan-50 text-cyan-700 font-semibold' 
+                          : 'border-gray-200 hover:border-cyan-300 hover:bg-gray-50 text-gray-900'
+                        }
+                      `}
+                    >
+                      <div className="text-xs text-gray-500 uppercase">
+                        {date.toLocaleDateString('es-ES', { weekday: 'short' })}
+                      </div>
+                      <div className="text-lg font-bold text-gray-900">
+                        {date.getDate()}
+                      </div>
+                      <div className="text-xs text-gray-600">
+                        {date.toLocaleDateString('es-ES', { month: 'short' })}
+                      </div>
+                    </button>
                   )
                 })}
               </div>
@@ -304,19 +299,19 @@ export default function AgendarPage() {
                     
                     return (
                       <button
-  key={slot}
-  type="button"
-  onClick={() => setSelectedTime(slot)}
-  className={`
-    py-3 rounded-xl border-2 transition-all font-semibold
-    ${isSelected 
-      ? 'border-cyan-500 bg-cyan-500 text-white' 
-      : 'border-gray-200 hover:border-cyan-300 hover:bg-gray-50 text-gray-900'
-    }
-  `}
->
-  {slot}
-</button>
+                        key={slot}
+                        type="button"
+                        onClick={() => setSelectedTime(slot)}
+                        className={`
+                          py-3 rounded-xl border-2 transition-all font-semibold
+                          ${isSelected 
+                            ? 'border-cyan-500 bg-cyan-500 text-white' 
+                            : 'border-gray-200 hover:border-cyan-300 hover:bg-gray-50 text-gray-900'
+                          }
+                        `}
+                      >
+                        {slot}
+                      </button>
                     )
                   })}
                 </div>
