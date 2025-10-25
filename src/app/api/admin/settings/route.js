@@ -1,97 +1,129 @@
 // src/app/api/admin/settings/route.js
-import { NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import dbConnect from '@/lib/mongodb'
-import SiteConfig from '@/models/SiteConfig'
+// API PARA GUARDAR CONFIGURACIÓN DEL ADMIN
 
-// GET - Obtener configuración actual
-export async function GET() {
+import { NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
+import connectDB from '@/lib/mongodb';
+import SiteConfig from '@/models/SiteConfig';
+
+export async function GET(request) {
   try {
-    await dbConnect()
-    
-    // Obtener todas las configuraciones
-    const configs = await SiteConfig.find({}).lean()
-    
-    // Organizar por categorías
-    const settings = {
-      site: {},
-      social: {},
-      analytics: {},
-      seo: {},
-      email: {},
-      maintenance: {}
+    const session = await getServerSession(authOptions);
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    
-    configs.forEach(config => {
-      const category = config.category || 'site'
-      if (settings[category]) {
-        // Extraer el nombre del campo del key
-        // Ejemplo: 'site_name' -> 'name'
-        const fieldName = config.key.replace(`${category}_`, '')
-        settings[category][fieldName] = config.value
+
+    await connectDB();
+
+    // Obtener configuración de la DB
+    const siteConfig = await SiteConfig.findOne({ key: 'site_info' });
+
+    if (siteConfig && siteConfig.value) {
+      return NextResponse.json(siteConfig.value);
+    }
+
+    // Si no existe, devolver valores por defecto
+    const defaultSettings = {
+      site: {
+        name: 'Luis Granero',
+        tagline: 'Desarrollador Web Freelance',
+        email: 'contacto@luisgranero.com',
+        phone: '+34 600 000 000',
+        address: 'Madrid, España',
+        whatsapp: '',
+        timezone: 'CET (UTC+1)',
+        languages: 'Español, Inglés',
+        workingHours: 'Lunes a Viernes: 9:00 - 18:00',
+        responseTime: '2-4 horas'
+      },
+      social: {
+        linkedin: '',
+        github: '',
+        twitter: '',
+        youtube: '',
+        instagram: '',
+        tiktok: ''
+      },
+      analytics: {
+        googleAnalytics: '',
+        gtmId: '',
+        facebookPixel: ''
+      },
+      seo: {
+        defaultMetaDescription: 'Desarrollador web freelance especializado en React, Next.js y soluciones personalizadas',
+        defaultKeywords: ['desarrollador web', 'freelance', 'React', 'Next.js', 'TypeScript'],
+        sitemapEnabled: true,
+        robotsEnabled: true
+      },
+      email: {
+        contactEmail: 'contacto@luisgranero.com',
+        smtpHost: '',
+        smtpPort: 587,
+        smtpUser: '',
+        smtpPassword: ''
+      },
+      maintenance: {
+        enabled: false,
+        message: 'Sitio en mantenimiento. Volvemos pronto.',
+        allowedIPs: []
       }
-    })
-    
-    return NextResponse.json(settings)
+    };
+
+    return NextResponse.json(defaultSettings);
+
   } catch (error) {
-    console.error('Error loading settings:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    console.error('❌ Error en GET /api/admin/settings:', error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
 
-// POST - Guardar configuración
 export async function POST(request) {
   try {
-    const session = await getServerSession()
-    
+    const session = await getServerSession(authOptions);
     if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    await dbConnect()
-    
-    const data = await request.json()
-    console.log('💾 Guardando configuración:', data)
-    
-    // Guardar cada categoría en SiteConfig
-    const savePromises = []
-    
-    // Procesar cada categoría
-    for (const [category, fields] of Object.entries(data)) {
-      if (typeof fields === 'object' && fields !== null) {
-        for (const [field, value] of Object.entries(fields)) {
-          const key = `${category}_${field}`
-          
-          savePromises.push(
-            SiteConfig.findOneAndUpdate(
-              { key },
-              {
-                key,
-                value,
-                category,
-                type: typeof value,
-                isPublic: category !== 'email' && category !== 'analytics',
-                updatedAt: new Date()
-              },
-              { upsert: true, new: true }
-            )
-          )
-        }
+    await connectDB();
+
+    const settings = await request.json();
+
+    console.log('💾 Guardando configuración...');
+    console.log('📦 Settings recibidos:', JSON.stringify(settings, null, 2));
+
+    // Guardar o actualizar en la DB
+    const result = await SiteConfig.findOneAndUpdate(
+      { key: 'site_info' },
+      {
+        key: 'site_info',
+        value: settings,
+        category: 'general',
+        type: 'object',
+        isPublic: true,
+        description: 'Configuración general del sitio'
+      },
+      { 
+        upsert: true, 
+        new: true,
+        runValidators: true 
       }
-    }
-    
-    await Promise.all(savePromises)
-    console.log('✅ Configuración guardada exitosamente')
-    
+    );
+
+    console.log('✅ Configuración guardada exitosamente');
+    console.log('📄 Documento guardado:', result);
+
     return NextResponse.json({ 
-      message: 'Configuración guardada exitosamente',
-      success: true
-    })
+      success: true,
+      message: 'Settings saved successfully',
+      data: result.value
+    });
+
   } catch (error) {
-    console.error('❌ Error guardando configuración:', error)
+    console.error('❌ Error guardando settings:', error);
     return NextResponse.json({ 
-      error: error.message,
-      success: false
-    }, { status: 500 })
+      success: false,
+      error: error.message 
+    }, { status: 500 });
   }
 }
