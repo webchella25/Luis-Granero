@@ -1,3 +1,6 @@
+// src/app/admin/test-scraper/page.tsx
+// VERSIÓN COMPLETA MEJORADA CON DEBUGGING EXTENSIVO
+
 'use client';
 
 import { useState } from 'react';
@@ -27,12 +30,19 @@ export default function TestScraperPage() {
   const [error, setError] = useState<string | null>(null);
   const [selectedLeads, setSelectedLeads] = useState<Set<number>>(new Set());
 
-  // Google Maps scraping
+  // ==================== GOOGLE MAPS ====================
   const handleGoogleMapsScrape = async () => {
     setLoading(true);
     setError(null);
     setResults([]);
     setSelectedLeads(new Set());
+
+    console.log('═══════════════════════════════════════');
+    console.log('🗺️ BUSCANDO EN GOOGLE MAPS');
+    console.log('═══════════════════════════════════════');
+    console.log('Ubicación:', location);
+    console.log('Categoría:', category);
+    console.log('Max resultados:', maxResults);
 
     try {
       const res = await fetch('/api/leads/search', {
@@ -46,21 +56,28 @@ export default function TestScraperPage() {
         })
       });
 
+      console.log('Response status:', res.status);
       const data = await res.json();
+      console.log('Response data:', data);
 
       if (data.success) {
+        console.log(`✅ ${data.leads.length} leads encontrados`);
         setResults(data.leads);
       } else {
+        console.error('❌ Error:', data.error);
         setError(data.error || 'Error desconocido');
       }
+      console.log('═══════════════════════════════════════');
     } catch (err: any) {
+      console.error('❌ CATCH ERROR:', err);
       setError(err?.message || 'Error desconocido');
+      console.log('═══════════════════════════════════════');
     } finally {
       setLoading(false);
     }
   };
 
-  // Google Search scraping
+  // ==================== GOOGLE SEARCH ====================
   const handleGoogleSearchScrape = async () => {
     if (!searchQuery.trim()) {
       setError('Por favor ingresa una búsqueda');
@@ -72,6 +89,12 @@ export default function TestScraperPage() {
     setResults([]);
     setSelectedLeads(new Set());
 
+    console.log('═══════════════════════════════════════');
+    console.log('🔎 BUSCANDO EN GOOGLE SEARCH');
+    console.log('═══════════════════════════════════════');
+    console.log('Query:', searchQuery);
+    console.log('Max resultados:', searchResults);
+
     try {
       const res = await fetch('/api/scraper/google-search', {
         method: 'POST',
@@ -82,104 +105,196 @@ export default function TestScraperPage() {
         })
       });
 
+      console.log('Response status:', res.status);
       const data = await res.json();
+      console.log('Response data:', data);
 
       if (data.success) {
+        console.log(`✅ ${data.leads.length} leads encontrados`);
         setResults(data.leads);
       } else {
+        console.error('❌ Error:', data.error);
         setError(data.error || 'Error desconocido');
       }
+      console.log('═══════════════════════════════════════');
     } catch (err: any) {
+      console.error('❌ CATCH ERROR:', err);
       setError(err?.message || 'Error desconocido');
+      console.log('═══════════════════════════════════════');
     } finally {
       setLoading(false);
     }
   };
 
-  // Instagram scraping
+  // ==================== INSTAGRAM ====================
   const handleInstagramScrape = async () => {
-  if (!instagramHashtag.trim()) {
-    setError('Por favor ingresa un hashtag');
-    return;
-  }
-
-  setLoading(true);
-  setError(null);
-  setResults([]);
-  setSelectedLeads(new Set());
-
-  try {
-    const res = await fetch('/api/scraper/instagram', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        hashtag: instagramHashtag.replace('#', ''),
-        maxResults: instagramResults
-      })
-    });
-
-    const data = await res.json();
-
-    if (data.success) {
-      setResults(data.leads);
-    } else {
-      setError(data.error || 'Error desconocido');
+    if (!instagramHashtag.trim()) {
+      setError('Por favor ingresa un hashtag');
+      return;
     }
-  } catch (err: any) {
-    setError(err?.message || 'Error desconocido');
-  } finally {
-    setLoading(false);
-  }
-};
 
-  // Toggle selección de un lead
+    setLoading(true);
+    setError(null);
+    setResults([]);
+    setSelectedLeads(new Set());
+
+    console.log('═══════════════════════════════════════');
+    console.log('📸 BUSCANDO LEADS EN INSTAGRAM');
+    console.log('═══════════════════════════════════════');
+    console.log('Hashtag:', instagramHashtag);
+    console.log('Max resultados:', instagramResults);
+
+    try {
+      const res = await fetch('/api/scraper/instagram', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          hashtag: instagramHashtag.replace('#', ''),
+          maxResults: instagramResults
+        })
+      });
+
+      console.log('Response status:', res.status);
+      const data = await res.json();
+      console.log('Response data:', data);
+
+      if (data.success) {
+        console.log(`✅ ${data.leads.length} leads encontrados`);
+        console.log('Primeros 3 leads:', data.leads.slice(0, 3));
+        setResults(data.leads);
+      } else {
+        console.error('❌ Error:', data.error);
+        setError(data.error || 'Error desconocido');
+      }
+      console.log('═══════════════════════════════════════');
+    } catch (err: any) {
+      console.error('❌ CATCH ERROR:', err);
+      setError(err?.message || 'Error desconocido');
+      console.log('═══════════════════════════════════════');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ==================== SELECCIÓN ====================
   const toggleLead = (index: number) => {
     const newSelected = new Set(selectedLeads);
     if (newSelected.has(index)) {
       newSelected.delete(index);
+      console.log(`❌ Deseleccionado lead #${index}`);
     } else {
       newSelected.add(index);
+      console.log(`✅ Seleccionado lead #${index}:`, results[index]?.name);
     }
     setSelectedLeads(newSelected);
+    console.log('📊 Total seleccionados:', newSelected.size);
   };
 
-  // Seleccionar todos
   const selectAll = () => {
     const allIndexes = new Set(results.map((_, i) => i));
     setSelectedLeads(allIndexes);
+    console.log('✅ TODOS SELECCIONADOS:', allIndexes.size, 'leads');
   };
 
-  // Deseleccionar todos
   const deselectAll = () => {
     setSelectedLeads(new Set());
+    console.log('❌ TODOS DESELECCIONADOS');
   };
 
-  // Importar leads seleccionados
+  // ==================== IMPORTACIÓN ====================
   const handleImportLeads = async () => {
     const leadsToImport = results.filter((_, index) => selectedLeads.has(index));
     
+    console.log('═══════════════════════════════════════');
+    console.log('💾 IMPORTACIÓN DE LEADS');
+    console.log('═══════════════════════════════════════');
+    console.log('📊 Leads seleccionados (índices):', Array.from(selectedLeads));
+    console.log('📦 Cantidad a importar:', leadsToImport.length);
+    console.log('📋 Leads a importar:');
+    leadsToImport.forEach((lead, i) => {
+      console.log(`  ${i + 1}. ${lead.name} - @${lead.username || 'N/A'} - Source: ${lead.source}`);
+    });
+    
     if (leadsToImport.length === 0) {
       alert('⚠️ Selecciona al menos un lead para importar');
+      console.log('⚠️ No hay leads seleccionados');
+      console.log('═══════════════════════════════════════');
       return;
     }
 
     try {
+      console.log('🚀 Enviando request al API...');
+      console.log('📤 Payload completo:', JSON.stringify({ leads: leadsToImport }, null, 2));
+      
       const res = await fetch('/api/leads/import', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ leads: leadsToImport })
       });
 
+      console.log('📡 Response status:', res.status);
+      console.log('📡 Response statusText:', res.statusText);
+      console.log('📡 Response headers:', Object.fromEntries(res.headers.entries()));
+      
+      // Verificar si la respuesta es JSON
+      const contentType = res.headers.get('content-type');
+      console.log('📄 Content-Type:', contentType);
+      
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await res.text();
+        console.error('❌ LA RESPUESTA NO ES JSON!');
+        console.error('Contenido recibido:', text.substring(0, 500));
+        console.log('═══════════════════════════════════════');
+        alert(`❌ Error: El servidor no respondió con JSON\n\nStatus: ${res.status}\nContenido: ${text.substring(0, 200)}\n\nRevisa la consola (F12) para más detalles.`);
+        return;
+      }
+      
       const data = await res.json();
+      console.log('📥 Response data completo:', data);
 
       if (data.success) {
-        alert(`✅ ${data.imported} leads importados correctamente`);
+        console.log('✅ IMPORTACIÓN EXITOSA!');
+        console.log(`   ✅ Importados: ${data.imported}`);
+        console.log(`   ⚠️ Omitidos: ${data.skipped}`);
+        
+        if (data.leads && data.leads.length > 0) {
+          console.log('📦 Leads importados:');
+          data.leads.forEach((lead: any, i: number) => {
+            console.log(`  ${i + 1}. ${lead.name} (ID: ${lead._id})`);
+          });
+        }
+        
+        if (data.skippedDetails && data.skippedDetails.length > 0) {
+          console.log('⚠️ Leads omitidos:');
+          data.skippedDetails.forEach((skip: any, i: number) => {
+            console.log(`  ${i + 1}. ${skip.name} - Razón: ${skip.reason}`);
+          });
+        }
+        
+        console.log('═══════════════════════════════════════');
+        
+        const message = data.skipped > 0 
+          ? `✅ ${data.imported} leads importados correctamente\n\n⚠️ ${data.skipped} leads omitidos (ya existían en la base de datos)`
+          : `✅ ${data.imported} leads importados correctamente`;
+        
+        alert(message);
         router.push('/admin/leads');
       } else {
-        alert(`❌ Error: ${data.error}`);
+        console.error('❌ ERROR EN LA RESPUESTA');
+        console.error('Mensaje de error:', data.error);
+        console.log('═══════════════════════════════════════');
+        alert(`❌ Error al importar:\n\n${data.error}\n\nRevisa la consola (F12) para más detalles.`);
       }
+      
     } catch (err: any) {
-      alert(`❌ Error: ${err?.message || 'Error desconocido'}`);
+      console.error('❌ CATCH ERROR - EXCEPCIÓN CAPTURADA');
+      console.error('Error name:', err.name);
+      console.error('Error message:', err.message);
+      console.error('Error stack:', err.stack);
+      console.error('Error completo:', err);
+      console.log('═══════════════════════════════════════');
+      
+      alert(`❌ Error de red o del servidor:\n\n${err?.message || 'Error desconocido'}\n\nEsto puede ser:\n- Problema de conexión\n- Error en el servidor\n- Timeout de la petición\n\nRevisa la consola (F12) para más detalles.`);
     }
   };
 
@@ -192,6 +307,9 @@ export default function TestScraperPage() {
         </h1>
         <p className="text-gray-400">
           Encuentra negocios potenciales de múltiples fuentes
+        </p>
+        <p className="text-gray-500 text-sm mt-2">
+          💡 Presiona F12 para ver los logs de debugging
         </p>
       </div>
 
@@ -336,7 +454,7 @@ export default function TestScraperPage() {
             disabled={loading}
             className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white font-bold py-4 px-6 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-cyan-500/50"
           >
-            {loading ? '🔄 Buscando...' : '🚀 Buscar Leads'}
+            {loading ? '🔄 Buscando...' : '🔎 Buscar en Google'}
           </button>
         </div>
       )}
@@ -454,6 +572,7 @@ export default function TestScraperPage() {
   );
 }
 
+// ==================== LEAD CARD ====================
 function LeadCard({ lead, source, selected, onToggle }: { 
   lead: any; 
   source: string;
