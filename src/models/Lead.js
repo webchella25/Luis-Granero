@@ -1,3 +1,4 @@
+// src/models/Lead.js - ACTUALIZACIÓN COMPLETA
 import mongoose from 'mongoose';
 
 const leadSchema = new mongoose.Schema({
@@ -46,12 +47,12 @@ const leadSchema = new mongoose.Schema({
   reviewCount: Number,
   
   // Google Maps specific
-  placeId: String, // ❌ REMOVIDO index: true
+  placeId: String,
   
   // Google Search specific
-  seoPosition: Number, // Posición en Google Search
-  domain: String, // Dominio extraído de la URL
-  description: String, // Meta description o snippet
+  seoPosition: Number,
+  domain: String,
+  description: String,
   
   // Web analysis
   webAnalysis: {
@@ -89,28 +90,54 @@ const leadSchema = new mongoose.Schema({
     enum: ['google_maps', 'google_search', 'instagram', 'linkedin', 'manual', 'referral', 'other'],
     default: 'manual'
   },
-  searchQuery: String, // Query usada para encontrar este lead
+  searchQuery: String,
   
   // Notes & history
   notes: String,
+  
+  // ✅ NUEVO: Historial de contacto mejorado
   contactHistory: [{
-    date: Date,
+    date: {
+      type: Date,
+      default: Date.now
+    },
     type: {
       type: String,
-      enum: ['email', 'call', 'meeting', 'message', 'other']
+      enum: ['email', 'call', 'meeting', 'instagram_dm', 'whatsapp', 'other'],
+      default: 'other'
     },
+    channel: {
+      type: String,
+      enum: ['email', 'phone', 'instagram', 'whatsapp', 'in_person', 'other'],
+      default: 'other'
+    },
+    subject: String,
     notes: String,
-    emailSubject: String
+    outcome: {
+      type: String,
+      enum: ['success', 'no_response', 'interested', 'not_interested', 'follow_up', 'other'],
+      default: 'other'
+    },
+    // ✅ NUEVO: Para plantillas de Instagram
+    templateUsed: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'MessageTemplate'
+    },
+    templateName: String,
+    messageContent: String, // El mensaje enviado
+    responded: {
+      type: Boolean,
+      default: false
+    },
+    responseDate: Date,
+    responseContent: String
   }],
   
-  // Assignment
-  assignedTo: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
-  },
-  
-  // Tags
+  // Tags personalizados
   tags: [String],
+  
+  // Asignación
+  assignedTo: String,
   
   // Timestamps
   createdAt: {
@@ -122,23 +149,19 @@ const leadSchema = new mongoose.Schema({
     default: Date.now
   },
   lastContactedAt: Date
-}, {
-  timestamps: true
 });
 
-// ✅ ÍNDICES DEFINIDOS SOLO UNA VEZ AQUÍ
-leadSchema.index({ email: 1 }, { sparse: true });
-leadSchema.index({ phone: 1 }, { sparse: true });
-leadSchema.index({ placeId: 1 }, { sparse: true }); // ✅ Solo aquí
-leadSchema.index({ username: 1, source: 1 }, { sparse: true });
-leadSchema.index({ status: 1 });
+// Índices
+leadSchema.index({ source: 1, status: 1 });
 leadSchema.index({ opportunityScore: -1 });
-leadSchema.index({ source: 1 });
 leadSchema.index({ createdAt: -1 });
+leadSchema.index({ status: 1 });
+leadSchema.index({ username: 1, source: 1 });
 
-// Virtual para el nombre completo del negocio
-leadSchema.virtual('displayName').get(function() {
-  return this.name || this.username || 'Sin nombre';
+// Actualizar updatedAt automáticamente
+leadSchema.pre('save', function(next) {
+  this.updatedAt = Date.now();
+  next();
 });
 
 export default mongoose.models.Lead || mongoose.model('Lead', leadSchema);

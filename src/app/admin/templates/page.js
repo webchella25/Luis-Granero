@@ -1,4 +1,4 @@
-// src/app/admin/templates/page.js
+// src/app/admin/templates/page.js - VERSIÓN ACTUALIZADA
 'use client'
 
 import { useState, useEffect } from 'react'
@@ -12,6 +12,9 @@ export default function TemplatesManager() {
   const [showPreview, setShowPreview] = useState(false)
   const [showNewTemplate, setShowNewTemplate] = useState(false)
   const [loading, setLoading] = useState(true)
+
+  // ✅ NUEVO: Añadir tab de Instagram
+  const tabs = ['email', 'whatsapp', 'copy', 'sms', 'instagram']
 
   // Shortcodes disponibles por tipo
   const availableShortcodes = {
@@ -47,8 +50,27 @@ export default function TemplatesManager() {
     sms: [
       { code: '{{business_name}}', desc: 'Nombre del negocio' },
       { code: '{{phone}}', desc: 'Teléfono' }
+    ],
+    // ✅ NUEVO: Shortcodes para Instagram (formato {variable})
+    instagram: [
+      { code: '{nombre}', desc: 'Nombre del lead' },
+      { code: '{username}', desc: 'Username de Instagram (@username)' },
+      { code: '{categoria}', desc: 'Categoría del negocio' },
+      { code: '{ubicacion}', desc: 'Ubicación extraída de la bio' },
+      { code: '{followers}', desc: 'Número de seguidores formateado' },
+      { code: '{tu_nombre}', desc: 'Tu nombre (Luis Granero)' },
+      { code: '{tu_web}', desc: 'Tu web (luisgranero.com)' }
     ]
   }
+
+  // ✅ NUEVO: Categorías para Instagram
+  const instagramCategories = [
+    { value: 'presentacion', label: 'Presentación', icon: '👋' },
+    { value: 'propuesta', label: 'Propuesta', icon: '💼' },
+    { value: 'seguimiento', label: 'Seguimiento', icon: '📞' },
+    { value: 'oferta', label: 'Oferta Especial', icon: '🎁' },
+    { value: 'otro', label: 'Otro', icon: '📝' }
+  ]
 
   useEffect(() => {
     fetchTemplates()
@@ -57,7 +79,12 @@ export default function TemplatesManager() {
   const fetchTemplates = async () => {
     setLoading(true)
     try {
-      const res = await fetch(`/api/templates?type=${activeTab}`)
+      // ✅ NUEVO: Detectar si es Instagram para usar la API correcta
+      const url = activeTab === 'instagram' 
+        ? '/api/templates?forMessages=true&targetSource=instagram'
+        : `/api/templates?type=${activeTab}`
+
+      const res = await fetch(url)
       const data = await res.json()
       if (data.success) {
         setTemplates(data.templates)
@@ -71,11 +98,14 @@ export default function TemplatesManager() {
 
   const handleSave = async () => {
     try {
+      // ✅ NUEVO: Detectar si es MessageTemplate (Instagram)
+      const isInstagram = activeTab === 'instagram' || editingTemplate.category
+      
       const url = editingTemplate._id 
-        ? `/api/templates/${editingTemplate.id}`
+        ? `/api/templates/${editingTemplate._id || editingTemplate.id}`
         : '/api/templates'
       
-      const method = editingTemplate._id ? 'PATCH' : 'POST'
+      const method = editingTemplate._id || editingTemplate.id ? 'PATCH' : 'POST'
       
       const res = await fetch(url, {
         method,
@@ -103,7 +133,8 @@ export default function TemplatesManager() {
     if (!confirm(`¿Eliminar el template "${template.name}"?`)) return
 
     try {
-      const res = await fetch(`/api/templates/${template.id}`, {
+      const id = template._id || template.id
+      const res = await fetch(`/api/templates/${id}`, {
         method: 'DELETE'
       })
 
@@ -123,32 +154,46 @@ export default function TemplatesManager() {
   }
 
   const handleNewTemplate = () => {
-    setEditingTemplate({
-      id: `${activeTab}_custom_${Date.now()}`,
-      name: '',
-      type: activeTab,
-      subject: activeTab === 'email' ? '' : undefined,
-      body: '',
-      variables: [],
-      isActive: true
-    })
+    // ✅ NUEVO: Detectar si es Instagram para crear MessageTemplate
+    if (activeTab === 'instagram') {
+      setEditingTemplate({
+        name: '',
+        description: '',
+        message: '',
+        category: 'presentacion',
+        targetSource: 'instagram',
+        isActive: true
+      })
+    } else {
+      setEditingTemplate({
+        id: `${activeTab}_custom_${Date.now()}`,
+        name: '',
+        type: activeTab,
+        subject: activeTab === 'email' ? '' : undefined,
+        body: '',
+        variables: [],
+        isActive: true
+      })
+    }
     setShowNewTemplate(true)
   }
 
   const insertShortcode = (code) => {
     if (!editingTemplate) return
     
+    // ✅ NUEVO: Detectar campo correcto (body o message)
+    const fieldName = activeTab === 'instagram' ? 'message' : 'body'
     const textarea = document.getElementById('template-body')
     if (!textarea) return
 
     const start = textarea.selectionStart
     const end = textarea.selectionEnd
-    const text = editingTemplate.body
+    const text = editingTemplate[fieldName] || ''
     const newText = text.substring(0, start) + code + text.substring(end)
     
     setEditingTemplate({
       ...editingTemplate,
-      body: newText
+      [fieldName]: newText
     })
 
     setTimeout(() => {
@@ -160,7 +205,16 @@ export default function TemplatesManager() {
   const renderPreview = () => {
     if (!editingTemplate) return null
 
-    const mockData = {
+    // ✅ NUEVO: Mock data diferente para Instagram
+    const mockData = activeTab === 'instagram' ? {
+      nombre: 'Pizzería Roma',
+      username: 'pizzeria_roma_madrid',
+      categoria: 'Restauración',
+      ubicacion: 'Madrid Centro',
+      followers: '2.5K',
+      tu_nombre: 'Luis Granero',
+      tu_web: 'luisgranero.com'
+    } : {
       business_name: 'Restaurante El Rincón',
       category: 'restaurantes',
       review_count: '47',
@@ -178,10 +232,13 @@ export default function TemplatesManager() {
     }
 
     let previewSubject = editingTemplate.subject || ''
-    let previewBody = editingTemplate.body
+    let previewBody = editingTemplate.body || editingTemplate.message || ''
     
+    // ✅ NUEVO: Reemplazar con formato correcto según tipo
     Object.entries(mockData).forEach(([key, value]) => {
-      const regex = new RegExp(`{{${key}}}`, 'g')
+      const regex = activeTab === 'instagram' 
+        ? new RegExp(`{${key}}`, 'g')
+        : new RegExp(`{{${key}}}`, 'g')
       previewSubject = previewSubject.replace(regex, value)
       previewBody = previewBody.replace(regex, value)
     })
@@ -223,10 +280,19 @@ export default function TemplatesManager() {
             </div>
 
             <div className="bg-blue-900/30 border border-blue-700 rounded-lg p-4">
-              <p className="text-blue-300 text-sm">
-                ℹ️ Esta es una vista previa con datos de ejemplo. Las variables se reemplazarán automáticamente con datos reales del lead.
+              <p className="text-xs text-blue-200">
+                💡 Esta es una vista previa con datos de ejemplo. Los valores reales se insertarán automáticamente al enviar el mensaje.
               </p>
             </div>
+          </div>
+
+          <div className="sticky bottom-0 bg-gray-900 border-t border-gray-700 p-6">
+            <button
+              onClick={() => setShowPreview(false)}
+              className="w-full px-6 py-3 bg-cyan-500 text-black rounded-lg hover:bg-cyan-400 transition-colors font-semibold"
+            >
+              Cerrar Preview
+            </button>
           </div>
         </div>
       </div>
@@ -234,156 +300,176 @@ export default function TemplatesManager() {
   }
 
   const renderEditor = () => {
-  if (!editingTemplate && !showNewTemplate) return null
+    if (!editingTemplate && !showNewTemplate) return null
 
-  const shortcuts = availableShortcodes[editingTemplate?.type || activeTab] || []
+    const shortcuts = availableShortcodes[activeTab] || []
+    const isInstagram = activeTab === 'instagram'
+    const fieldName = isInstagram ? 'message' : 'body'
 
-  return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      {/* AÑADIR overflow-y-auto AQUÍ */}
-      <div className="bg-gray-900 rounded-xl border border-gray-700 max-w-6xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-gray-900 border-b border-gray-700 p-6 flex justify-between items-center z-10">
-          <h3 className="text-2xl font-bold text-white">
-            {showNewTemplate ? '➕ Nuevo Template' : `✏️ Editando: ${editingTemplate.name}`}
-          </h3>
-          <button
-            onClick={() => {
-              setEditingTemplate(null)
-              setShowNewTemplate(false)
-            }}
-            className="text-gray-400 hover:text-white text-2xl"
-          >
-            ✕
-          </button>
-        </div>
+    return (
+      <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div className="bg-gray-900 rounded-xl border border-gray-700 max-w-6xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+          <div className="sticky top-0 bg-gray-900 border-b border-gray-700 p-6 flex justify-between items-center">
+            <h3 className="text-2xl font-bold text-white">
+              {editingTemplate._id || editingTemplate.id ? '✏️ Editar Template' : '➕ Nuevo Template'}
+            </h3>
+            <button
+              onClick={() => {
+                setEditingTemplate(null)
+                setShowNewTemplate(false)
+              }}
+              className="text-gray-400 hover:text-white text-2xl"
+            >
+              ✕
+            </button>
+          </div>
 
-        {/* QUITAR sticky del sidebar de shortcodes */}
-        <div className="p-6">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Editor - 2 columnas */}
-            <div className="lg:col-span-2 space-y-6">
-              {/* Nombre del template */}
-              <div>
-                <label className="block text-sm font-semibold text-gray-300 mb-2">
-                  Nombre del Template
-                </label>
-                <input
-                  type="text"
-                  value={editingTemplate?.name || ''}
-                  onChange={(e) => setEditingTemplate({
-                    ...editingTemplate,
-                    name: e.target.value
-                  })}
-                  className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:border-cyan-500 focus:outline-none"
-                  placeholder="Ej: Email - Prospección inicial"
-                />
-              </div>
-
-              {/* ID del template */}
-              <div>
-                <label className="block text-sm font-semibold text-gray-300 mb-2">
-                  ID del Template (único)
-                </label>
-                <input
-                  type="text"
-                  value={editingTemplate?.id || ''}
-                  onChange={(e) => setEditingTemplate({
-                    ...editingTemplate,
-                    id: e.target.value
-                  })}
-                  className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:border-cyan-500 focus:outline-none font-mono"
-                  placeholder="email_prospecting_v1"
-                  disabled={!showNewTemplate}
-                />
-                {!showNewTemplate && (
-                  <p className="text-xs text-gray-500 mt-1">
-                    El ID no se puede cambiar una vez creado
-                  </p>
-                )}
-              </div>
-
-              {/* Asunto (solo email) */}
-              {editingTemplate?.type === 'email' && (
+          <div className="flex-1 overflow-y-auto p-6">
+            <div className="grid lg:grid-cols-3 gap-6">
+              {/* Columna principal - 2/3 */}
+              <div className="lg:col-span-2 space-y-4">
                 <div>
                   <label className="block text-sm font-semibold text-gray-300 mb-2">
-                    Asunto del Email
+                    Nombre del Template *
                   </label>
                   <input
                     type="text"
-                    value={editingTemplate?.subject || ''}
+                    value={editingTemplate.name || ''}
                     onChange={(e) => setEditingTemplate({
                       ...editingTemplate,
-                      subject: e.target.value
+                      name: e.target.value
                     })}
-                    className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:border-cyan-500 focus:outline-none"
-                    placeholder="Usa {{shortcodes}} para personalizar"
+                    className="w-full px-4 py-3 bg-gray-800 text-white rounded-lg border border-gray-700 focus:border-cyan-500 focus:outline-none"
+                    placeholder="Ej: Presentación inicial"
                   />
                 </div>
-              )}
 
-              {/* Body */}
-              <div>
-                <label className="block text-sm font-semibold text-gray-300 mb-2">
-                  Cuerpo del Mensaje
-                </label>
-                <textarea
-                  id="template-body"
-                  value={editingTemplate?.body || ''}
-                  onChange={(e) => setEditingTemplate({
-                    ...editingTemplate,
-                    body: e.target.value
-                  })}
-                  rows={15}
-                  className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:border-cyan-500 focus:outline-none font-mono text-sm"
-                  placeholder="Escribe tu mensaje aquí... Usa {{shortcodes}} para personalizar"
-                />
-              </div>
-            </div>
+                {/* ✅ NUEVO: Campo descripción para Instagram */}
+                {isInstagram && (
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-300 mb-2">
+                      Descripción (opcional)
+                    </label>
+                    <input
+                      type="text"
+                      value={editingTemplate.description || ''}
+                      onChange={(e) => setEditingTemplate({
+                        ...editingTemplate,
+                        description: e.target.value
+                      })}
+                      className="w-full px-4 py-3 bg-gray-800 text-white rounded-lg border border-gray-700 focus:border-cyan-500 focus:outline-none"
+                      placeholder="Breve descripción del propósito de esta plantilla"
+                    />
+                  </div>
+                )}
 
-            {/* Shortcodes - 1 columna - QUITAR sticky */}
-            <div className="space-y-4">
-              <div className="bg-gray-800 border border-gray-700 rounded-lg p-4">
-                <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
-                  <span className="text-xl">📌</span>
-                  Shortcodes Disponibles
-                </h4>
-                <p className="text-sm text-gray-400 mb-4">
-                  Haz clic para insertar en el cursor
-                </p>
-                <div className="space-y-2 max-h-96 overflow-y-auto">
-                  {shortcuts.map((shortcut) => (
-                    <button
-                      key={shortcut.code}
-                      onClick={() => insertShortcode(shortcut.code)}
-                      className="w-full text-left px-3 py-2 bg-gray-900 hover:bg-gray-700 rounded-lg transition-colors group"
+                {/* ✅ NUEVO: Categoría para Instagram */}
+                {isInstagram && (
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-300 mb-2">
+                      Categoría
+                    </label>
+                    <select
+                      value={editingTemplate.category || 'presentacion'}
+                      onChange={(e) => setEditingTemplate({
+                        ...editingTemplate,
+                        category: e.target.value
+                      })}
+                      className="w-full px-4 py-3 bg-gray-800 text-white rounded-lg border border-gray-700 focus:border-cyan-500 focus:outline-none"
                     >
-                      <code className="text-cyan-400 text-sm font-mono block mb-1">
-                        {shortcut.code}
-                      </code>
-                      <span className="text-xs text-gray-500 group-hover:text-gray-400">
-                        {shortcut.desc}
-                      </span>
-                    </button>
-                  ))}
+                      {instagramCategories.map(cat => (
+                        <option key={cat.value} value={cat.value}>
+                          {cat.icon} {cat.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                {editingTemplate.subject !== undefined && (
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-300 mb-2">
+                      Asunto (Email)
+                    </label>
+                    <input
+                      type="text"
+                      value={editingTemplate.subject || ''}
+                      onChange={(e) => setEditingTemplate({
+                        ...editingTemplate,
+                        subject: e.target.value
+                      })}
+                      className="w-full px-4 py-3 bg-gray-800 text-white rounded-lg border border-gray-700 focus:border-cyan-500 focus:outline-none"
+                      placeholder="Asunto del email"
+                    />
+                  </div>
+                )}
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-300 mb-2">
+                    {isInstagram ? 'Mensaje *' : 'Contenido *'}
+                  </label>
+                  <textarea
+                    id="template-body"
+                    value={editingTemplate[fieldName] || ''}
+                    onChange={(e) => setEditingTemplate({
+                      ...editingTemplate,
+                      [fieldName]: e.target.value
+                    })}
+                    rows={isInstagram ? 12 : 10}
+                    className="w-full px-4 py-3 bg-gray-800 text-white rounded-lg border border-gray-700 focus:border-cyan-500 focus:outline-none font-mono text-sm"
+                    placeholder={isInstagram 
+                      ? "Escribe tu mensaje aquí... Usa {variables} para personalizar"
+                      : "Escribe tu mensaje aquí... Usa {{shortcodes}} para personalizar"
+                    }
+                  />
                 </div>
               </div>
 
-              <div className="bg-blue-900/30 border border-blue-700 rounded-lg p-4">
-                <h5 className="font-semibold text-blue-300 mb-2 text-sm">
-                  💡 Consejos
-                </h5>
-                <ul className="text-xs text-blue-200 space-y-2">
-                  <li>• Los shortcodes se reemplazan automáticamente</li>
-                  <li>• Usa saltos de línea para mejor formato</li>
-                  <li>• Añade emojis para mensajes más atractivos</li>
-                  <li>• Prueba el preview antes de guardar</li>
-                </ul>
+              {/* Shortcodes - 1/3 */}
+              <div className="space-y-4">
+                <div className="bg-gray-800 border border-gray-700 rounded-lg p-4">
+                  <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
+                    <span className="text-xl">📌</span>
+                    {isInstagram ? 'Variables Disponibles' : 'Shortcodes Disponibles'}
+                  </h4>
+                  <p className="text-sm text-gray-400 mb-4">
+                    Haz clic para insertar en el cursor
+                  </p>
+                  <div className="space-y-2 max-h-96 overflow-y-auto">
+                    {shortcuts.map((shortcut) => (
+                      <button
+                        key={shortcut.code}
+                        onClick={() => insertShortcode(shortcut.code)}
+                        className="w-full text-left px-3 py-2 bg-gray-900 hover:bg-gray-700 rounded-lg transition-colors group"
+                      >
+                        <code className="text-cyan-400 text-sm font-mono block mb-1">
+                          {shortcut.code}
+                        </code>
+                        <span className="text-xs text-gray-500 group-hover:text-gray-400">
+                          {shortcut.desc}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="bg-blue-900/30 border border-blue-700 rounded-lg p-4">
+                  <h5 className="font-semibold text-blue-300 mb-2 text-sm">
+                    💡 Consejos
+                  </h5>
+                  <ul className="text-xs text-blue-200 space-y-2">
+                    <li>• Las {isInstagram ? 'variables' : 'shortcodes'} se reemplazan automáticamente</li>
+                    <li>• Usa saltos de línea para mejor formato</li>
+                    <li>• Añade emojis para mensajes más atractivos</li>
+                    <li>• Prueba el preview antes de guardar</li>
+                  </ul>
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Botones - STICKY al fondo */}
-          <div className="sticky bottom-0 bg-gray-900 border-t border-gray-700 mt-6 pt-6 -mx-6 px-6 pb-6">
+          {/* Botones */}
+          <div className="sticky bottom-0 bg-gray-900 border-t border-gray-700 p-6">
             <div className="flex gap-4 justify-end">
               <button
                 onClick={() => handlePreview(editingTemplate)}
@@ -402,7 +488,7 @@ export default function TemplatesManager() {
               </button>
               <button
                 onClick={handleSave}
-                disabled={!editingTemplate?.name || !editingTemplate?.body}
+                disabled={!editingTemplate?.name || !(editingTemplate?.body || editingTemplate?.message)}
                 className="px-6 py-3 bg-gradient-to-r from-cyan-500 to-green-500 text-black rounded-lg hover:opacity-90 transition-opacity font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 💾 Guardar Template
@@ -411,9 +497,8 @@ export default function TemplatesManager() {
           </div>
         </div>
       </div>
-    </div>
-  )
-}
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gray-950 text-white p-8">
@@ -436,13 +521,13 @@ export default function TemplatesManager() {
           </button>
         </div>
 
-        {/* Tabs */}
-        <div className="flex gap-2 mb-6 border-b border-gray-800">
-          {['email', 'whatsapp', 'copy', 'sms'].map(tab => (
+        {/* Tabs - ✅ AÑADIDO Instagram */}
+        <div className="flex gap-2 mb-6 border-b border-gray-800 overflow-x-auto">
+          {tabs.map(tab => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`px-6 py-3 font-semibold transition-all ${
+              className={`px-6 py-3 font-semibold transition-all whitespace-nowrap ${
                 activeTab === tab
                   ? 'text-cyan-400 border-b-2 border-cyan-400'
                   : 'text-gray-500 hover:text-gray-300'
@@ -452,6 +537,7 @@ export default function TemplatesManager() {
               {tab === 'whatsapp' && '📱 WhatsApp'}
               {tab === 'copy' && '📋 Copiar'}
               {tab === 'sms' && '💬 SMS'}
+              {tab === 'instagram' && '📸 Instagram'}
             </button>
           ))}
         </div>
@@ -475,66 +561,105 @@ export default function TemplatesManager() {
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-4">
-            {templates.map(template => (
-              <div
-                key={template.id}
-                className="bg-gray-900 border border-gray-800 rounded-xl p-6 hover:border-cyan-500/50 transition-all"
-              >
-                <div className="flex justify-between items-start mb-4">
-                  <div className="flex-1">
-                    <h3 className="text-xl font-bold text-white mb-1">
-                      {template.name}
-                    </h3>
-                    <code className="text-xs text-gray-500 bg-gray-800 px-2 py-1 rounded">
-                      {template.id}
-                    </code>
-                    {template.subject && (
-                      <p className="text-sm text-gray-400 mt-2">
-                        <span className="font-semibold">Asunto:</span>{' '}
-                        <span className="text-cyan-400">{template.subject}</span>
-                      </p>
-                    )}
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => handlePreview(template)}
-                      className="px-4 py-2 bg-gray-800 text-cyan-400 rounded-lg hover:bg-gray-700 transition-colors text-sm"
-                    >
-                      👁️ Preview
-                    </button>
-                    <button
-                      onClick={() => setEditingTemplate(template)}
-                      className="px-4 py-2 bg-cyan-500 text-black rounded-lg hover:bg-cyan-400 transition-colors font-semibold text-sm"
-                    >
-                      ✏️ Editar
-                    </button>
-                    <button
-                      onClick={() => handleDelete(template)}
-                      className="px-4 py-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 transition-colors text-sm"
-                    >
-                      🗑️
-                    </button>
-                  </div>
-                </div>
+            {templates.map(template => {
+              // ✅ NUEVO: Detectar si es MessageTemplate
+              const isMessageTemplate = template.category !== undefined
+              const displayId = template._id || template.id
+              const displayBody = template.message || template.body
 
-                <div className="bg-gray-800 rounded-lg p-4 mb-4">
-                  <p className="text-gray-300 text-sm whitespace-pre-wrap line-clamp-3">
-                    {template.body}
-                  </p>
-                </div>
+              return (
+                <div
+                  key={displayId}
+                  className="bg-gray-900 border border-gray-800 rounded-xl p-6 hover:border-cyan-500/50 transition-all"
+                >
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <h3 className="text-xl font-bold text-white">
+                          {template.name}
+                        </h3>
+                        {/* ✅ NUEVO: Badge de categoría para Instagram */}
+                        {isMessageTemplate && template.category && (
+                          <span className="px-3 py-1 bg-purple-500/20 text-purple-400 rounded-full text-xs font-semibold">
+                            {instagramCategories.find(c => c.value === template.category)?.icon} {
+                              instagramCategories.find(c => c.value === template.category)?.label
+                            }
+                          </span>
+                        )}
+                      </div>
+                      <code className="text-xs text-gray-500 bg-gray-800 px-2 py-1 rounded">
+                        {displayId}
+                      </code>
+                      {template.subject && (
+                        <p className="text-sm text-gray-400 mt-2">
+                          <span className="font-semibold">Asunto:</span>{' '}
+                          <span className="text-cyan-400">{template.subject}</span>
+                        </p>
+                      )}
+                      {template.description && (
+                        <p className="text-sm text-gray-400 mt-2">
+                          {template.description}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handlePreview(template)}
+                        className="px-4 py-2 bg-gray-800 text-cyan-400 rounded-lg hover:bg-gray-700 transition-colors text-sm"
+                      >
+                        👁️ Preview
+                      </button>
+                      <button
+                        onClick={() => setEditingTemplate(template)}
+                        className="px-4 py-2 bg-cyan-500 text-black rounded-lg hover:bg-cyan-400 transition-colors font-semibold text-sm"
+                      >
+                        ✏️ Editar
+                      </button>
+                      <button
+                        onClick={() => handleDelete(template)}
+                        className="px-4 py-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 transition-colors text-sm"
+                      >
+                        🗑️
+                      </button>
+                    </div>
+                  </div>
 
-                <div className="flex flex-wrap gap-2">
-                  {template.variables?.map(variable => (
-                    <span
-                      key={variable}
-                      className="px-3 py-1 bg-gray-800 text-cyan-400 rounded-full text-xs font-mono"
-                    >
-                      {`{{${variable}}}`}
-                    </span>
-                  ))}
+                  <div className="bg-gray-800 rounded-lg p-4 mb-4">
+                    <p className="text-gray-300 text-sm whitespace-pre-wrap line-clamp-3">
+                      {displayBody}
+                    </p>
+                  </div>
+
+                  {/* ✅ NUEVO: Mostrar variables disponibles para Instagram */}
+                  {isMessageTemplate && template.availableVariables && template.availableVariables.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {template.availableVariables.map(variable => (
+                        <span
+                          key={variable}
+                          className="px-3 py-1 bg-purple-500/20 text-purple-400 rounded-full text-xs font-mono"
+                        >
+                          {`{${variable}}`}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Variables para templates normales */}
+                  {!isMessageTemplate && template.variables && template.variables.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {template.variables.map(variable => (
+                        <span
+                          key={variable}
+                          className="px-3 py-1 bg-gray-800 text-cyan-400 rounded-full text-xs font-mono"
+                        >
+                          {`{{${variable}}}`}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         )}
 

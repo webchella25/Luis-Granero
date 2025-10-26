@@ -1,29 +1,35 @@
-// src/app/admin/leads/page.js - VERSIÓN CON PESTAÑAS + PAGINACIÓN
+// src/app/admin/leads/page.js - VERSIÓN COMPLETA INTEGRADA
 'use client'
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import InstagramContactModal from '@/components/admin/InstagramContactModal'
+import ContactHistory from '@/components/admin/ContactHistory'
 
 export default function LeadsPage() {
   const router = useRouter()
   const [leads, setLeads] = useState([])
   const [loading, setLoading] = useState(true)
   const [stats, setStats] = useState(null)
-  const [activeTab, setActiveTab] = useState('all') // ✅ NUEVO
+  const [activeTab, setActiveTab] = useState('all')
   const [filters, setFilters] = useState({
     status: 'all',
     search: '',
     page: 1,
-    limit: 20 // ✅ 20 leads por página
+    limit: 20
   })
-  const [pagination, setPagination] = useState({ // ✅ NUEVO
+  const [pagination, setPagination] = useState({
     total: 0,
     pages: 0,
     current: 1
   })
 
-  // ✅ DEFINIR TABS
+  // ✅ NUEVOS ESTADOS PARA INSTAGRAM
+  const [selectedLead, setSelectedLead] = useState(null)
+  const [showContactModal, setShowContactModal] = useState(false)
+  const [showHistoryModal, setShowHistoryModal] = useState(false)
+
   const tabs = [
     { id: 'all', label: 'Todos', icon: '📊', status: 'all' },
     { id: 'new', label: 'Nuevos', icon: '🆕', status: 'new' },
@@ -57,7 +63,6 @@ export default function LeadsPage() {
         setLeads(data.leads)
         setStats(data.stats)
         
-        // ✅ ACTUALIZAR PAGINACIÓN
         setPagination({
           total: data.total || 0,
           pages: Math.ceil((data.total || 0) / filters.limit),
@@ -71,17 +76,20 @@ export default function LeadsPage() {
     }
   }
 
-  // ✅ CAMBIAR DE TAB
+  // ✅ NUEVA FUNCIÓN PARA INSTAGRAM
+  const handleContactSuccess = () => {
+    fetchLeads() // Recargar leads para actualizar estado
+  }
+
   const handleTabChange = (tabStatus) => {
     setActiveTab(tabStatus)
     setFilters({
       ...filters,
       status: tabStatus,
-      page: 1 // Reset a página 1
+      page: 1
     })
   }
 
-  // ✅ CAMBIAR DE PÁGINA
   const handlePageChange = (newPage) => {
     setFilters({
       ...filters,
@@ -90,7 +98,6 @@ export default function LeadsPage() {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-  // ✅ OBTENER CONTADOR POR STATUS
   const getCountForStatus = (status) => {
     if (!stats) return 0
     if (status === 'all') return stats.opportunities?.total || 0
@@ -124,19 +131,18 @@ export default function LeadsPage() {
     }
   }
 
-  // ✅ FUNCIÓN WHATSAPP DINÁMICA
   const handleWhatsAppClick = async (lead) => {
     try {
-      const res = await fetch('/api/templates?type=whatsapp');
-      const data = await res.json();
+      const res = await fetch('/api/templates?type=whatsapp')
+      const data = await res.json()
       
       if (!data.success || data.templates.length === 0) {
-        alert('❌ No hay templates de WhatsApp configurados. Ve a /admin/templates para crear uno.');
-        return;
+        alert('❌ No hay templates de WhatsApp configurados. Ve a /admin/templates para crear uno.')
+        return
       }
       
-      const template = data.templates.find(t => t.isActive) || data.templates[0];
-      let message = template.body;
+      const template = data.templates.find(t => t.isActive) || data.templates[0]
+      let message = template.body
       
       const replacements = {
         '{{business_name}}': lead.name || '',
@@ -147,40 +153,39 @@ export default function LeadsPage() {
         '{{address}}': lead.address || '',
         '{{website}}': lead.website || '',
         '{{score}}': lead.opportunityScore || 0
-      };
-      
-      Object.entries(replacements).forEach(([key, value]) => {
-        message = message.replace(new RegExp(key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), String(value));
-      });
-      
-      const phoneClean = lead.phone?.replace(/\D/g, '') || '';
-      
-      if (!phoneClean) {
-        alert('❌ Este lead no tiene teléfono');
-        return;
       }
       
-      const whatsappUrl = `https://wa.me/${phoneClean}?text=${encodeURIComponent(message)}`;
-      window.open(whatsappUrl, '_blank');
+      Object.entries(replacements).forEach(([key, value]) => {
+        message = message.replace(new RegExp(key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), String(value))
+      })
       
-      console.log(`✅ WhatsApp abierto para ${lead.name}`);
+      const phoneClean = lead.phone?.replace(/\D/g, '') || ''
+      
+      if (!phoneClean) {
+        alert('❌ Este lead no tiene teléfono')
+        return
+      }
+      
+      const whatsappUrl = `https://wa.me/${phoneClean}?text=${encodeURIComponent(message)}`
+      window.open(whatsappUrl, '_blank')
+      
+      console.log(`✅ WhatsApp abierto para ${lead.name}`)
       
     } catch (error) {
-      console.error('Error cargando template de WhatsApp:', error);
-      alert('❌ Error al cargar el template de WhatsApp');
+      console.error('Error cargando template de WhatsApp:', error)
+      alert('❌ Error al cargar el template de WhatsApp')
     }
   }
 
   return (
     <div className="space-y-6">
-       {/* Header */}
+      {/* Header */}
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
             📊 Gestión de Leads
           </h1>
           <p className="text-gray-600 dark:text-gray-400 mt-1">
-            {/* ✅ CONTADOR DINÁMICO SEGÚN FILTRO */}
             {activeTab === 'all' 
               ? `${pagination.total} leads totales` 
               : `${getCountForStatus(activeTab)} leads en "${tabs.find(t => t.status === activeTab)?.label}"`
@@ -196,7 +201,7 @@ export default function LeadsPage() {
         </Link>
       </div>
 
-      {/* ✅ PESTAÑAS CON CONTADORES */}
+      {/* Pestañas con contadores */}
       <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
         <div className="flex flex-wrap gap-2">
           {tabs.map((tab) => {
@@ -209,77 +214,90 @@ export default function LeadsPage() {
                 onClick={() => handleTabChange(tab.status)}
                 className={`px-4 py-2 rounded-lg font-semibold transition-all ${
                   isActive
-                    ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-lg'
+                    ? 'bg-cyan-500 text-white'
                     : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                 }`}
               >
-                {tab.icon} {tab.label}
-                {count > 0 && (
-                  <span className={`ml-2 px-2 py-0.5 rounded-full text-xs font-bold ${
-                    isActive 
-                      ? 'bg-white/20' 
-                      : 'bg-gray-300 dark:bg-gray-600'
-                  }`}>
-                    {count}
-                  </span>
-                )}
+                <span className="mr-2">{tab.icon}</span>
+                {tab.label}
+                <span className={`ml-2 px-2 py-0.5 rounded-full text-xs ${
+                  isActive
+                    ? 'bg-white/20'
+                    : 'bg-gray-200 dark:bg-gray-600'
+                }`}>
+                  {count}
+                </span>
               </button>
             )
           })}
         </div>
       </div>
 
-      {/* Filtros de búsqueda */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="flex-1">
-            <input
-              type="text"
-              placeholder="Buscar por nombre, categoría o dirección..."
-              value={filters.search}
-              onChange={(e) => setFilters({ ...filters, search: e.target.value, page: 1 })}
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-            />
-          </div>
+      {/* Stats Cards */}
+      {stats && (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <StatCard
+            title="Total Oportunidades"
+            value={stats.opportunities?.total || 0}
+            icon="📊"
+            color="blue"
+          />
+          <StatCard
+            title="Score Promedio"
+            value={Math.round(stats.opportunities?.avgScore || 0)}
+            icon="⭐"
+            color="yellow"
+          />
+          <StatCard
+            title="Alta Prioridad"
+            value={stats.opportunities?.highPriority || 0}
+            icon="🔥"
+            color="red"
+          />
+          <StatCard
+            title="Sin Web"
+            value={stats.opportunities?.noWebsite || 0}
+            icon="🚫"
+            color="green"
+          />
         </div>
+      )}
+
+      {/* Search */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+        <input
+          type="text"
+          placeholder="🔍 Buscar leads..."
+          value={filters.search}
+          onChange={(e) => setFilters({ ...filters, search: e.target.value, page: 1 })}
+          className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+        />
       </div>
 
-      {/* Tabla de Leads */}
+      {/* Leads Table */}
       {loading ? (
-        <div className="text-center py-12">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-500"></div>
-          <p className="text-gray-600 dark:text-gray-400 mt-4">Cargando leads...</p>
+        <div className="flex items-center justify-center py-20">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-500"></div>
         </div>
       ) : leads.length === 0 ? (
-        <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-          <p className="text-gray-600 dark:text-gray-400 text-lg">
-            {filters.search 
-              ? `No se encontraron leads con "${filters.search}"`
-              : activeTab === 'all'
-              ? 'No hay leads todavía'
-              : `No hay leads en estado "${tabs.find(t => t.status === activeTab)?.label}"`
-            }
+        <div className="text-center py-20 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+          <p className="text-gray-500 dark:text-gray-400 text-lg">
+            No hay leads en esta categoría
           </p>
-          <Link
-            href="/admin/test-scraper"
-            className="mt-4 text-cyan-500 hover:underline inline-block"
-          >
-            Buscar nuevos leads
-          </Link>
         </div>
       ) : (
         <>
-          <div className="bg-white dark:bg-gray-800 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
+          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50 dark:bg-gray-900">
+                <thead className="bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
                   <tr>
-                    <th className="text-left p-4 text-gray-600 dark:text-gray-400 font-semibold">Score</th>
-                    <th className="text-left p-4 text-gray-600 dark:text-gray-400 font-semibold">Negocio</th>
-                    <th className="text-left p-4 text-gray-600 dark:text-gray-400 font-semibold">Contacto</th>
-                    <th className="text-left p-4 text-gray-600 dark:text-gray-400 font-semibold">Website</th>
-                    <th className="text-left p-4 text-gray-600 dark:text-gray-400 font-semibold">Estado</th>
-                    <th className="text-left p-4 text-gray-600 dark:text-gray-400 font-semibold">Acciones</th>
+                    <th className="p-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase">Score</th>
+                    <th className="p-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase">Negocio</th>
+                    <th className="p-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase">Contacto</th>
+                    <th className="p-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase">Web</th>
+                    <th className="p-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase">Estado</th>
+                    <th className="p-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase">Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -338,7 +356,7 @@ export default function LeadsPage() {
                             <p className="text-gray-700 dark:text-gray-300">✉️ {lead.possibleEmails[0]}</p>
                           )}
                           {!lead.phone && !lead.possibleEmails?.[0] && (
-                            <p className="text-gray-500">Sin contacto</p>
+                            <span className="text-orange-500 text-xs">⚠️ Sin contacto directo</span>
                           )}
                         </div>
                       </td>
@@ -384,8 +402,39 @@ export default function LeadsPage() {
                         </select>
                       </td>
 
+                      {/* ✅ COLUMNA DE ACCIONES ACTUALIZADA CON INSTAGRAM */}
                       <td className="p-4">
-                        <div className="flex gap-2 items-center">
+                        <div className="flex gap-2 items-center flex-wrap">
+                          
+                          {/* ✅ NUEVO: Botón contactar por Instagram */}
+                          {lead.source === 'instagram' && lead.username && (
+                            <button
+                              onClick={() => {
+                                setSelectedLead(lead)
+                                setShowContactModal(true)
+                              }}
+                              className="px-3 py-1.5 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white text-sm font-semibold rounded-lg transition-colors flex items-center gap-1"
+                              title="Contactar por Instagram"
+                            >
+                              📸 Contactar
+                            </button>
+                          )}
+                          
+                          {/* ✅ NUEVO: Ver historial de contactos */}
+                          {lead.contactHistory && lead.contactHistory.length > 0 && (
+                            <button
+                              onClick={() => {
+                                setSelectedLead(lead)
+                                setShowHistoryModal(true)
+                              }}
+                              className="px-3 py-1.5 bg-blue-100 dark:bg-blue-900/30 hover:bg-blue-200 dark:hover:bg-blue-900/50 text-blue-800 dark:text-blue-300 text-sm font-semibold rounded-lg transition-colors"
+                              title={`Ver ${lead.contactHistory.length} contactos`}
+                            >
+                              📜 ({lead.contactHistory.length})
+                            </button>
+                          )}
+                          
+                          {/* Botones existentes */}
                           <Link
                             href={`/admin/leads/${lead._id}`}
                             className="text-cyan-500 hover:text-cyan-400 text-xl"
@@ -426,7 +475,7 @@ export default function LeadsPage() {
                           
                           {lead.username && lead.source === 'instagram' && (
                             <Link
-                              href={`https://instagram.com/${lead.username}`}
+                              href={`https://instagram.com/${lead.username.replace('@', '')}`}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="text-pink-500 hover:text-pink-400 text-xl"
@@ -476,7 +525,7 @@ export default function LeadsPage() {
             </div>
           </div>
 
-          {/* ✅ PAGINACIÓN */}
+          {/* Paginación */}
           {pagination.pages > 1 && (
             <div className="flex items-center justify-between bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
               <button
@@ -506,6 +555,57 @@ export default function LeadsPage() {
             </div>
           )}
         </>
+      )}
+
+      {/* ✅ NUEVO: Modal de contacto Instagram */}
+      {showContactModal && selectedLead && (
+        <InstagramContactModal
+          lead={selectedLead}
+          isOpen={showContactModal}
+          onClose={() => {
+            setShowContactModal(false)
+            setSelectedLead(null)
+          }}
+          onSuccess={handleContactSuccess}
+        />
+      )}
+
+      {/* ✅ NUEVO: Modal de historial de contactos */}
+      {showHistoryModal && selectedLead && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+            
+            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                  Historial de contactos
+                </h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  {selectedLead.name} {selectedLead.username && `• @${selectedLead.username.replace('@', '')}`}
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  setShowHistoryModal(false)
+                  setSelectedLead(null)
+                }}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              >
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-6">
+              <ContactHistory
+                leadId={selectedLead._id}
+                contacts={selectedLead.contactHistory}
+                onUpdate={handleContactSuccess}
+              />
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )
