@@ -1,4 +1,4 @@
-// src/lib/mongodb.js - Conexión a MongoDB
+// src/lib/mongodb.js - Conexión a MongoDB con pre-carga de modelos
 import mongoose from 'mongoose';
 
 const MONGODB_URI = process.env.MONGODB_URI;
@@ -27,6 +27,43 @@ async function connectDB() {
     };
 
     cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {
+      console.log('✅ MongoDB conectado exitosamente');
+      
+      // 🔥 PRE-CARGAR MODELOS para evitar "Schema hasn't been registered"
+      // Esto es crítico en entornos serverless como Vercel
+      try {
+        // Cargar modelos principales
+        if (!mongoose.models.Lead) {
+          require('@/models/Lead');
+          console.log('✅ Modelo Lead cargado');
+        }
+        
+        if (!mongoose.models.Appointment) {
+          require('@/models/Appointment');
+          console.log('✅ Modelo Appointment cargado');
+        }
+        
+        if (!mongoose.models.BlogPost) {
+          require('@/models/BlogPost');
+          console.log('✅ Modelo BlogPost cargado');
+        }
+        
+        if (!mongoose.models.LearningPath) {
+          require('@/models/LearningPath');
+          console.log('✅ Modelo LearningPath cargado');
+        }
+        
+        if (!mongoose.models.MessageTemplate) {
+          require('@/models/MessageTemplate');
+          console.log('✅ Modelo MessageTemplate cargado');
+        }
+        
+        console.log('✅ Todos los modelos registrados correctamente');
+      } catch (error) {
+        console.warn('⚠️ Advertencia al cargar algunos modelos:', error.message);
+        // No lanzar error, solo advertir
+      }
+      
       return mongoose;
     });
   }
@@ -35,6 +72,7 @@ async function connectDB() {
     cached.conn = await cached.promise;
   } catch (e) {
     cached.promise = null;
+    console.error('❌ Error conectando a MongoDB:', e);
     throw e;
   }
 
