@@ -1,5 +1,5 @@
 // src/app/blog/page.tsx - Versión corregida
-import Link from 'next/link'; // 🔥 AÑADIR ESTE IMPORT
+import Link from 'next/link';
 import Header from '../../components/layout/Header';
 import Footer from '../../components/layout/Footer';
 import BlogHero from '../../components/blog/BlogHero';
@@ -112,17 +112,11 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
       <BlogGrid 
         posts={blogData.posts}
         pagination={blogData.pagination}
-        categories={blogData.categories}
-        selectedCategory={
-          typeof resolvedSearchParams.category === 'string' 
-            ? resolvedSearchParams.category 
-            : 'all'
-        }
       />
       
       <BlogCategories />
       
-      {/* CTA a Cursos - Añadir antes del Footer */}
+      {/* CTA a Cursos */}
       <section className="py-20 bg-gray-900">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto text-center">
