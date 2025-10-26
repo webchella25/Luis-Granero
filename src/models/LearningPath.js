@@ -1,7 +1,8 @@
 // src/models/LearningPath.js
-import mongoose from 'mongoose'
+import mongoose from 'mongoose';
 
-const learningPathSchema = new mongoose.Schema({
+const LearningPathSchema = new mongoose.Schema({
+  // Basic info
   title: {
     type: String,
     required: true,
@@ -10,59 +11,56 @@ const learningPathSchema = new mongoose.Schema({
   slug: {
     type: String,
     required: true,
-    unique: true
+    unique: true,
+    lowercase: true
   },
   description: {
     type: String,
     required: true
   },
+  icon: {
+    type: String,
+    default: '🎓'
+  },
+  
+  // Learning details
   duration: {
-    type: String, // "8 semanas", "2 meses"
-    required: true
+    type: String,
+    default: '4 semanas'
   },
   level: {
     type: String,
-    enum: ['Principiante', 'Intermedio', 'Avanzado', 'Principiante → Intermedio', 'Intermedio → Avanzado', 'Principiante → Avanzado'],
-    required: true
-  },
-  difficulty: {
-    type: Number,
-    min: 1,
-    max: 5,
-    default: 3
+    enum: ['Principiante', 'Intermedio', 'Avanzado', 'Principiante → Avanzado', 'Intermedio → Avanzado'],
+    default: 'Intermedio'
   },
   topics: [{
-    type: String,
-    required: true
+    type: String
   }],
+  prerequisites: [{
+    type: String
+  }],
+  learningObjectives: [{
+    type: String
+  }],
+  
+  // Articles/lessons
   articles: [{
     postId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'Post'
+      ref: 'BlogPost'
     },
     order: {
       type: Number,
       required: true
     },
+    title: String,
     isRequired: {
       type: Boolean,
       default: true
     }
   }],
-  prerequisites: [String],
-  learningObjectives: [String],
-  estimatedHours: {
-    type: Number,
-    default: 0
-  },
-  color: {
-    type: String,
-    default: '#06B6D4'
-  },
-  icon: {
-    type: String,
-    default: '🎯'
-  },
+  
+  // Status
   isPublished: {
     type: Boolean,
     default: false
@@ -71,24 +69,51 @@ const learningPathSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  isPremium: {
+    type: Boolean,
+    default: false
+  },
+  
+  // Stats
   enrollments: {
+    type: Number,
+    default: 0
+  },
+  views: {
     type: Number,
     default: 0
   },
   completions: {
     type: Number,
     default: 0
-  }
+  },
+  
+  // SEO
+  metaTitle: String,
+  metaDescription: String,
+  
+  // Timestamps
+  publishedAt: Date,
+  
 }, {
   timestamps: true
-})
+});
 
-// Generar slug automáticamente
-learningPathSchema.pre('save', function(next) {
-  if (this.isModified('title')) {
-    this.slug = this.title.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, '')
-  }
-  next()
-})
+// Índices para búsquedas
+LearningPathSchema.index({ slug: 1 });
+LearningPathSchema.index({ isPublished: 1, isFeatured: -1 });
+LearningPathSchema.index({ topics: 1 });
+LearningPathSchema.index({ level: 1 });
 
-export default mongoose.models.LearningPath || mongoose.model('LearningPath', learningPathSchema)
+// Virtual para obtener número total de artículos
+LearningPathSchema.virtual('totalArticles').get(function() {
+  return this.articles ? this.articles.length : 0;
+});
+
+// Método para ordenar artículos
+LearningPathSchema.methods.sortArticles = function() {
+  this.articles.sort((a, b) => a.order - b.order);
+  return this.articles;
+};
+
+export default mongoose.models.LearningPath || mongoose.model('LearningPath', LearningPathSchema);

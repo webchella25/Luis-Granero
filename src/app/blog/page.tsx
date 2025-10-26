@@ -115,6 +115,30 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
       />
       <BlogCategories />
       <NewsletterSignup />
+	  {/* CTA a Cursos - Añadir antes del Footer */}
+<section className="py-20 bg-gray-900">
+  <div className="container mx-auto px-4">
+    <div className="max-w-4xl mx-auto text-center">
+      <div className="inline-block px-4 py-2 bg-purple-500/10 border border-purple-500/30 rounded-full mb-6">
+        <span className="text-purple-400 font-semibold text-sm">
+          🎓 ¿Quieres aprender de forma estructurada?
+        </span>
+      </div>
+      <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+        Descubre nuestras Rutas de Aprendizaje
+      </h2>
+      <p className="text-gray-400 text-lg mb-8">
+        Secuencias de artículos diseñadas para llevarte de principiante a experto, paso a paso.
+      </p>
+      <Link
+        href="/cursos"
+        className="inline-block px-8 py-4 bg-gradient-to-r from-purple-500 to-cyan-500 text-white font-bold rounded-lg hover:shadow-xl hover:shadow-purple-500/50 transition-all duration-300 transform hover:scale-105"
+      >
+        Ver todas las rutas →
+      </Link>
+    </div>
+  </div>
+</section>
       <Footer />
     </main>
   );
