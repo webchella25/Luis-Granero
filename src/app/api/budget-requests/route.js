@@ -1,16 +1,19 @@
+// src/app/api/budget-requests/route.js - VERSIÓN CORREGIDA
+// Solo cambiado: líneas 5-13 (transporter con variables de entorno)
+
 import { NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import BudgetRequest from '@/models/BudgetRequest';
 import nodemailer from 'nodemailer';
 
-// Configurar transporter IGUAL que en el CRM
+// ✅ CORREGIDO: Configurar transporter con variables de entorno
 const transporter = nodemailer.createTransport({
-  host: 'smtp-relay.brevo.com',
-  port: 587,
+  host: process.env.BREVO_SMTP_HOST || 'smtp-relay.brevo.com',
+  port: parseInt(process.env.BREVO_SMTP_PORT || '587'),
   secure: false,
   auth: {
-    user: '97fd27001@smtp-brevo.com',
-    pass: 'KTcWQIh2szOLS34N'
+    user: process.env.BREVO_SMTP_USER,
+    pass: process.env.BREVO_SMTP_PASS
   }
 });
 

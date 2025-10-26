@@ -1,5 +1,5 @@
 // src/app/api/contact/route.js - VERSIÓN CORREGIDA
-// Reemplaza TODA la función POST por esta versión
+// Solo cambiado: líneas 11-19 (transporter con variables de entorno)
 
 import connectDB from '@/lib/mongodb';
 import Contact from '@/models/Contact';
@@ -10,14 +10,14 @@ import Appointment from '@/models/Appointment';
 import nodemailer from 'nodemailer';
 import crypto from 'crypto';
 
-// Configurar transporter
+// ✅ CORREGIDO: Configurar transporter con variables de entorno
 const transporter = nodemailer.createTransport({
-  host: 'smtp-relay.brevo.com',
-  port: 587,
+  host: process.env.BREVO_SMTP_HOST || 'smtp-relay.brevo.com',
+  port: parseInt(process.env.BREVO_SMTP_PORT || '587'),
   secure: false,
   auth: {
-    user: '97fd27001@smtp-brevo.com',
-    pass: 'KTcWQIh2szOLS34N'
+    user: process.env.BREVO_SMTP_USER,
+    pass: process.env.BREVO_SMTP_PASS
   }
 });
 
