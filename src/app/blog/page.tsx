@@ -1,4 +1,5 @@
 // src/app/blog/page.tsx - Versión corregida
+import Link from 'next/link'; // 🔥 AÑADIR ESTE IMPORT
 import Header from '../../components/layout/Header';
 import Footer from '../../components/layout/Footer';
 import BlogHero from '../../components/blog/BlogHero';
@@ -80,65 +81,74 @@ export async function generateMetadata({ searchParams }: BlogPageProps) {
     keywords: [
       'blog desarrollo web',
       'tutoriales react',
-      'next.js guías',
-      'javascript avanzado',
-      'performance web',
-      'seo técnico'
+      'next.js',
+      'javascript',
+      'typescript',
+      'frontend',
+      'backend',
+      'luis granero blog'
     ],
     openGraph: {
-      title: 'Blog de Desarrollo Web - Luis Granero',
-      description: `${blogData.total} artículos técnicos sobre React, Next.js y desarrollo web moderno`,
-      type: 'website'
+      title: 'Blog - Luis Granero',
+      description: 'Artículos técnicos y tutoriales de desarrollo web',
+      type: 'website',
     }
   };
 }
 
 export default async function BlogPage({ searchParams }: BlogPageProps) {
-  // ✅ AWAIT searchParams antes de usar
   const resolvedSearchParams = await searchParams;
-  
-  const [blogData, featuredPost] = await Promise.all([
-    getBlogData(resolvedSearchParams),
-    getFeaturedPost()
-  ]);
+  const blogData = await getBlogData(resolvedSearchParams);
+  const featuredPost = await getFeaturedPost();
 
   return (
     <main className="min-h-screen bg-black">
       <Header />
-      <BlogHero totalPosts={blogData.total} />
+      
+      <BlogHero />
+      
       {featuredPost && <FeaturedPost post={featuredPost} />}
+      
       <BlogGrid 
-        posts={blogData.posts} 
-        categories={blogData.categories}
+        posts={blogData.posts}
         pagination={blogData.pagination}
-        currentCategory={resolvedSearchParams?.category as string}
+        categories={blogData.categories}
+        selectedCategory={
+          typeof resolvedSearchParams.category === 'string' 
+            ? resolvedSearchParams.category 
+            : 'all'
+        }
       />
+      
       <BlogCategories />
+      
+      {/* CTA a Cursos - Añadir antes del Footer */}
+      <section className="py-20 bg-gray-900">
+        <div className="container mx-auto px-4">
+          <div className="max-w-4xl mx-auto text-center">
+            <div className="inline-block px-4 py-2 bg-purple-500/10 border border-purple-500/30 rounded-full mb-6">
+              <span className="text-purple-400 font-semibold text-sm">
+                🎓 ¿Quieres aprender de forma estructurada?
+              </span>
+            </div>
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+              Descubre nuestras Rutas de Aprendizaje
+            </h2>
+            <p className="text-gray-400 text-lg mb-8">
+              Secuencias de artículos diseñadas para llevarte de principiante a experto, paso a paso.
+            </p>
+            <Link
+              href="/cursos"
+              className="inline-block px-8 py-4 bg-gradient-to-r from-purple-500 to-cyan-500 text-white font-bold rounded-lg hover:shadow-xl hover:shadow-purple-500/50 transition-all duration-300 transform hover:scale-105"
+            >
+              Ver todas las rutas →
+            </Link>
+          </div>
+        </div>
+      </section>
+      
       <NewsletterSignup />
-	  {/* CTA a Cursos - Añadir antes del Footer */}
-<section className="py-20 bg-gray-900">
-  <div className="container mx-auto px-4">
-    <div className="max-w-4xl mx-auto text-center">
-      <div className="inline-block px-4 py-2 bg-purple-500/10 border border-purple-500/30 rounded-full mb-6">
-        <span className="text-purple-400 font-semibold text-sm">
-          🎓 ¿Quieres aprender de forma estructurada?
-        </span>
-      </div>
-      <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-        Descubre nuestras Rutas de Aprendizaje
-      </h2>
-      <p className="text-gray-400 text-lg mb-8">
-        Secuencias de artículos diseñadas para llevarte de principiante a experto, paso a paso.
-      </p>
-      <Link
-        href="/cursos"
-        className="inline-block px-8 py-4 bg-gradient-to-r from-purple-500 to-cyan-500 text-white font-bold rounded-lg hover:shadow-xl hover:shadow-purple-500/50 transition-all duration-300 transform hover:scale-105"
-      >
-        Ver todas las rutas →
-      </Link>
-    </div>
-  </div>
-</section>
+      
       <Footer />
     </main>
   );
