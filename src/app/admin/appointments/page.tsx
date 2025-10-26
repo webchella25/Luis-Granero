@@ -1,4 +1,4 @@
-// src/app/admin/appointments/page.tsx - MEJORADO CON LAS 5 FUNCIONALIDADES
+// src/app/admin/appointments/page.tsx - ARREGLADO Y COMPATIBLE
 'use client'
 
 import { useState, useEffect } from 'react'
@@ -77,6 +77,7 @@ export default function AppointmentsPage() {
   // Recargar cuando cambia el tab
   useEffect(() => {
     if (!loading) {
+      console.log('🔄 Tab cambió a:', activeTab)
       fetchAppointments()
     }
   }, [activeTab])
@@ -84,25 +85,62 @@ export default function AppointmentsPage() {
   const fetchAppointments = async () => {
     try {
       setLoading(true)
-      console.log('📡 Fetching appointments...')
+      console.log('📡 Fetching appointments con tab:', activeTab)
       
+      // ✅ FIX: Usar la ruta correcta de tu API
       const url = activeTab === 'all' 
-        ? '/api/admin/appointments?includeExpired=true'
+        ? '/api/admin/appointments' 
         : `/api/admin/appointments?status=${activeTab}`
+      
+      console.log('📡 URL:', url)
       
       const res = await fetch(url)
       const data = await res.json()
       
+      console.log('✅ Respuesta API:', data)
       console.log('✅ Citas recibidas:', data.appointments?.length || 0)
       
-      if (data.success) {
-        setAppointments(data.appointments || [])
-        setStats(data.stats || stats)
+      if (data.success && data.appointments) {
+        setAppointments(data.appointments)
+        
+        // ✅ FIX: Calcular stats manualmente si la API no las devuelve
+        const calculatedStats = calculateStats(data.appointments)
+        setStats(calculatedStats)
+        
+        console.log('📊 Stats calculadas:', calculatedStats)
+      } else {
+        console.error('❌ Error en respuesta:', data.error || 'No hay campo success')
       }
     } catch (error) {
       console.error('❌ Error cargando citas:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  // ✅ NUEVA FUNCIÓN: Calcular stats manualmente
+  const calculateStats = (appointments: Appointment[]): Stats => {
+    const now = new Date()
+    const weekStart = new Date(now)
+    weekStart.setDate(now.getDate() - now.getDay())
+    
+    return {
+      total: appointments.length,
+      pending: appointments.filter(a => a.status === 'pending').length,
+      confirmed: appointments.filter(a => a.status === 'confirmed').length,
+      completed: appointments.filter(a => a.status === 'completed').length,
+      cancelled: appointments.filter(a => a.status === 'cancelled').length,
+      no_show: appointments.filter(a => a.status === 'no_show').length,
+      thisWeek: appointments.filter(a => {
+        if (!a.scheduledDate) return false
+        const date = new Date(a.scheduledDate)
+        return date >= weekStart && date <= now
+      }).length,
+      needsReminder: appointments.filter(a => {
+        if (!a.scheduledDate || a.status !== 'confirmed') return false
+        const hoursUntil = (new Date(a.scheduledDate).getTime() - now.getTime()) / (1000 * 60 * 60)
+        return hoursUntil <= 24 && hoursUntil > 0
+      }).length
     }
   }
 
@@ -205,11 +243,11 @@ export default function AppointmentsPage() {
 
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
-      pending: 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30',
-      confirmed: 'bg-green-500/20 text-green-300 border-green-500/30',
-      completed: 'bg-blue-500/20 text-blue-300 border-blue-500/30',
-      cancelled: 'bg-red-500/20 text-red-300 border-red-500/30',
-      no_show: 'bg-gray-500/20 text-gray-300 border-gray-500/30'
+      pending: 'bg-yellow-100 dark:bg-yellow-900 text-yellow-700 dark:text-yellow-300 border-yellow-500/30',
+      confirmed: 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 border-green-500/30',
+      completed: 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 border-blue-500/30',
+      cancelled: 'bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300 border-red-500/30',
+      no_show: 'bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-300 border-gray-500/30'
     }
     return colors[status] || colors.pending
   }
@@ -238,10 +276,11 @@ export default function AppointmentsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-500 mx-auto mb-4"></div>
-          <p className="text-gray-400">Cargando citas...</p>
+      <div className="space-y-6">
+        <div className="text-center py-12">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-500 mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-400">Cargando citas...</p>
+          <p className="text-sm text-gray-500 mt-2">Filtro: {activeTab}</p>
         </div>
       </div>
     )
@@ -280,6 +319,8 @@ export default function AppointmentsPage() {
                   ? 'bg-cyan-500 text-white'
                   : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
               }`}
+              disabled
+              title="Próximamente"
             >
               📅 Calendario
             </button>
@@ -289,12 +330,12 @@ export default function AppointmentsPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
-        <StatCard label="Pendientes" value={stats.pending} icon="🟡" color="yellow" />
-        <StatCard label="Confirmadas" value={stats.confirmed} icon="🟢" color="green" />
-        <StatCard label="Completadas" value={stats.completed} icon="🔵" color="blue" />
-        <StatCard label="Canceladas" value={stats.cancelled} icon="🔴" color="red" />
-        <StatCard label="No asistió" value={stats.no_show} icon="⚪" color="gray" />
-        <StatCard label="Esta semana" value={stats.thisWeek} icon="📆" color="cyan" />
+        <StatCard label="Pendientes" value={stats.pending} icon="🟡" />
+        <StatCard label="Confirmadas" value={stats.confirmed} icon="🟢" />
+        <StatCard label="Completadas" value={stats.completed} icon="🔵" />
+        <StatCard label="Canceladas" value={stats.cancelled} icon="🔴" />
+        <StatCard label="No asistió" value={stats.no_show} icon="⚪" />
+        <StatCard label="Esta semana" value={stats.thisWeek} icon="📆" />
       </div>
 
       {/* Tabs */}
@@ -330,9 +371,18 @@ export default function AppointmentsPage() {
         <div className="text-center py-20 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
           <p className="text-6xl mb-4">📭</p>
           <p className="text-xl text-gray-600 dark:text-gray-400 mb-2">No hay citas agendadas</p>
-          <p className="text-gray-500 dark:text-gray-500">
+          <p className="text-gray-500 dark:text-gray-500 mb-4">
             {activeTab !== 'all' && `No hay citas con estado "${getStatusLabel(activeTab)}"`}
           </p>
+          <button
+            onClick={() => {
+              console.log('🔄 Recargando manualmente...')
+              fetchAppointments()
+            }}
+            className="px-6 py-3 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg"
+          >
+            🔄 Recargar
+          </button>
         </div>
       ) : (
         <div className="grid gap-4">
@@ -366,7 +416,7 @@ export default function AppointmentsPage() {
 }
 
 // Componente StatCard
-function StatCard({ label, value, icon, color }: { label: string; value: number; icon: string; color: string }) {
+function StatCard({ label, value, icon }: { label: string; value: number; icon: string }) {
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
       <div className="flex items-center justify-between mb-2">
@@ -398,9 +448,7 @@ function AppointmentCard({
       weekday: 'long',
       year: 'numeric',
       month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+      day: 'numeric'
     })
   }
 
@@ -422,8 +470,8 @@ function AppointmentCard({
             </span>
           </div>
           
-          <div className="space-y-1 text-gray-600 dark:text-gray-400">
-            <p>📅 {formatDate(appointment.scheduledDate)}</p>
+          <div className="space-y-1 text-gray-600 dark:text-gray-400 text-sm">
+            <p>📅 {formatDate(appointment.scheduledDate)} {appointment.scheduledTime && `a las ${appointment.scheduledTime}`}</p>
             {appointment.phone && <p>📱 {appointment.phone}</p>}
             {appointment.email && <p>📧 {appointment.email}</p>}
             {leadId && (
@@ -439,7 +487,7 @@ function AppointmentCard({
 
         <button
           onClick={() => setShowDetails(!showDetails)}
-          className="text-gray-400 hover:text-gray-600 dark:hover:text-white"
+          className="text-gray-400 hover:text-gray-600 dark:hover:text-white transition text-xl"
         >
           {showDetails ? '▼' : '▶'}
         </button>
@@ -451,13 +499,13 @@ function AppointmentCard({
           <>
             <button
               onClick={() => onStartCall(appointment)}
-              className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg text-sm"
+              className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg text-sm transition"
             >
               📞 Iniciar Llamada
             </button>
             <button
               onClick={() => onSendReminder(appointment._id)}
-              className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm"
+              className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm transition"
             >
               🔔 Enviar Recordatorio
             </button>
@@ -467,22 +515,31 @@ function AppointmentCard({
         {appointment.status === 'pending' && (
           <button
             onClick={() => onStatusChange(appointment._id, 'confirmed')}
-            className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg text-sm"
+            className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg text-sm transition"
           >
             ✅ Confirmar
           </button>
         )}
 
+        {appointment.status === 'confirmed' && (
+          <button
+            onClick={() => onStatusChange(appointment._id, 'completed')}
+            className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm transition"
+          >
+            ✔️ Completada
+          </button>
+        )}
+
         <button
           onClick={() => onStatusChange(appointment._id, 'cancelled')}
-          className="px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg text-sm border border-red-500/30"
+          className="px-4 py-2 bg-red-100 dark:bg-red-900/20 hover:bg-red-200 dark:hover:bg-red-900/30 text-red-700 dark:text-red-400 rounded-lg text-sm border border-red-300 dark:border-red-500/30 transition"
         >
           ❌ Cancelar
         </button>
 
         <button
           onClick={() => onDelete(appointment._id)}
-          className="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg text-sm"
+          className="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg text-sm transition"
         >
           🗑️ Eliminar
         </button>
@@ -495,26 +552,26 @@ function AppointmentCard({
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700"
+            className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 space-y-4"
           >
             {appointment.notes && (
-              <div className="mb-4">
+              <div>
                 <h4 className="font-semibold text-gray-900 dark:text-white mb-2">📝 Notas pre-llamada:</h4>
-                <p className="text-gray-600 dark:text-gray-400">{appointment.notes}</p>
+                <p className="text-gray-600 dark:text-gray-400 text-sm">{appointment.notes}</p>
               </div>
             )}
 
             {appointment.callNotes && (
-              <div className="mb-4">
+              <div>
                 <h4 className="font-semibold text-gray-900 dark:text-white mb-2">💬 Notas de la llamada:</h4>
-                <p className="text-gray-600 dark:text-gray-400">{appointment.callNotes}</p>
+                <p className="text-gray-600 dark:text-gray-400 text-sm">{appointment.callNotes}</p>
               </div>
             )}
 
             {appointment.duration?.actual && (
-              <div className="mb-4">
+              <div>
                 <h4 className="font-semibold text-gray-900 dark:text-white mb-2">⏱️ Duración:</h4>
-                <p className="text-gray-600 dark:text-gray-400">
+                <p className="text-gray-600 dark:text-gray-400 text-sm">
                   Planificado: {appointment.duration.planned} min | Real: {appointment.duration.actual} min
                 </p>
               </div>
@@ -523,8 +580,8 @@ function AppointmentCard({
             {appointment.callResult && (
               <div>
                 <h4 className="font-semibold text-gray-900 dark:text-white mb-2">📊 Resultado:</h4>
-                <div className="space-y-2 text-gray-600 dark:text-gray-400">
-                  {appointment.callResult.converted !== null && (
+                <div className="space-y-2 text-gray-600 dark:text-gray-400 text-sm">
+                  {appointment.callResult.converted !== null && appointment.callResult.converted !== undefined && (
                     <p>Conversión: {appointment.callResult.converted ? '✅ Sí' : '❌ No'}</p>
                   )}
                   {appointment.callResult.interest && (
@@ -583,7 +640,7 @@ function CallModal({ appointment, onClose, onSave }: any) {
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               rows={6}
-              className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white resize-none"
+              className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white resize-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
               placeholder="¿Qué se habló? ¿Qué necesita el cliente?"
             />
           </div>
@@ -598,8 +655,8 @@ function CallModal({ appointment, onClose, onSave }: any) {
                 onClick={() => setConverted(true)}
                 className={`flex-1 py-3 rounded-lg border-2 transition ${
                   converted === true
-                    ? 'bg-green-500/20 border-green-500 text-green-600 dark:text-green-400'
-                    : 'bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400'
+                    ? 'bg-green-100 dark:bg-green-900/20 border-green-500 text-green-700 dark:text-green-400'
+                    : 'bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:border-green-500'
                 }`}
               >
                 ✅ Sí
@@ -608,8 +665,8 @@ function CallModal({ appointment, onClose, onSave }: any) {
                 onClick={() => setConverted(false)}
                 className={`flex-1 py-3 rounded-lg border-2 transition ${
                   converted === false
-                    ? 'bg-red-500/20 border-red-500 text-red-600 dark:text-red-400'
-                    : 'bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400'
+                    ? 'bg-red-100 dark:bg-red-900/20 border-red-500 text-red-700 dark:text-red-400'
+                    : 'bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:border-red-500'
                 }`}
               >
                 ❌ No
@@ -623,23 +680,36 @@ function CallModal({ appointment, onClose, onSave }: any) {
               🌡️ Nivel de interés:
             </label>
             <div className="grid grid-cols-3 gap-4">
-              {[
-                { value: 'hot' as const, label: '🔥 Caliente', colorClass: 'red' },
-                { value: 'warm' as const, label: '🌡️ Tibio', colorClass: 'yellow' },
-                { value: 'cold' as const, label: '❄️ Frío', colorClass: 'blue' }
-              ].map(opt => (
-                <button
-                  key={opt.value}
-                  onClick={() => setInterest(opt.value)}
-                  className={`py-3 rounded-lg border-2 transition ${
-                    interest === opt.value
-                      ? `bg-${opt.colorClass}-500/20 border-${opt.colorClass}-500 text-${opt.colorClass}-600 dark:text-${opt.colorClass}-400`
-                      : 'bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400'
-                  }`}
-                >
-                  {opt.label}
-                </button>
-              ))}
+              <button
+                onClick={() => setInterest('hot')}
+                className={`py-3 rounded-lg border-2 transition ${
+                  interest === 'hot'
+                    ? 'bg-red-100 dark:bg-red-900/20 border-red-500 text-red-700 dark:text-red-400'
+                    : 'bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:border-red-500'
+                }`}
+              >
+                🔥 Caliente
+              </button>
+              <button
+                onClick={() => setInterest('warm')}
+                className={`py-3 rounded-lg border-2 transition ${
+                  interest === 'warm'
+                    ? 'bg-yellow-100 dark:bg-yellow-900/20 border-yellow-500 text-yellow-700 dark:text-yellow-400'
+                    : 'bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:border-yellow-500'
+                }`}
+              >
+                🌡️ Tibio
+              </button>
+              <button
+                onClick={() => setInterest('cold')}
+                className={`py-3 rounded-lg border-2 transition ${
+                  interest === 'cold'
+                    ? 'bg-blue-100 dark:bg-blue-900/20 border-blue-500 text-blue-700 dark:text-blue-400'
+                    : 'bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:border-blue-500'
+                }`}
+              >
+                ❄️ Frío
+              </button>
             </div>
           </div>
 
@@ -652,7 +722,7 @@ function CallModal({ appointment, onClose, onSave }: any) {
               type="text"
               value={nextSteps}
               onChange={(e) => setNextSteps(e.target.value)}
-              className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white"
+              className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
               placeholder="Enviar propuesta, agendar otra llamada..."
             />
           </div>
@@ -662,13 +732,13 @@ function CallModal({ appointment, onClose, onSave }: any) {
         <div className="p-6 border-t border-gray-200 dark:border-gray-700 flex gap-4">
           <button
             onClick={onClose}
-            className="flex-1 px-6 py-3 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-900 dark:text-white rounded-lg"
+            className="flex-1 px-6 py-3 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-900 dark:text-white rounded-lg transition"
           >
             Cancelar
           </button>
           <button
             onClick={handleSave}
-            className="flex-1 px-6 py-3 bg-gradient-to-r from-cyan-500 to-green-500 hover:opacity-90 text-white font-bold rounded-lg"
+            className="flex-1 px-6 py-3 bg-gradient-to-r from-cyan-500 to-green-500 hover:opacity-90 text-white font-bold rounded-lg transition"
           >
             💾 Guardar y Finalizar
           </button>
