@@ -73,12 +73,12 @@ export default function CursosHero({ totalCursos }: Props) {
 
           {/* CTAs */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <a 
-              href="#rutas"
+            <Link 
+              href="/cursos"
               className="px-8 py-4 bg-gradient-to-r from-purple-500 to-cyan-500 text-white font-bold rounded-lg hover:shadow-xl hover:shadow-purple-500/25 transition-all duration-300 transform hover:scale-105"
             >
               Ver todas las rutas
-            </a>
+            </Link>
             
             <Link
               href="/blog"
