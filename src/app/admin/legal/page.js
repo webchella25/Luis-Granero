@@ -322,3 +322,210 @@ function LegalSettingsForm({ settings, onSave }) {
         body: JSON.stringify({
           ...settings,
           legal: formData
+        })
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        setMessage({ type: 'success', text: 'Datos guardados correctamente' })
+        setTimeout(() => setMessage({ type: '', text: '' }), 3000)
+        onSave()
+      } else {
+        setMessage({ type: 'error', text: data.error || 'Error al guardar' })
+      }
+    } catch (error) {
+      console.error('Error saving legal settings:', error)
+      setMessage({ type: 'error', text: 'Error al guardar los datos' })
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const updateField = (field, value) => {
+    setFormData(prev => ({ ...prev, [field]: value }))
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-6">
+      
+      {/* Message */}
+      {message.text && (
+        <div className={`p-4 rounded-lg ${
+          message.type === 'success' 
+            ? 'bg-green-500/10 border border-green-500 text-green-400'
+            : 'bg-red-500/10 border border-red-500 text-red-400'
+        }`}>
+          {message.text}
+        </div>
+      )}
+
+      {/* Info */}
+      <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
+        <div className="flex items-start space-x-3">
+          <span className="text-2xl">ℹ️</span>
+          <div>
+            <h3 className="font-semibold text-blue-400 mb-1">
+              Estos datos se usan en las páginas legales
+            </h3>
+            <p className="text-sm text-gray-300">
+              La información que completes aquí se insertará automáticamente en tus páginas legales 
+              usando variables como <code className="bg-gray-800 px-1 rounded">{'{{companyName}}'}</code>, 
+              <code className="bg-gray-800 px-1 rounded">{'{{dni}}'}</code>, etc.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Form */}
+      <div className="bg-gray-800 rounded-lg p-6">
+        <h2 className="text-xl font-bold text-white mb-6">Datos Legales Obligatorios</h2>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Nombre Comercial *
+            </label>
+            <input
+              type="text"
+              required
+              value={formData.companyName || ''}
+              onChange={(e) => updateField('companyName', e.target.value)}
+              className="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white"
+              placeholder="Luis Granero"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Nombre del Propietario *
+            </label>
+            <input
+              type="text"
+              required
+              value={formData.ownerName || ''}
+              onChange={(e) => updateField('ownerName', e.target.value)}
+              className="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white"
+              placeholder="Luis Granero García"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              DNI/NIF *
+            </label>
+            <input
+              type="text"
+              required
+              value={formData.dni || ''}
+              onChange={(e) => updateField('dni', e.target.value)}
+              className="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white"
+              placeholder="12345678X"
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Obligatorio para el Aviso Legal (LSSI)
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Dirección Legal *
+            </label>
+            <input
+              type="text"
+              required
+              value={formData.legalAddress || ''}
+              onChange={(e) => updateField('legalAddress', e.target.value)}
+              className="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white"
+              placeholder="Calle Ejemplo 123, 1º A"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Ciudad *
+            </label>
+            <input
+              type="text"
+              required
+              value={formData.city || ''}
+              onChange={(e) => updateField('city', e.target.value)}
+              className="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white"
+              placeholder="Madrid"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Código Postal *
+            </label>
+            <input
+              type="text"
+              required
+              value={formData.postalCode || ''}
+              onChange={(e) => updateField('postalCode', e.target.value)}
+              className="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white"
+              placeholder="28001"
+            />
+          </div>
+
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              País
+            </label>
+            <input
+              type="text"
+              value={formData.country || 'España'}
+              onChange={(e) => updateField('country', e.target.value)}
+              className="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white"
+              placeholder="España"
+            />
+          </div>
+
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              CIF/NIF Empresarial (opcional)
+            </label>
+            <input
+              type="text"
+              value={formData.vatNumber || ''}
+              onChange={(e) => updateField('vatNumber', e.target.value)}
+              className="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white"
+              placeholder="B12345678"
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Solo si tienes una sociedad mercantil
+            </p>
+          </div>
+
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Datos Registrales (opcional)
+            </label>
+            <textarea
+              rows={2}
+              value={formData.registryData || ''}
+              onChange={(e) => updateField('registryData', e.target.value)}
+              className="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white"
+              placeholder="Registro Mercantil de Madrid, Tomo 1234, Folio 56, Hoja M-78901"
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Solo si tu empresa está inscrita en el Registro Mercantil
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Submit */}
+      <div className="flex justify-end">
+        <button
+          type="submit"
+          disabled={saving}
+          className="px-8 py-3 bg-cyan-600 hover:bg-cyan-700 disabled:bg-gray-600 text-white font-semibold rounded-lg transition-colors"
+        >
+          {saving ? 'Guardando...' : 'Guardar Datos Legales'}
+        </button>
+      </div>
+    </form>
+  )
+}
