@@ -332,18 +332,18 @@ export default function EditProject() {
             </h3>
             
             <div className="space-y-4">
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  id="featured"
-                  checked={project.isFeatured || false}
-                  onChange={(e) => updateField('isFeatured', e.target.checked)}
-                  className="mr-2"
-                />
-                <label htmlFor="featured" className="text-sm text-gray-700 dark:text-gray-300">
-                  Proyecto destacado
-                </label>
-              </div>
+             <div className="flex items-center">
+  <input
+    type="checkbox"
+    id="published"
+    checked={project.isPublished !== false}
+    onChange={(e) => updateField('isPublished', e.target.checked)}
+    className="mr-2"
+  />
+  <label htmlFor="published" className="text-sm text-gray-700 dark:text-gray-300">
+    Publicar proyecto (visible en web)
+  </label>
+</div>
 
               <div className="flex items-center">
                 <input
