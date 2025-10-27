@@ -1,4 +1,4 @@
-// src/components/portfolio/ProjectsGrid.tsx
+// src/components/portfolio/ProjectsGrid.tsx - FIX
 'use client';
 
 import { useState } from 'react';
@@ -41,10 +41,10 @@ export default function ProjectsGrid({ projects = [] }: Props) {
   // Si no hay categorías dinámicas, usar por defecto
   const defaultCategories = [
     { id: 'all', name: 'Todos', count: projects.length },
-    { id: 'e-commerce', name: 'E-commerce', count: 0 },
+    { id: 'ecommerce', name: 'E-commerce', count: 0 },
+    { id: 'webapp', name: 'Web Apps', count: 0 },
     { id: 'dashboard', name: 'Dashboards', count: 0 },
-    { id: 'landing', name: 'Landing Pages', count: 0 },
-    { id: 'app', name: 'Web Apps', count: 0 }
+    { id: 'landing', name: 'Landing Pages', count: 0 }
   ];
 
   const finalCategories = categories.length > 1 ? categories : defaultCategories;
@@ -122,7 +122,7 @@ export default function ProjectsGrid({ projects = [] }: Props) {
         {filteredProjects.length > 0 ? (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {filteredProjects.map((project) => (
-              <ProjectCard key={project._id} project={project} />
+              <ProjectCard key={String(project._id)} project={project} />
             ))}
           </div>
         ) : (
@@ -157,6 +157,10 @@ export default function ProjectsGrid({ projects = [] }: Props) {
 
 // Componente separado para la tarjeta de proyecto
 function ProjectCard({ project }: { project: Project }) {
+  // 🔥 FIX: Convertir _id a string explícitamente
+  const projectId = String(project._id);
+  const projectSlug = project.slug || projectId;
+
   return (
     <div className="group bg-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-xl overflow-hidden hover:border-cyan-500/50 transition-all duration-300 hover:transform hover:scale-105">
       
@@ -202,7 +206,7 @@ function ProjectCard({ project }: { project: Project }) {
           <div className="grid grid-cols-2 gap-4">
             {Object.entries(project.metrics).slice(0, 4).map(([key, value], index) => (
               <div key={index} className="bg-gray-800/50 rounded-lg p-3 text-center">
-                <div className="text-lg font-bold gradient-text">{value}</div>
+                <div className="text-lg font-bold gradient-text">{String(value)}</div>
                 <div className="text-xs text-gray-400 capitalize">
                   {key.replace(/([A-Z])/g, ' $1').trim()}
                 </div>
@@ -235,7 +239,7 @@ function ProjectCard({ project }: { project: Project }) {
       {/* CTA */}
       <div className="p-6 pt-0">
         <Link
-          href={`/portfolio/${project.slug || project._id}`}
+          href={`/portfolio/${projectSlug}`}
           className="block w-full py-3 px-6 bg-gradient-to-r from-cyan-400 to-green-400 text-black font-bold rounded-lg hover:shadow-xl transition-all duration-300 text-center"
         >
           Ver caso completo
