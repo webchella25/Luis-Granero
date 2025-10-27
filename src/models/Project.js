@@ -1,11 +1,12 @@
-// src/models/Project.js - Portfolio de proyectos
+// src/models/Project.js - VERSIÓN CORREGIDA SIN ÍNDICES DUPLICADOS
 import mongoose from 'mongoose';
 
 const projectSchema = new mongoose.Schema({
   slug: {
     type: String,
-    required: true,
-    unique: true
+    required: true
+    // NO ponemos unique: true aquí para evitar duplicado
+    // El índice único se crea manualmente abajo
   },
   title: {
     type: String,
@@ -69,8 +70,11 @@ const projectSchema = new mongoose.Schema({
   timestamps: true
 });
 
-projectSchema.index({ category: 1 });
-projectSchema.index({ isFeatured: 1 });
-projectSchema.index({ orderIndex: 1 });
+// ✅ ÍNDICES DEFINIDOS UNA SOLA VEZ (sin duplicados)
+projectSchema.index({ slug: 1 }, { unique: true }); // Índice único para slug
+projectSchema.index({ category: 1 }); // Para filtrar por categoría
+projectSchema.index({ isFeatured: 1 }); // Para destacados
+projectSchema.index({ orderIndex: 1 }); // Para ordenamiento
+projectSchema.index({ isActive: 1 }); // Para filtrar activos
 
 export default mongoose.models.Project || mongoose.model('Project', projectSchema);
