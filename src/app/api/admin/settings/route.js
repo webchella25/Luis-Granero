@@ -1,6 +1,5 @@
 // src/app/api/admin/settings/route.js
-// API PARA GUARDAR CONFIGURACIÓN DEL ADMIN
-
+// API PARA GUARDAR CONFIGURACIÓN DEL ADMIN + DATOS LEGALES
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
@@ -15,14 +14,14 @@ export async function GET(request) {
     }
 
     await connectDB();
-
+    
     // Obtener configuración de la DB
     const siteConfig = await SiteConfig.findOne({ key: 'site_info' });
-
+    
     if (siteConfig && siteConfig.value) {
       return NextResponse.json(siteConfig.value);
     }
-
+    
     // Si no existe, devolver valores por defecto
     const defaultSettings = {
       site: {
@@ -67,11 +66,22 @@ export async function GET(request) {
         enabled: false,
         message: 'Sitio en mantenimiento. Volvemos pronto.',
         allowedIPs: []
+      },
+      // 🔥 NUEVO: Datos legales para páginas legales
+      legal: {
+        companyName: 'Luis Granero',
+        ownerName: 'Luis Granero',
+        dni: '',
+        legalAddress: '',
+        city: 'Madrid',
+        postalCode: '',
+        country: 'España',
+        registryData: '', // Ej: "Registro Mercantil de Madrid, Tomo..."
+        vatNumber: '' // CIF/NIF empresarial si aplica
       }
     };
-
+    
     return NextResponse.json(defaultSettings);
-
   } catch (error) {
     console.error('❌ Error en GET /api/admin/settings:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -86,12 +96,12 @@ export async function POST(request) {
     }
 
     await connectDB();
-
+    
     const settings = await request.json();
-
+    
     console.log('💾 Guardando configuración...');
     console.log('📦 Settings recibidos:', JSON.stringify(settings, null, 2));
-
+    
     // Guardar o actualizar en la DB
     const result = await SiteConfig.findOneAndUpdate(
       { key: 'site_info' },
@@ -109,16 +119,15 @@ export async function POST(request) {
         runValidators: true 
       }
     );
-
+    
     console.log('✅ Configuración guardada exitosamente');
     console.log('📄 Documento guardado:', result);
-
+    
     return NextResponse.json({ 
       success: true,
       message: 'Settings saved successfully',
       data: result.value
     });
-
   } catch (error) {
     console.error('❌ Error guardando settings:', error);
     return NextResponse.json({ 
