@@ -25,11 +25,11 @@ const projectSchema = new mongoose.Schema({
   },
   technologies: [String],
   features: [String],
-  metrics: [{
-    key: String,
-    value: String,
-    label: String
-  }],
+// ✅ CAMBIO: Metrics como objeto flexible
+  metrics: {
+    type: mongoose.Schema.Types.Mixed,
+    default: {}
+  },
   urls: {
     live: String,
     github: String,
