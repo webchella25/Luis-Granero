@@ -1,3 +1,6 @@
+// src/components/layout/Footer.jsx
+import Link from 'next/link';
+
 function Footer() {
   const currentYear = new Date().getFullYear();
 
@@ -24,6 +27,14 @@ function Footer() {
     "MongoDB", "Tailwind CSS", "Express", "Git"
   ];
 
+  // 🔥 NUEVO: Links legales
+  const legalLinks = [
+    { name: "Aviso Legal", href: "/legal/aviso-legal" },
+    { name: "Política de Privacidad", href: "/legal/privacidad" },
+    { name: "Política de Cookies", href: "/legal/cookies" },
+    { name: "Términos y Condiciones", href: "/legal/terminos" }
+  ];
+
   return (
     <footer className="bg-gray-950 border-t border-gray-800">
       {/* CTA Section */}
@@ -37,12 +48,18 @@ function Footer() {
             Hablemos sobre tu proyecto sin compromiso.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button className="px-8 py-4 bg-gradient-to-r from-cyan-400 to-green-400 text-black font-bold rounded-lg hover:shadow-xl hover:shadow-cyan-400/25 transition-all duration-300 transform hover:scale-105">
+            <Link
+              href="/contacto"
+              className="px-8 py-4 bg-gradient-to-r from-cyan-400 to-green-400 text-black font-bold rounded-lg hover:shadow-xl hover:shadow-cyan-400/25 transition-all duration-300 transform hover:scale-105"
+            >
               Iniciar proyecto
-            </button>
-            <button className="px-8 py-4 border-2 border-cyan-400 text-cyan-400 hover:bg-cyan-400 hover:text-black font-bold rounded-lg transition-all duration-300">
+            </Link>
+            <Link
+              href="/contacto#presupuesto"
+              className="px-8 py-4 border-2 border-cyan-400 text-cyan-400 hover:bg-cyan-400 hover:text-black font-bold rounded-lg transition-all duration-300"
+            >
               Consulta gratuita
-            </button>
+            </Link>
           </div>
         </div>
       </div>
@@ -50,6 +67,7 @@ function Footer() {
       {/* Main Footer */}
       <div className="container mx-auto px-4 py-16">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          
           {/* Brand */}
           <div className="lg:col-span-1">
             <div className="flex items-center space-x-2 mb-4">
@@ -61,15 +79,31 @@ function Footer() {
               Transformo ideas en aplicaciones web exitosas.
             </p>
             <div className="flex space-x-4">
-              <button className="text-gray-400 hover:text-cyan-400 transition-colors duration-300">
+              <a 
+                href="mailto:hola@luisgranero.com"
+                className="text-gray-400 hover:text-cyan-400 transition-colors duration-300"
+                aria-label="Email"
+              >
                 <span className="text-xl">📧</span>
-              </button>
-              <button className="text-gray-400 hover:text-cyan-400 transition-colors duration-300">
+              </a>
+              <a 
+                href="https://linkedin.com/in/luisgranero"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gray-400 hover:text-cyan-400 transition-colors duration-300"
+                aria-label="LinkedIn"
+              >
                 <span className="text-xl">💼</span>
-              </button>
-              <button className="text-gray-400 hover:text-cyan-400 transition-colors duration-300">
+              </a>
+              <a 
+                href="https://github.com/luisgranero"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gray-400 hover:text-cyan-400 transition-colors duration-300"
+                aria-label="GitHub"
+              >
                 <span className="text-xl">🐱</span>
-              </button>
+              </a>
             </div>
           </div>
 
@@ -79,9 +113,12 @@ function Footer() {
             <ul className="space-y-2">
               {quickLinks.map((link, index) => (
                 <li key={index}>
-                  <button className="text-gray-400 hover:text-cyan-400 transition-colors duration-300 text-left">
+                  <Link 
+                    href={link.href}
+                    className="text-gray-400 hover:text-cyan-400 transition-colors duration-300 text-left"
+                  >
                     {link.name}
-                  </button>
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -93,9 +130,9 @@ function Footer() {
             <ul className="space-y-2">
               {services.map((service, index) => (
                 <li key={index}>
-                  <button className="text-gray-400 hover:text-cyan-400 transition-colors duration-300 text-left text-sm">
+                  <span className="text-gray-400 text-sm">
                     {service}
-                  </button>
+                  </span>
                 </li>
               ))}
             </ul>
@@ -119,23 +156,32 @@ function Footer() {
 
         {/* Bottom Bar */}
         <div className="border-t border-gray-800 mt-12 pt-8">
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            <div className="text-gray-400 text-sm mb-4 md:mb-0">
+          <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
+            
+            {/* Copyright */}
+            <div className="text-gray-400 text-sm text-center md:text-left">
               <span className="font-mono">© {currentYear} Luis Granero.</span> Todos los derechos reservados.
             </div>
-            <div className="flex items-center space-x-6 text-sm text-gray-400">
-              <button className="hover:text-cyan-400 transition-colors duration-300">
-                Política de Privacidad
-              </button>
-              <button className="hover:text-cyan-400 transition-colors duration-300">
-                Términos de Servicio
-              </button>
-              <div className="flex items-center space-x-1">
-                <span>Hecho con</span>
-                <span className="text-red-400">❤️</span>
-                <span>y</span>
-                <span className="text-cyan-400 font-mono">Next.js</span>
-              </div>
+            
+            {/* 🔥 NUEVO: Legal Links */}
+            <div className="flex flex-wrap items-center justify-center space-x-4 text-sm text-gray-400">
+              {legalLinks.map((link, index) => (
+                <Link
+                  key={index}
+                  href={link.href}
+                  className="hover:text-cyan-400 transition-colors duration-300"
+                >
+                  {link.name}
+                </Link>
+              ))}
+            </div>
+            
+            {/* Made with */}
+            <div className="flex items-center space-x-1 text-sm text-gray-400">
+              <span>Hecho con</span>
+              <span className="text-red-400">❤️</span>
+              <span>y</span>
+              <span className="text-cyan-400 font-mono">Next.js</span>
             </div>
           </div>
         </div>
