@@ -1,4 +1,4 @@
-// src/components/admin/AdminSidebar.js - VERSION OPTIMIZADA
+// src/components/admin/AdminSidebar.js - VERSIÓN ACTUALIZADA CON PÁGINAS LEGALES
 'use client'
 
 import { useState } from 'react'
@@ -27,9 +27,9 @@ export default function AdminSidebar({ isOpen, onClose }) {
       items: [
         { name: 'Blog', href: '/admin/blog', icon: '📝' },
         { name: 'Portfolio', href: '/admin/portfolio', icon: '💼' },
-        // 🗑️ ELIMINADO: { name: 'Proyectos', href: '/admin/projects', icon: '🚀' },
-        { name: 'Mensajes', href: '/admin/messages', icon: '📬' }, // ← RENOMBRADO de "Contactos"
+        { name: 'Mensajes', href: '/admin/messages', icon: '📬' },
         { name: 'Calculadora', href: '/admin/calculator', icon: '🧮', badge: 'new' },
+        { name: 'Páginas Legales', href: '/admin/legal', icon: '⚖️', badge: 'new' }, // 🔥 AÑADIDO
         { name: 'Configuracion', href: '/admin/settings', icon: '⚙️' }
       ]
     },
