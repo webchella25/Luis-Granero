@@ -9,6 +9,44 @@ import { ArrowLeftIcon, ArrowTopRightOnSquareIcon } from '@heroicons/react/24/ou
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
+// Función simple para renderizar Markdown a HTML
+function renderMarkdown(markdown: string): string {
+  if (!markdown) return '';
+  
+  let html = markdown
+    // Headers
+    .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+    .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+    .replace(/^# (.*$)/gim, '<h1>$1</h1>')
+    // Bold
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/__(.+?)__/g, '<strong>$1</strong>')
+    // Italic
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/_(.+?)_/g, '<em>$1</em>')
+    // Links
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>')
+    // Code blocks
+    .replace(/```([^`]+)```/g, '<pre><code>$1</code></pre>')
+    // Inline code
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    // Line breaks
+    .replace(/\n\n/g, '</p><p>')
+    // Lists
+    .replace(/^\* (.+)$/gim, '<li>$1</li>')
+    .replace(/^- (.+)$/gim, '<li>$1</li>')
+    .replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>')
+    // Blockquotes
+    .replace(/^> (.+)$/gim, '<blockquote>$1</blockquote>');
+  
+  // Wrap in paragraphs if not already wrapped
+  if (!html.startsWith('<h') && !html.startsWith('<ul') && !html.startsWith('<ol') && !html.startsWith('<blockquote')) {
+    html = `<p>${html}</p>`;
+  }
+  
+  return html;
+}
+
 // Función para obtener un proyecto por slug
 async function getProjectBySlug(slug: string) {
   try {
@@ -244,6 +282,38 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                       <span className="text-gray-300">{feature}</span>
                     </div>
                   ))}
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* Contenido detallado en Markdown */}
+        {project.content && (
+          <section className="py-12">
+            <div className="container mx-auto px-4">
+              <div className="max-w-5xl mx-auto">
+                <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-xl p-8">
+                  <div 
+                    className="prose prose-invert prose-cyan max-w-none
+                      prose-headings:text-white prose-headings:font-bold
+                      prose-h1:text-3xl prose-h1:mb-6 prose-h1:gradient-text
+                      prose-h2:text-2xl prose-h2:mb-4 prose-h2:text-cyan-400
+                      prose-h3:text-xl prose-h3:mb-3 prose-h3:text-cyan-300
+                      prose-p:text-gray-300 prose-p:leading-relaxed prose-p:mb-4
+                      prose-a:text-cyan-400 prose-a:no-underline hover:prose-a:text-cyan-300
+                      prose-strong:text-white prose-strong:font-semibold
+                      prose-code:text-cyan-400 prose-code:bg-gray-800 prose-code:px-2 prose-code:py-1 prose-code:rounded
+                      prose-pre:bg-gray-800 prose-pre:border prose-pre:border-gray-700 prose-pre:rounded-lg
+                      prose-ul:text-gray-300 prose-ul:list-disc prose-ul:pl-6
+                      prose-ol:text-gray-300 prose-ol:list-decimal prose-ol:pl-6
+                      prose-li:mb-2
+                      prose-blockquote:border-l-4 prose-blockquote:border-cyan-500 prose-blockquote:pl-4 prose-blockquote:italic prose-blockquote:text-gray-400
+                      prose-img:rounded-lg prose-img:shadow-xl"
+                    dangerouslySetInnerHTML={{ 
+                      __html: renderMarkdown(project.content) 
+                    }}
+                  />
                 </div>
               </div>
             </div>

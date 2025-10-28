@@ -1,4 +1,4 @@
-// src/models/Project.js - VERSIÓN CORREGIDA SIN ÍNDICES DUPLICADOS
+// src/models/Project.js - VERSIÓN MEJORADA
 import mongoose from 'mongoose';
 
 const projectSchema = new mongoose.Schema({
@@ -6,7 +6,6 @@ const projectSchema = new mongoose.Schema({
     type: String,
     required: true
     // NO ponemos unique: true aquí para evitar duplicado
-    // El índice único se crea manualmente abajo
   },
   title: {
     type: String,
@@ -17,6 +16,10 @@ const projectSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  content: {
+    type: String,
+    default: ''
+  },
   image: String, // Emoji o URL
   category: {
     type: String,
@@ -25,11 +28,13 @@ const projectSchema = new mongoose.Schema({
   },
   technologies: [String],
   features: [String],
-// ✅ CAMBIO: Metrics como objeto flexible
+  
+  // ✅ CAMBIO: Metrics como objeto flexible
   metrics: {
     type: mongoose.Schema.Types.Mixed,
     default: {}
   },
+  
   urls: {
     live: String,
     github: String,
@@ -46,10 +51,10 @@ const projectSchema = new mongoose.Schema({
     company: String,
     testimonial: String
   },
-  codeSnippet: String, // Código destacado del proyecto
-  results: String, // Resultados obtenidos
-  challenges: [String], // Desafíos técnicos
-  learnings: [String], // Aprendizajes del proyecto
+  codeSnippet: String,
+  results: String,
+  challenges: [String],
+  learnings: [String],
   isFeatured: {
     type: Boolean,
     default: false
@@ -70,11 +75,11 @@ const projectSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// ✅ ÍNDICES DEFINIDOS UNA SOLA VEZ (sin duplicados)
-projectSchema.index({ slug: 1 }, { unique: true }); // Índice único para slug
-projectSchema.index({ category: 1 }); // Para filtrar por categoría
-projectSchema.index({ isFeatured: 1 }); // Para destacados
-projectSchema.index({ orderIndex: 1 }); // Para ordenamiento
-projectSchema.index({ isActive: 1 }); // Para filtrar activos
+// ✅ ÍNDICES DEFINIDOS UNA SOLA VEZ
+projectSchema.index({ slug: 1 }, { unique: true });
+projectSchema.index({ category: 1 });
+projectSchema.index({ isFeatured: 1 });
+projectSchema.index({ orderIndex: 1 });
+projectSchema.index({ isActive: 1 });
 
 export default mongoose.models.Project || mongoose.model('Project', projectSchema);
