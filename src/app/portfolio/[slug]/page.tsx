@@ -30,14 +30,17 @@ function renderMarkdown(markdown: string): string {
     .replace(/```([^`]+)```/g, '<pre><code>$1</code></pre>')
     // Inline code
     .replace(/`([^`]+)`/g, '<code>$1</code>')
-    // Line breaks
-    .replace(/\n\n/g, '</p><p>')
+    // Blockquotes
+    .replace(/^> (.+)$/gim, '<blockquote>$1</blockquote>')
     // Lists
     .replace(/^\* (.+)$/gim, '<li>$1</li>')
-    .replace(/^- (.+)$/gim, '<li>$1</li>')
-    .replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>')
-    // Blockquotes
-    .replace(/^> (.+)$/gim, '<blockquote>$1</blockquote>');
+    .replace(/^- (.+)$/gim, '<li>$1</li>');
+  
+  // Wrap consecutive list items in ul tags
+  html = html.replace(/(<li>.*?<\/li>\n?)+/g, (match) => `<ul>${match}</ul>`);
+  
+  // Line breaks - convert double newlines to paragraphs
+  html = html.replace(/\n\n/g, '</p><p>');
   
   // Wrap in paragraphs if not already wrapped
   if (!html.startsWith('<h') && !html.startsWith('<ul') && !html.startsWith('<ol') && !html.startsWith('<blockquote')) {
