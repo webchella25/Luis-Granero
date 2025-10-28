@@ -130,7 +130,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
   return (
     <>
       <Header />
-      <main className="min-h-screen bg-gray-950">
+      <main className="min-h-screen bg-gray-950 pt-20">
         
         {/* Breadcrumb y botón volver */}
         <div className="bg-gray-900/50 border-b border-gray-800">
