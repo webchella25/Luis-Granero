@@ -1,7 +1,7 @@
-// src/components/admin/ImageUploader.tsx
+// src/components/admin/ImageUploader.tsx - VERSIÓN CON DEBUG
 'use client'
 import { useState, useCallback } from 'react'
-import { Upload, X, Image as ImageIcon, Loader2 } from 'lucide-react'
+import { Upload, X, Image as ImageIcon, Loader2, AlertCircle } from 'lucide-react'
 
 interface ImageUploaderProps {
   images: string[]
@@ -18,48 +18,115 @@ export default function ImageUploader({
 }: ImageUploaderProps) {
   const [uploading, setUploading] = useState(false)
   const [dragActive, setDragActive] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  // 🔥 UPLOAD A CLOUDINARY
-  const uploadToCloudinary = async (file: File): Promise<string> => {
-    const formData = new FormData()
-    formData.append('file', file)
-    formData.append('upload_preset', process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || 'ml_default')
-    formData.append('folder', 'luisgranero-portfolio')
+  // 🔥 VERIFICAR CONFIGURACIÓN
+  const checkConfig = () => {
+    const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME
+    const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET
 
-    const response = await fetch(
-      `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`,
-      {
-        method: 'POST',
-        body: formData
-      }
-    )
+    console.log('🔍 Verificando configuración Cloudinary:')
+    console.log('Cloud Name:', cloudName)
+    console.log('Upload Preset:', uploadPreset)
 
-    if (!response.ok) {
-      throw new Error('Error al subir imagen a Cloudinary')
+    if (!cloudName) {
+      throw new Error('NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME no está configurado en .env.local')
     }
 
-    const data = await response.json()
-    return data.secure_url
+    if (!uploadPreset) {
+      throw new Error('NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET no está configurado en .env.local')
+    }
+
+    return { cloudName, uploadPreset }
   }
 
-  // 🔥 HANDLE FILE UPLOAD
+  // 🔥 UPLOAD A CLOUDINARY CON MEJOR MANEJO DE ERRORES
+  const uploadToCloudinary = async (file: File): Promise<string> => {
+    try {
+      // Verificar configuración
+      const { cloudName, uploadPreset } = checkConfig()
+
+      console.log(`📤 Subiendo archivo: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)`)
+
+      // Validar tamaño del archivo (máximo 10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        throw new Error('La imagen es muy grande. Máximo 10MB permitido.')
+      }
+
+      // Validar tipo de archivo
+      if (!file.type.startsWith('image/')) {
+        throw new Error('El archivo debe ser una imagen (PNG, JPG, WEBP, GIF)')
+      }
+
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('upload_preset', uploadPreset)
+      formData.append('folder', 'luisgranero-portfolio')
+
+      const url = `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`
+      console.log('🌐 URL de Cloudinary:', url)
+
+      const response = await fetch(url, {
+        method: 'POST',
+        body: formData
+      })
+
+      console.log('📥 Respuesta de Cloudinary:', response.status, response.statusText)
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        console.error('❌ Error de Cloudinary:', errorData)
+        
+        // Mensajes de error específicos
+        if (response.status === 401) {
+          throw new Error('Credenciales inválidas. Verifica tu Cloud Name y Upload Preset.')
+        }
+        if (response.status === 400) {
+          throw new Error(errorData.error?.message || 'Upload Preset inválido o mal configurado.')
+        }
+        
+        throw new Error(errorData.error?.message || `Error ${response.status}: ${response.statusText}`)
+      }
+
+      const data = await response.json()
+      console.log('✅ Upload exitoso:', data.secure_url)
+      
+      return data.secure_url
+    } catch (err) {
+      console.error('❌ Error en uploadToCloudinary:', err)
+      throw err
+    }
+  }
+
+  // 🔥 HANDLE FILE UPLOAD CON MEJOR MANEJO DE ERRORES
   const handleFileUpload = async (files: FileList) => {
     if (images.length >= maxImages) {
-      alert(`Máximo ${maxImages} imágenes permitidas`)
+      setError(`Máximo ${maxImages} imágenes permitidas`)
       return
     }
 
     setUploading(true)
+    setError(null)
 
     try {
-      const uploadPromises = Array.from(files).map(file => uploadToCloudinary(file))
+      const filesToUpload = Array.from(files).slice(0, maxImages - images.length)
+      console.log(`📦 Subiendo ${filesToUpload.length} archivo(s)...`)
+
+      const uploadPromises = filesToUpload.map(file => uploadToCloudinary(file))
       const uploadedUrls = await Promise.all(uploadPromises)
       
-      const newImages = [...images, ...uploadedUrls].slice(0, maxImages)
+      const newImages = [...images, ...uploadedUrls]
+      console.log('✅ Todas las imágenes subidas:', newImages)
+      
       onImagesChange(newImages)
-    } catch (error) {
-      console.error('Error uploading images:', error)
-      alert('Error al subir imágenes. Intenta de nuevo.')
+      setError(null)
+    } catch (err) {
+      console.error('❌ Error uploading images:', err)
+      const errorMessage = err instanceof Error ? err.message : 'Error desconocido al subir imágenes'
+      setError(errorMessage)
+      
+      // Mostrar alert también para que sea más visible
+      alert(`❌ Error al subir imágenes:\n\n${errorMessage}\n\nRevisa la consola del navegador para más detalles.`)
     } finally {
       setUploading(false)
     }
@@ -109,6 +176,23 @@ export default function ImageUploader({
     <div className="bg-gray-800 rounded-lg p-6">
       <h3 className="text-lg font-medium text-white mb-4">{label}</h3>
       
+      {/* 🔥 ERROR ALERT */}
+      {error && (
+        <div className="mb-4 bg-red-500/10 border border-red-500 rounded-lg p-4 flex items-start space-x-3">
+          <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <p className="text-red-500 font-medium">Error al subir imagen</p>
+            <p className="text-red-400 text-sm mt-1">{error}</p>
+          </div>
+          <button
+            onClick={() => setError(null)}
+            className="text-red-400 hover:text-red-300"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
       {/* Upload Zone */}
       <div
         className={`relative border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
@@ -127,7 +211,7 @@ export default function ImageUploader({
           accept="image/*"
           onChange={handleChange}
           disabled={uploading || images.length >= maxImages}
-          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
         />
         
         <div className="flex flex-col items-center space-y-2">
@@ -135,6 +219,7 @@ export default function ImageUploader({
             <>
               <Loader2 className="w-12 h-12 text-cyan-500 animate-spin" />
               <p className="text-gray-400">Subiendo imágenes...</p>
+              <p className="text-xs text-gray-500">Por favor espera...</p>
             </>
           ) : (
             <>
@@ -143,7 +228,7 @@ export default function ImageUploader({
                 Arrastra imágenes aquí o haz clic para seleccionar
               </p>
               <p className="text-sm text-gray-500">
-                PNG, JPG, WEBP hasta 10MB ({images.length}/{maxImages} imágenes)
+                PNG, JPG, WEBP, GIF hasta 10MB ({images.length}/{maxImages} imágenes)
               </p>
             </>
           )}
@@ -163,6 +248,10 @@ export default function ImageUploader({
                 src={url}
                 alt={`Preview ${index + 1}`}
                 className="w-full h-full object-cover"
+                onError={(e) => {
+                  console.error('❌ Error cargando imagen:', url)
+                  e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100"%3E%3Crect fill="%23374151" width="100" height="100"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" fill="%239CA3AF" dy=".3em"%3E❌%3C/text%3E%3C/svg%3E'
+                }}
               />
               
               {/* Overlay */}
@@ -229,7 +318,7 @@ export default function ImageUploader({
 
       {images.length > 0 && (
         <p className="mt-4 text-sm text-gray-400">
-          💡 Tip: La primera imagen será la imagen principal del proyecto. Puedes reordenar arrastrando o usando las flechas.
+          💡 Tip: La primera imagen será la imagen principal del proyecto. Puedes reordenar usando las flechas.
         </p>
       )}
     </div>
