@@ -1,6 +1,11 @@
-// src/components/admin/forms/ProjectForm.js - VERSIÓN MEJORADA
+// src/components/admin/forms/ProjectForm.js - CON IMAGE UPLOADER
 'use client'
 import { useState } from 'react'
+import dynamic from 'next/dynamic'
+import ImageUploader from '../ImageUploader'
+
+// 🔥 Importar Monaco Editor dinámicamente (evita errores SSR)
+const Editor = dynamic(() => import('@monaco-editor/react'), { ssr: false })
 
 const categories = [
   { value: 'ecommerce', label: 'E-commerce' },
@@ -46,15 +51,15 @@ export default function ProjectForm({
     title: initialData?.title || '',
     slug: initialData?.slug || '',
     description: initialData?.description || '',
-    content: initialData?.content || '',
+    content: initialData?.content || '# Descripción del Proyecto\n\n## Problema\n\n## Solución\n\n## Resultados',
     technologies: initialData?.technologies || [],
-    images: initialData?.images || [''],
-    demoUrl: initialData?.demoUrl || '',
-    githubUrl: initialData?.githubUrl || '',
+    images: initialData?.images || [],
+    demoUrl: initialData?.urls?.live || initialData?.demoUrl || '',
+    githubUrl: initialData?.urls?.github || initialData?.githubUrl || '',
     category: initialData?.category || 'ecommerce',
     isFeatured: initialData?.isFeatured || false,
-    isPublished: initialData?.isPublished !== false, // 🔥 Por defecto true
-    isActive: initialData?.isActive !== false, // 🔥 Por defecto true
+    isPublished: initialData?.isPublished !== false,
+    isActive: initialData?.isActive !== false,
     metrics: initialData?.metrics || {},
     features: initialData?.features || [''],
     year: initialData?.year || new Date().getFullYear(),
@@ -145,29 +150,6 @@ export default function ProjectForm({
     }
   }
 
-  // Imágenes
-  const addImageField = () => {
-    setFormData(prev => ({
-      ...prev,
-      images: [...prev.images, '']
-    }))
-  }
-
-  const updateImage = (index, url) => {
-    const newImages = [...formData.images]
-    newImages[index] = url
-    setFormData(prev => ({ ...prev, images: newImages }))
-  }
-
-  const removeImage = (index) => {
-    if (formData.images.length > 1) {
-      setFormData(prev => ({
-        ...prev,
-        images: prev.images.filter((_, i) => i !== index)
-      }))
-    }
-  }
-
   const validateForm = () => {
     const newErrors = {}
 
@@ -187,6 +169,10 @@ export default function ProjectForm({
       newErrors.technologies = 'Añade al menos una tecnología'
     }
 
+    if (formData.images.length === 0) {
+      newErrors.images = 'Sube al menos una imagen del proyecto'
+    }
+
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
@@ -195,11 +181,14 @@ export default function ProjectForm({
     e.preventDefault()
     
     if (validateForm()) {
-      // Limpiar arrays vacíos
+      // Limpiar arrays vacíos y preparar datos
       const cleanedData = {
         ...formData,
         features: formData.features.filter(f => f.trim() !== ''),
-        images: formData.images.filter(i => i.trim() !== '')
+        urls: {
+          live: formData.demoUrl,
+          github: formData.githubUrl
+        }
       }
       
       onSubmit(cleanedData)
@@ -484,16 +473,33 @@ export default function ProjectForm({
         </div>
       </div>
 
-      {/* Contenido Markdown */}
+      {/* 🔥 CONTENIDO MARKDOWN CON MONACO EDITOR */}
       <div className="bg-gray-800 rounded-lg p-6">
-        <h3 className="text-lg font-medium text-white mb-4">Contenido Detallado (Markdown)</h3>
-        <textarea
-          rows={15}
-          value={formData.content}
-          onChange={(e) => handleChange('content', e.target.value)}
-          placeholder="# Descripción del Proyecto&#10;&#10;## Problema&#10;&#10;## Solución&#10;&#10;## Resultados"
-          className="w-full bg-gray-900 border border-gray-700 rounded-md px-4 py-3 text-white font-mono text-sm"
-        />
+        <h3 className="text-lg font-medium text-white mb-4">
+          Contenido Detallado (Markdown)
+        </h3>
+        <p className="text-sm text-gray-400 mb-4">
+          Escribe contenido detallado del proyecto usando Markdown. Este contenido aparecerá en la página de detalle.
+        </p>
+        <div className="border border-gray-600 rounded-md overflow-hidden">
+          <Editor
+            height="500px"
+            defaultLanguage="markdown"
+            theme="vs-dark"
+            value={formData.content}
+            onChange={(value) => handleChange('content', value || '')}
+            options={{
+              minimap: { enabled: false },
+              fontSize: 14,
+              wordWrap: 'on',
+              lineNumbers: 'on',
+              scrollBeyondLastLine: false,
+              automaticLayout: true,
+              tabSize: 2,
+              insertSpaces: true
+            }}
+          />
+        </div>
       </div>
 
       {/* URLs */}
@@ -529,42 +535,15 @@ export default function ProjectForm({
         </div>
       </div>
 
-      {/* Imágenes */}
-      <div className="bg-gray-800 rounded-lg p-6">
-        <h3 className="text-lg font-medium text-white mb-4">Imágenes del Proyecto</h3>
-        
-        <div className="space-y-2">
-          {formData.images.map((image, index) => (
-            <div key={index} className="flex items-center space-x-2">
-              <span className="text-gray-400">{index + 1}.</span>
-              <input
-                type="url"
-                value={image}
-                onChange={(e) => updateImage(index, e.target.value)}
-                placeholder="https://ejemplo.com/imagen.jpg"
-                className="flex-1 bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white"
-              />
-              {formData.images.length > 1 && (
-                <button
-                  type="button"
-                  onClick={() => removeImage(index)}
-                  className="text-red-400 hover:text-red-300 px-2"
-                >
-                  ✕
-                </button>
-              )}
-            </div>
-          ))}
-          
-          <button
-            type="button"
-            onClick={addImageField}
-            className="text-cyan-400 hover:text-cyan-300 text-sm mt-2"
-          >
-            + Añadir imagen
-          </button>
-        </div>
-      </div>
+      {/* 🔥 IMAGE UPLOADER CON CLOUDINARY */}
+      <ImageUploader
+        images={formData.images}
+        onImagesChange={(images) => handleChange('images', images)}
+        maxImages={10}
+      />
+      {errors.images && (
+        <p className="text-red-400 text-sm -mt-4 ml-6">{errors.images}</p>
+      )}
 
       {/* Submit Button */}
       <div className="flex justify-end space-x-4">
