@@ -1,11 +1,11 @@
-// src/models/Project.js - VERSIÓN MEJORADA
+// src/models/Project.js - ACTUALIZADO CON SOPORTE PARA MÚLTIPLES IMÁGENES
 import mongoose from 'mongoose';
 
 const projectSchema = new mongoose.Schema({
   slug: {
     type: String,
-    required: true
-    // NO ponemos unique: true aquí para evitar duplicado
+    required: true,
+    unique: true
   },
   title: {
     type: String,
@@ -17,24 +17,26 @@ const projectSchema = new mongoose.Schema({
     required: true
   },
   content: {
-    type: String,
+    type: String, // 🔥 NUEVO: Contenido markdown detallado
     default: ''
   },
-  image: String, // Emoji o URL
+  image: String, // ⚠️ MANTENER para compatibilidad retroactiva (deprecated)
+  images: [String], // 🔥 NUEVO: Array de URLs de imágenes de Cloudinary
   category: {
     type: String,
     required: true,
-    enum: ['ecommerce', 'webapp', 'dashboard', 'landing', 'api', 'mobile']
+    enum: ['ecommerce', 'webapp', 'dashboard', 'landing', 'api', 'mobile', 'saas']
   },
   technologies: [String],
   features: [String],
-  
-  // ✅ CAMBIO: Metrics como objeto flexible
   metrics: {
-    type: mongoose.Schema.Types.Mixed,
-    default: {}
+    performanceImprovement: String,
+    loadTimeReduction: String,
+    conversionIncrease: String,
+    userSatisfaction: String,
+    completionTime: String,
+    budget: String
   },
-  
   urls: {
     live: String,
     github: String,
@@ -42,10 +44,13 @@ const projectSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['En producción', 'En desarrollo', 'Finalizado', 'Pausado'],
+    enum: ['En producción', 'En desarrollo', 'Finalizado', 'Pausado', 'Mantenimiento'],
     default: 'Finalizado'
   },
-  year: Number,
+  year: {
+    type: Number,
+    default: () => new Date().getFullYear()
+  },
   client: {
     name: String,
     company: String,
@@ -59,13 +64,17 @@ const projectSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
-  orderIndex: {
-    type: Number,
-    default: 0
+  isPublished: { // 🔥 NUEVO: Control de publicación
+    type: Boolean,
+    default: true
   },
   isActive: {
     type: Boolean,
     default: true
+  },
+  orderIndex: {
+    type: Number,
+    default: 0
   },
   stats: {
     views: { type: Number, default: 0 },
@@ -75,11 +84,26 @@ const projectSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// ✅ ÍNDICES DEFINIDOS UNA SOLA VEZ
+// Índices
 projectSchema.index({ slug: 1 }, { unique: true });
 projectSchema.index({ category: 1 });
 projectSchema.index({ isFeatured: 1 });
-projectSchema.index({ orderIndex: 1 });
+projectSchema.index({ isPublished: 1 });
 projectSchema.index({ isActive: 1 });
+projectSchema.index({ orderIndex: 1 });
+
+// 🔥 Virtual para obtener la imagen principal
+projectSchema.virtual('mainImage').get(function() {
+  // Si tiene images array, retornar la primera
+  if (this.images && this.images.length > 0) {
+    return this.images[0];
+  }
+  // Sino, retornar el campo image antiguo
+  return this.image || null;
+});
+
+// 🔥 Asegurar que mainImage se incluya en JSON
+projectSchema.set('toJSON', { virtuals: true });
+projectSchema.set('toObject', { virtuals: true });
 
 export default mongoose.models.Project || mongoose.model('Project', projectSchema);
