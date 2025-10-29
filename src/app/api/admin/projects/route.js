@@ -1,69 +1,71 @@
-// src/app/api/admin/projects/route.js - ACTUALIZADO
-import { NextResponse } from 'next/server';
-import connectDB from '@/lib/mongodb';
-import Project from '@/models/Project';
+// src/app/api/admin/projects/route.js - ACTUALIZADO CON IMÁGENES
+import { NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
+import connectDB from '@/lib/mongodb'
+import Project from '@/models/Project'
 
-// GET - Listar todos los proyectos (admin)
-export async function GET(request) {
+export async function GET() {
   try {
-    await connectDB();
+    const session = await getServerSession(authOptions)
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
     
-    const { searchParams } = new URL(request.url);
-    const category = searchParams.get('category');
-    const featured = searchParams.get('featured');
+    await connectDB()
     
-    const filter = {};
-    if (category) filter.category = category;
-    if (featured === 'true') filter.isFeatured = true;
+    const projects = await Project.find({})
+      .sort({ createdAt: -1 })
+      .limit(100)
+      .lean()
     
-    const projects = await Project.find(filter)
-      .sort({ orderIndex: 1, createdAt: -1 })
-      .lean();
+    // Convertir ObjectId a strings
+    const serializedProjects = projects.map(project => ({
+      ...project,
+      _id: project._id.toString()
+    }))
     
-    return NextResponse.json({ 
-      success: true, 
-      projects,
-      count: projects.length 
-    });
-    
+    return NextResponse.json(serializedProjects)
   } catch (error) {
-    console.error('Error fetching projects:', error);
-    return NextResponse.json(
-      { error: 'Error interno del servidor' }, 
-      { status: 500 }
-    );
+    console.error('Error fetching projects:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
-// POST - Crear nuevo proyecto
 export async function POST(request) {
   try {
-    await connectDB();
+    const session = await getServerSession(authOptions)
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
     
-    const data = await request.json();
+    await connectDB()
     
-    console.log('📝 Datos recibidos para crear proyecto:', {
+    const data = await request.json()
+    
+    // 🔥 LOG PARA DEBUG
+    console.log('📝 Creando proyecto:', {
       title: data.title,
       slug: data.slug,
       imagesCount: data.images?.length || 0,
-      images: data.images
-    });
+      hasImages: !!data.images
+    })
     
-    // Validar campos requeridos
+    // 🔥 VALIDAR CAMPOS REQUERIDOS
     if (!data.title || !data.slug || !data.description) {
       return NextResponse.json(
         { error: 'Campos requeridos: title, slug, description' }, 
         { status: 400 }
-      );
+      )
     }
     
-    // Verificar que el slug no exista
-    const existingProject = await Project.findOne({ slug: data.slug });
+    // 🔥 VERIFICAR SLUG ÚNICO
+    const existingProject = await Project.findOne({ slug: data.slug })
     if (existingProject) {
       return NextResponse.json(
         { error: 'Ya existe un proyecto con ese slug' }, 
         { status: 400 }
-      );
+      )
     }
     
     // 🔥 PREPARAR DATOS CON IMÁGENES
@@ -82,48 +84,48 @@ export async function POST(request) {
       status: data.status || 'En producción',
       year: data.year || new Date().getFullYear(),
       isFeatured: data.isFeatured || false,
-      isPublished: data.isPublished !== false, // Por defecto true
-      isActive: data.isActive !== false, // Por defecto true
+      isPublished: data.isPublished !== false,
+      isActive: data.isActive !== false,
       client: data.client || {}
-    };
+    }
     
-    console.log('💾 Guardando proyecto en MongoDB:', {
+    console.log('💾 Guardando en MongoDB:', {
       slug: projectData.slug,
-      imagesCount: projectData.images.length,
-      firstImage: projectData.images[0]
-    });
+      images: projectData.images.length,
+      firstImage: projectData.images[0]?.substring(0, 50) + '...'
+    })
     
-    const project = await Project.create(projectData);
+    const project = await Project.create(projectData)
     
-    console.log('✅ Proyecto creado exitosamente:', {
-      _id: project._id,
+    console.log('✅ Proyecto creado:', {
+      _id: project._id.toString(),
       slug: project.slug,
-      imagesInDB: project.images.length
-    });
+      imagesInDB: project.images?.length || 0
+    })
     
     return NextResponse.json({ 
-      success: true, 
-      project,
+      success: true,
+      project: {
+        ...project.toObject(),
+        _id: project._id.toString()
+      },
       message: 'Proyecto creado exitosamente'
-    }, { status: 201 });
+    }, { status: 201 })
     
   } catch (error) {
-    console.error('❌ Error creating project:', error);
+    console.error('❌ Error creating project:', error)
     
-    // Error de duplicado
+    // Error de slug duplicado
     if (error.code === 11000) {
       return NextResponse.json(
         { error: 'Ya existe un proyecto con ese slug' }, 
         { status: 400 }
-      );
+      )
     }
     
-    return NextResponse.json(
-      { 
-        error: 'Error creando proyecto',
-        details: error.message 
-      }, 
-      { status: 500 }
-    );
+    return NextResponse.json({ 
+      error: 'Error creando proyecto',
+      details: error.message 
+    }, { status: 500 })
   }
 }
