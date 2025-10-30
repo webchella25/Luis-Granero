@@ -1,11 +1,11 @@
-// src/models/Project.js - ACTUALIZADO CON SOPORTE PARA MÚLTIPLES IMÁGENES
+// src/models/Project.js - CORREGIDO SIN ÍNDICE DUPLICADO
 import mongoose from 'mongoose';
 
 const projectSchema = new mongoose.Schema({
   slug: {
     type: String,
     required: true,
-    unique: true
+    unique: true // 🔥 SOLO aquí, NO en schema.index()
   },
   title: {
     type: String,
@@ -17,11 +17,11 @@ const projectSchema = new mongoose.Schema({
     required: true
   },
   content: {
-    type: String, // 🔥 NUEVO: Contenido markdown detallado
+    type: String,
     default: ''
   },
-  image: String, // ⚠️ MANTENER para compatibilidad retroactiva (deprecated)
-  images: [String], // 🔥 NUEVO: Array de URLs de imágenes de Cloudinary
+  image: String, // Compatibilidad con proyectos antiguos
+  images: [String], // 🔥 Array de URLs de Cloudinary
   category: {
     type: String,
     required: true,
@@ -64,7 +64,7 @@ const projectSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
-  isPublished: { // 🔥 NUEVO: Control de publicación
+  isPublished: {
     type: Boolean,
     default: true
   },
@@ -84,8 +84,7 @@ const projectSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Índices
-projectSchema.index({ slug: 1 }, { unique: true });
+// 🔥 ÍNDICES (sin slug porque ya tiene unique: true arriba)
 projectSchema.index({ category: 1 });
 projectSchema.index({ isFeatured: 1 });
 projectSchema.index({ isPublished: 1 });
@@ -94,15 +93,13 @@ projectSchema.index({ orderIndex: 1 });
 
 // 🔥 Virtual para obtener la imagen principal
 projectSchema.virtual('mainImage').get(function() {
-  // Si tiene images array, retornar la primera
   if (this.images && this.images.length > 0) {
     return this.images[0];
   }
-  // Sino, retornar el campo image antiguo
   return this.image || null;
 });
 
-// 🔥 Asegurar que mainImage se incluya en JSON
+// 🔥 Asegurar que virtuals se incluyan en JSON
 projectSchema.set('toJSON', { virtuals: true });
 projectSchema.set('toObject', { virtuals: true });
 

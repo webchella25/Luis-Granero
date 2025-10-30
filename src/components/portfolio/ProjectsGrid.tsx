@@ -1,8 +1,9 @@
-// src/components/portfolio/ProjectsGrid.tsx - FIX
+// src/components/portfolio/ProjectsGrid.tsx - ACTUALIZADO
 'use client';
 
 import { useState } from 'react';
 import Link from 'next/link';
+import ProjectCard from './ProjectCard'; // 🔥 IMPORTANTE: Import del ProjectCard
 
 interface Project {
   _id: string;
@@ -13,10 +14,11 @@ interface Project {
   status: string;
   metrics?: Record<string, string>;
   features?: string[];
-  images?: string[];
+  images?: string[]; // 🔥 Array de imágenes
+  image?: string;    // Imagen antigua
   isFeatured?: boolean;
   slug?: string;
-  year?: string;
+  year?: string | number;
 }
 
 interface Props {
@@ -118,7 +120,7 @@ export default function ProjectsGrid({ projects = [] }: Props) {
           </div>
         )}
 
-        {/* Projects grid */}
+        {/* 🔥 PROJECTS GRID CON PROJECTCARD */}
         {filteredProjects.length > 0 ? (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {filteredProjects.map((project) => (
@@ -152,99 +154,5 @@ export default function ProjectsGrid({ projects = [] }: Props) {
         </div>
       </div>
     </section>
-  );
-}
-
-// Componente separado para la tarjeta de proyecto
-function ProjectCard({ project }: { project: Project }) {
-  // 🔥 FIX: Convertir _id a string explícitamente
-  const projectId = String(project._id);
-  const projectSlug = project.slug || projectId;
-
-  return (
-    <div className="group bg-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-xl overflow-hidden hover:border-cyan-500/50 transition-all duration-300 hover:transform hover:scale-105">
-      
-      {/* Project header */}
-      <div className="p-6 pb-4">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h3 className="text-xl font-bold text-white group-hover:text-cyan-400 transition-colors">
-              {project.title}
-            </h3>
-            <p className="text-gray-500 text-sm">{project.category} • {project.year}</p>
-          </div>
-          <span className={`text-xs px-2 py-1 rounded-full ${
-            project.status === 'En producción' 
-              ? 'bg-green-500/20 text-green-400 border border-green-500/30' 
-              : 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'
-          }`}>
-            {project.status}
-          </span>
-        </div>
-        
-        <p className="text-gray-300 leading-relaxed mb-4">
-          {project.description}
-        </p>
-
-        {/* Technologies */}
-        <div className="flex flex-wrap gap-2 mb-4">
-          {project.technologies?.map((tech, techIndex) => (
-            <span
-              key={techIndex}
-              className="px-2 py-1 text-xs font-mono bg-gray-800 text-cyan-400 rounded border border-cyan-500/30"
-            >
-              {tech}
-            </span>
-          ))}
-        </div>
-      </div>
-
-      {/* Metrics */}
-      {project.metrics && Object.keys(project.metrics).length > 0 && (
-        <div className="px-6 pb-4">
-          <h4 className="font-semibold text-white mb-3">Métricas clave:</h4>
-          <div className="grid grid-cols-2 gap-4">
-            {Object.entries(project.metrics).slice(0, 4).map(([key, value], index) => (
-              <div key={index} className="bg-gray-800/50 rounded-lg p-3 text-center">
-                <div className="text-lg font-bold gradient-text">{String(value)}</div>
-                <div className="text-xs text-gray-400 capitalize">
-                  {key.replace(/([A-Z])/g, ' $1').trim()}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Features */}
-      {project.features && project.features.length > 0 && (
-        <div className="px-6 pb-4">
-          <h4 className="font-semibold text-white mb-3">Características principales:</h4>
-          <div className="space-y-1">
-            {project.features.slice(0, 3).map((feature, index) => (
-              <div key={index} className="flex items-center space-x-2">
-                <span className="text-green-400 text-xs">✓</span>
-                <span className="text-gray-300 text-sm">{feature}</span>
-              </div>
-            ))}
-            {project.features.length > 3 && (
-              <div className="text-cyan-400 text-sm">
-                +{project.features.length - 3} características más
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* CTA */}
-      <div className="p-6 pt-0">
-        <Link
-          href={`/portfolio/${projectSlug}`}
-          className="block w-full py-3 px-6 bg-gradient-to-r from-cyan-400 to-green-400 text-black font-bold rounded-lg hover:shadow-xl transition-all duration-300 text-center"
-        >
-          Ver caso completo
-        </Link>
-      </div>
-    </div>
   );
 }
