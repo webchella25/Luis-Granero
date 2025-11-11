@@ -7,8 +7,10 @@ import {
   PencilIcon, 
   TrashIcon, 
   EyeIcon,
-  AcademicCapIcon 
+  AcademicCapIcon,
+  CalendarIcon // ← AÑADIDO
 } from '@heroicons/react/24/outline'
+
 export default function BlogManager() {
   const [posts, setPosts] = useState([])
   const [loading, setLoading] = useState(true)
@@ -66,6 +68,14 @@ export default function BlogManager() {
     return matchesFilter && matchesSearch
   })
 
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('es-ES', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    })
+  }
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -77,191 +87,163 @@ export default function BlogManager() {
   return (
     <div>
       <div className="mb-8 flex justify-between items-center">
-  <div>
-    <h1 className="text-2xl font-bold text-white">Gestión de Blog</h1>
-    <p className="text-gray-400">Administra tus artículos y contenido técnico</p>
-  </div>
-  <div className="flex space-x-3">
-    <Link
-      href="/admin/blog/learning-paths"
-      className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md flex items-center space-x-2"
-    >
-      <AcademicCapIcon className="w-4 h-4" />
-      <span>Rutas</span>
-    </Link>
-    <Link
-      href="/admin/blog/categories"
-      className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md flex items-center space-x-2"
-    >
-      <span>🏷️</span>
-      <span>Categorías</span>
-    </Link>
-    <Link
-      href="/admin/blog/new"
-      className="bg-cyan-600 hover:bg-cyan-700 text-white px-4 py-2 rounded-md flex items-center space-x-2"
-    >
-      <PlusIcon className="w-4 h-4" />
-      <span>Nuevo Artículo</span>
-    </Link>
-  </div>
-</div>
-
-      {/* Filtros y búsqueda */}
-      <div className="mb-6 flex flex-col sm:flex-row gap-4">
-        <div className="flex-1">
-          <input
-            type="text"
-            placeholder="Buscar artículos..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full bg-gray-800 border border-gray-600 rounded-md px-4 py-2 text-white focus:ring-cyan-500 focus:border-cyan-500"
-          />
+        <div>
+          <h1 className="text-2xl font-bold text-white">Gestión de Blog</h1>
+          <p className="text-gray-400">Administra tus artículos y contenido técnico</p>
         </div>
-        <div className="flex space-x-2">
-          {['all', 'published', 'draft'].map((filterType) => (
-            <button
-              key={filterType}
-              onClick={() => setFilter(filterType)}
-              className={`px-4 py-2 rounded-md text-sm font-medium ${
-                filter === filterType
-                  ? 'bg-cyan-600 text-white'
-                  : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-              }`}
-            >
-              {filterType === 'all' ? 'Todos' : 
-               filterType === 'published' ? 'Publicados' : 'Borradores'}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Estadísticas rápidas */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-gray-800 p-4 rounded-lg">
-          <div className="text-2xl font-bold text-white">{posts.length}</div>
-          <div className="text-gray-400 text-sm">Total artículos</div>
-        </div>
-        <div className="bg-gray-800 p-4 rounded-lg">
-          <div className="text-2xl font-bold text-green-400">
-            {posts.filter(p => p.isPublished).length}
-          </div>
-          <div className="text-gray-400 text-sm">Publicados</div>
-        </div>
-        <div className="bg-gray-800 p-4 rounded-lg">
-          <div className="text-2xl font-bold text-yellow-400">
-            {posts.filter(p => !p.isPublished).length}
-          </div>
-          <div className="text-gray-400 text-sm">Borradores</div>
-        </div>
-        <div className="bg-gray-800 p-4 rounded-lg">
-          <div className="text-2xl font-bold text-cyan-400">
-            {[...new Set(posts.flatMap(p => p.tags || []))].length}
-          </div>
-          <div className="text-gray-400 text-sm">Tags únicos</div>
-        </div>
-      </div>
-
-      {filteredPosts.length === 0 ? (
-        <div className="text-center py-12">
-          <div className="text-gray-400 mb-4">
-            {posts.length === 0 ? 'No tienes artículos aún' : 'No se encontraron artículos'}
-          </div>
+        <div className="flex space-x-3">
+          <Link
+            href="/admin/blog/learning-paths"
+            className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md flex items-center space-x-2"
+          >
+            <AcademicCapIcon className="w-4 h-4" />
+            <span>Rutas</span>
+          </Link>
+          <Link
+            href="/admin/blog/categories"
+            className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md flex items-center space-x-2"
+          >
+            <span>🏷️</span>
+            <span>Categorías</span>
+          </Link>
           <Link
             href="/admin/blog/new"
-            className="bg-cyan-600 hover:bg-cyan-700 text-white px-6 py-3 rounded-md"
+            className="bg-cyan-600 hover:bg-cyan-700 text-white px-4 py-2 rounded-md flex items-center space-x-2"
           >
-            {posts.length === 0 ? 'Escribir tu primer artículo' : 'Crear nuevo artículo'}
+            <PlusIcon className="w-4 h-4" />
+            <span>Nuevo Artículo</span>
           </Link>
         </div>
+      </div>
+
+      {/* Filters */}
+      <div className="mb-6 flex flex-col sm:flex-row gap-4">
+        <div className="flex space-x-2">
+          <button
+            onClick={() => setFilter('all')}
+            className={`px-4 py-2 rounded-md ${
+              filter === 'all'
+                ? 'bg-cyan-600 text-white'
+                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+            }`}
+          >
+            Todos ({posts.length})
+          </button>
+          <button
+            onClick={() => setFilter('published')}
+            className={`px-4 py-2 rounded-md ${
+              filter === 'published'
+                ? 'bg-green-600 text-white'
+                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+            }`}
+          >
+            Publicados ({posts.filter(p => p.isPublished).length})
+          </button>
+          <button
+            onClick={() => setFilter('draft')}
+            className={`px-4 py-2 rounded-md ${
+              filter === 'draft'
+                ? 'bg-orange-600 text-white'
+                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+            }`}
+          >
+            Borradores ({posts.filter(p => !p.isPublished).length})
+          </button>
+        </div>
+
+        <input
+          type="text"
+          placeholder="Buscar artículos..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="flex-1 bg-gray-800 border border-gray-700 text-white px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-500"
+        />
+      </div>
+
+      {/* Posts List */}
+      {filteredPosts.length === 0 ? (
+        <div className="text-center py-12 bg-gray-800 rounded-lg border border-gray-700">
+          <p className="text-gray-400">No hay artículos que mostrar</p>
+        </div>
       ) : (
-        <div className="bg-gray-800 shadow overflow-hidden sm:rounded-md">
-          <ul className="divide-y divide-gray-700">
-            {filteredPosts.map((post) => (
-              <li key={post._id} className="px-6 py-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center space-x-2 mb-2">
-                      <h3 className="text-lg font-medium text-white truncate">
-                        {post.title}
-                      </h3>
-                      <span className={`text-xs font-medium px-2.5 py-0.5 rounded-full ${
-                        post.isPublished 
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-yellow-100 text-yellow-800'
-                      }`}>
-                        {post.isPublished ? 'Publicado' : 'Borrador'}
+        <div className="space-y-4">
+          {filteredPosts.map(post => (
+            <div
+              key={post._id}
+              className="bg-gray-800 border border-gray-700 rounded-lg p-6 hover:border-cyan-500/50 transition-colors"
+            >
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center space-x-3 mb-2">
+                    <h3 className="text-xl font-bold text-white">{post.title}</h3>
+                    {post.isPublished ? (
+                      <span className="bg-green-500/20 text-green-400 text-xs px-2 py-1 rounded">
+                        Publicado
                       </span>
-                    </div>
-                    
-                    <p className="text-gray-400 text-sm mb-2">
-                      {post.excerpt?.substring(0, 150)}...
-                    </p>
-                    
-                    <div className="flex items-center space-x-4 text-xs text-gray-500">
-                      <div className="flex items-center space-x-1">
-                        <CalendarIcon className="w-4 h-4" />
-                        <span>
-                          {new Date(post.createdAt).toLocaleDateString('es-ES')}
-                        </span>
-                      </div>
-                      {post.category && (
-                        <span className="bg-gray-700 px-2 py-1 rounded">
-                          {post.category}
-                        </span>
-                      )}
-                      <div className="flex space-x-1">
-                        {post.tags?.slice(0, 3).map((tag, index) => (
-                          <span key={index} className="bg-cyan-600 px-2 py-1 rounded text-white">
-                            {tag}
-                          </span>
-                        ))}
-                        {post.tags?.length > 3 && (
-                          <span className="text-gray-400">+{post.tags.length - 3}</span>
-                        )}
-                      </div>
-                      <span>{post.readTime || '5'} min lectura</span>
-                    </div>
+                    ) : (
+                      <span className="bg-orange-500/20 text-orange-400 text-xs px-2 py-1 rounded">
+                        Borrador
+                      </span>
+                    )}
                   </div>
                   
-                  <div className="flex items-center space-x-2">
-                    <button
-                      onClick={() => togglePublished(post._id, post.isPublished)}
-                      className={`p-2 rounded-md ${
-                        post.isPublished
-                          ? 'text-green-400 hover:text-green-300'
-                          : 'text-yellow-400 hover:text-yellow-300'
-                      }`}
-                      title={post.isPublished ? 'Despublicar' : 'Publicar'}
-                    >
-                      {post.isPublished ? '👁️' : '📝'}
-                    </button>
-                    <Link
-                      href={`/blog/${post.slug}`}
-                      className="p-2 text-gray-400 hover:text-cyan-400 rounded-md"
-                      title="Ver artículo"
-                      target="_blank"
-                    >
+                  <p className="text-gray-400 mb-4">{post.excerpt}</p>
+                  
+                  <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500">
+                    <span className="flex items-center space-x-1">
+                      <CalendarIcon className="w-4 h-4" />
+                      <span>{formatDate(post.publishDate)}</span>
+                    </span>
+                    <span className="flex items-center space-x-1">
                       <EyeIcon className="w-4 h-4" />
-                    </Link>
-                    <Link
-                      href={`/admin/blog/${post._id}`}
-                      className="p-2 text-gray-400 hover:text-cyan-400 rounded-md"
-                      title="Editar"
-                    >
-                      <PencilIcon className="w-4 h-4" />
-                    </Link>
-                    <button
-                      onClick={() => deletePost(post._id)}
-                      className="p-2 text-gray-400 hover:text-red-400 rounded-md"
-                      title="Eliminar"
-                    >
-                      <TrashIcon className="w-4 h-4" />
-                    </button>
+                      <span>{post.views || 0} vistas</span>
+                    </span>
+                    <span className="bg-cyan-500/20 text-cyan-400 px-2 py-1 rounded text-xs">
+                      {post.category}
+                    </span>
+                    {post.tags?.slice(0, 3).map(tag => (
+                      <span key={tag} className="text-gray-500">#{tag}</span>
+                    ))}
                   </div>
                 </div>
-              </li>
-            ))}
-          </ul>
+
+                <div className="flex items-center space-x-2 ml-4">
+                  <Link
+                    href={`/blog/${post.slug}`}
+                    target="_blank"
+                    className="p-2 text-gray-400 hover:text-cyan-400 transition-colors"
+                    title="Ver artículo"
+                  >
+                    <EyeIcon className="w-5 h-5" />
+                  </Link>
+                  <Link
+                    href={`/admin/blog/edit/${post._id}`}
+                    className="p-2 text-gray-400 hover:text-yellow-400 transition-colors"
+                    title="Editar"
+                  >
+                    <PencilIcon className="w-5 h-5" />
+                  </Link>
+                  <button
+                    onClick={() => togglePublished(post._id, post.isPublished)}
+                    className={`px-3 py-1 rounded text-xs font-semibold ${
+                      post.isPublished
+                        ? 'bg-orange-600 hover:bg-orange-700 text-white'
+                        : 'bg-green-600 hover:bg-green-700 text-white'
+                    }`}
+                  >
+                    {post.isPublished ? 'Despublicar' : 'Publicar'}
+                  </button>
+                  <button
+                    onClick={() => deletePost(post._id)}
+                    className="p-2 text-gray-400 hover:text-red-400 transition-colors"
+                    title="Eliminar"
+                  >
+                    <TrashIcon className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       )}
     </div>

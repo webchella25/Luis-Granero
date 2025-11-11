@@ -10,6 +10,7 @@ import {
   BookOpenIcon,
   AcademicCapIcon
 } from '@heroicons/react/24/outline';
+import CourseProgress from '@/components/courses/CourseProgress';
 
 interface Article {
   postId: {
@@ -35,6 +36,7 @@ interface LearningPath {
   articles: Article[];
   icon: string;
   enrollments?: number;
+  slug: string;
 }
 
 interface Props {
@@ -44,12 +46,9 @@ interface Props {
 export default function LearningPathDetail({ path }: Props) {
   const [completedArticles, setCompletedArticles] = useState<string[]>([]);
 
-  const toggleArticleComplete = (articleId: string) => {
-    setCompletedArticles(prev => 
-      prev.includes(articleId) 
-        ? prev.filter(id => id !== articleId)
-        : [...prev, articleId]
-    );
+  const handleArticleComplete = (data: any) => {
+    console.log('✅ Artículo completado:', data);
+    // Aquí podrías actualizar el estado local o refrescar datos
   };
 
   const progress = path.articles.length > 0 
@@ -57,60 +56,8 @@ export default function LearningPathDetail({ path }: Props) {
     : 0;
 
   return (
-    <div className="min-h-screen bg-black pt-20">
+    <div className="min-h-screen bg-black">
       
-      {/* Hero Section */}
-      <section className="py-20 bg-gradient-to-b from-gray-900 to-black">
-        <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto text-center">
-            
-            {/* Icon */}
-            <div className="text-6xl mb-6">{path.icon}</div>
-            
-            {/* Title */}
-            <h1 className="text-4xl md:text-6xl font-bold text-white mb-6">
-              {path.title}
-            </h1>
-            
-            {/* Description */}
-            <p className="text-xl text-gray-300 mb-8 leading-relaxed">
-              {path.description}
-            </p>
-
-            {/* Stats */}
-            <div className="flex flex-wrap justify-center gap-6 mb-8">
-              <div className="flex items-center space-x-2 text-gray-300">
-                <ClockIcon className="w-5 h-5 text-cyan-400" />
-                <span>{path.duration}</span>
-              </div>
-              <div className="flex items-center space-x-2 text-gray-300">
-                <DocumentTextIcon className="w-5 h-5 text-green-400" />
-                <span>{path.articles.length} artículos</span>
-              </div>
-              <div className="flex items-center space-x-2 text-gray-300">
-                <AcademicCapIcon className="w-5 h-5 text-purple-400" />
-                <span>{path.level}</span>
-              </div>
-            </div>
-
-            {/* Progress bar */}
-            <div className="max-w-md mx-auto">
-              <div className="flex justify-between text-sm text-gray-400 mb-2">
-                <span>Tu progreso</span>
-                <span>{progress}%</span>
-              </div>
-              <div className="w-full h-3 bg-gray-800 rounded-full overflow-hidden">
-                <div 
-                  className="h-full bg-gradient-to-r from-purple-500 to-cyan-500 transition-all duration-500"
-                  style={{ width: `${progress}%` }}
-                />
-              </div>
-            </div>
-
-          </div>
-        </div>
-      </section>
-
       {/* Content Grid */}
       <section className="py-20">
         <div className="container mx-auto px-4">
@@ -121,7 +68,7 @@ export default function LearningPathDetail({ path }: Props) {
               <div className="sticky top-24 space-y-6">
                 
                 {/* Topics */}
-                <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
+                <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-6">
                   <h3 className="text-lg font-bold text-white mb-4 flex items-center">
                     <span className="mr-2">🎯</span>
                     Temas principales
@@ -138,7 +85,7 @@ export default function LearningPathDetail({ path }: Props) {
 
                 {/* Prerequisites */}
                 {path.prerequisites && path.prerequisites.length > 0 && (
-                  <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
+                  <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-6">
                     <h3 className="text-lg font-bold text-white mb-4 flex items-center">
                       <span className="mr-2">📚</span>
                       Prerrequisitos
@@ -156,7 +103,7 @@ export default function LearningPathDetail({ path }: Props) {
 
                 {/* Learning Objectives */}
                 {path.learningObjectives && path.learningObjectives.length > 0 && (
-                  <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
+                  <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-6">
                     <h3 className="text-lg font-bold text-white mb-4 flex items-center">
                       <span className="mr-2">🎓</span>
                       Objetivos de aprendizaje
@@ -172,94 +119,133 @@ export default function LearningPathDetail({ path }: Props) {
                   </div>
                 )}
 
+                {/* Stats Card */}
+                <div className="bg-gradient-to-br from-purple-500/10 to-cyan-500/10 border border-purple-500/30 rounded-xl p-6">
+                  <h3 className="text-lg font-bold text-white mb-4">
+                    📊 Estadísticas
+                  </h3>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-400 text-sm">Total lecciones</span>
+                      <span className="text-white font-bold">{path.articles.length}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-400 text-sm">Duración</span>
+                      <span className="text-cyan-400 font-bold">{path.duration}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-400 text-sm">Nivel</span>
+                      <span className="text-purple-400 font-bold">{path.level}</span>
+                    </div>
+                  </div>
+                </div>
+
               </div>
             </div>
 
             {/* Articles List */}
             <div className="lg:col-span-2">
               <div className="mb-8">
-                <h2 className="text-3xl font-bold text-white mb-2">
+                <h2 className="text-3xl font-bold text-white mb-2" id="articles">
                   Contenido de la ruta
                 </h2>
                 <p className="text-gray-400">
-                  Sigue los artículos en orden para un aprendizaje óptimo
+                  {path.articles.length} lecciones • Sigue el orden para un aprendizaje óptimo
                 </p>
               </div>
 
-              <div className="space-y-4">
+              <div className="space-y-6">
                 {path.articles
                   .sort((a, b) => a.order - b.order)
                   .map((article, index) => {
-                    const isCompleted = completedArticles.includes(article.postId._id);
-                    
                     return (
                       <div
                         key={article.postId._id}
-                        className="group bg-gray-900 border border-gray-800 rounded-xl p-6 hover:border-purple-500/50 transition-all duration-300"
+                        className="group bg-gray-900/50 border border-gray-800 rounded-xl overflow-hidden hover:border-cyan-500/50 transition-all duration-300"
                       >
-                        <div className="flex items-start space-x-4">
-                          
-                          {/* Checkbox */}
-                          <button
-                            onClick={() => toggleArticleComplete(article.postId._id)}
-                            className={`flex-shrink-0 w-6 h-6 rounded border-2 flex items-center justify-center transition-all ${
-                              isCompleted 
-                                ? 'bg-green-500 border-green-500' 
-                                : 'border-gray-600 hover:border-green-500'
-                            }`}
-                          >
-                            {isCompleted && (
-                              <CheckCircleIcon className="w-4 h-4 text-white" />
-                            )}
-                          </button>
-
-                          {/* Content */}
-                          <div className="flex-1">
-                            <div className="flex items-center space-x-3 mb-2">
-                              <span className="px-2 py-1 bg-gray-800 text-gray-400 text-xs font-mono rounded">
-                                {index + 1}/{path.articles.length}
-                              </span>
-                              {article.isRequired && (
-                                <span className="px-2 py-1 bg-red-500/20 text-red-400 text-xs font-semibold rounded">
-                                  REQUERIDO
+                        {/* Article Content */}
+                        <div className="p-6">
+                          <div className="flex items-start space-x-4">
+                            
+                            {/* Number Badge */}
+                            <div className="flex-shrink-0">
+                              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-cyan-500/20 to-purple-500/20 border border-cyan-500/30 flex items-center justify-center">
+                                <span className="text-cyan-400 font-bold text-lg">
+                                  {index + 1}
                                 </span>
-                              )}
-                              {article.postId.readTime && (
-                                <span className="text-xs text-gray-500">
-                                  {article.postId.readTime}
-                                </span>
-                              )}
+                              </div>
                             </div>
 
-                            <Link 
-                              href={`/blog/${article.postId.slug}`}
-                              className="block group-hover:text-purple-400 transition-colors"
-                            >
-                              <h3 className={`text-xl font-bold mb-2 ${
-                                isCompleted ? 'text-gray-500 line-through' : 'text-white'
-                              }`}>
-                                {article.postId.title}
-                              </h3>
-                            </Link>
+                            {/* Content */}
+                            <div className="flex-1">
+                              <div className="flex flex-wrap items-center gap-2 mb-3">
+                                <span className="px-2 py-1 bg-gray-800 text-gray-400 text-xs font-mono rounded">
+                                  Lección {index + 1} de {path.articles.length}
+                                </span>
+                                
+                                {article.isRequired && (
+                                  <span className="px-2 py-1 bg-red-500/20 text-red-400 text-xs font-semibold rounded border border-red-500/30">
+                                    ⚡ REQUERIDO
+                                  </span>
+                                )}
+                                
+                                {article.postId.readTime && (
+                                  <span className="flex items-center gap-1 text-xs text-gray-500">
+                                    <ClockIcon className="w-3 h-3" />
+                                    {article.postId.readTime}
+                                  </span>
+                                )}
+                              </div>
 
-                            <p className="text-gray-400 text-sm mb-4">
-                              {article.postId.excerpt}
-                            </p>
+                              <Link 
+                                href={`/blog/${article.postId.slug}`}
+                                className="block group-hover:text-cyan-400 transition-colors"
+                              >
+                                <h3 className="text-xl md:text-2xl font-bold text-white mb-3 group-hover:text-cyan-400 transition-colors">
+                                  {article.postId.title}
+                                </h3>
+                              </Link>
 
-                            <Link
-                              href={`/blog/${article.postId.slug}`}
-                              className="inline-flex items-center text-cyan-400 hover:text-cyan-300 text-sm font-semibold"
-                            >
-                              <BookOpenIcon className="w-4 h-4 mr-2" />
-                              Leer artículo
-                            </Link>
+                              <p className="text-gray-400 text-sm md:text-base mb-4 leading-relaxed">
+                                {article.postId.excerpt}
+                              </p>
+
+                              <Link
+                                href={`/blog/${article.postId.slug}`}
+                                className="inline-flex items-center gap-2 text-cyan-400 hover:text-cyan-300 text-sm font-semibold group/link"
+                              >
+                                <BookOpenIcon className="w-4 h-4" />
+                                Leer artículo
+                                <span className="group-hover/link:translate-x-1 transition-transform">→</span>
+                              </Link>
+                            </div>
+
                           </div>
+                        </div>
 
+                        {/* 🔥 COMPONENTE DE PROGRESO */}
+                        <div className="border-t border-gray-800 bg-gray-900/30 p-4">
+                          <CourseProgress
+                            courseId={path._id}
+                            courseSlug={path.slug}
+                            articleId={article.postId._id}
+                            onComplete={handleArticleComplete}
+                          />
                         </div>
                       </div>
                     );
                   })}
               </div>
+
+              {/* Completion Message */}
+              {path.articles.length === 0 && (
+                <div className="text-center py-12 bg-gray-900/50 border border-gray-800 rounded-xl">
+                  <DocumentTextIcon className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+                  <p className="text-gray-400">
+                    Aún no hay lecciones en esta ruta de aprendizaje
+                  </p>
+                </div>
+              )}
             </div>
 
           </div>
