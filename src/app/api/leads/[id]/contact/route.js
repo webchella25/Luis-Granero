@@ -9,8 +9,10 @@ export async function POST(request, { params }) {
   try {
     await dbConnect();
     
-    const { id } = params;
+    const { id } = await params; // ⚠️ AÑADIR await
     const data = await request.json();
+    
+    console.log('📞 Registrando contacto con lead:', id);
     
     const lead = await Lead.findById(id);
     
@@ -43,6 +45,8 @@ export async function POST(request, { params }) {
         data.templateId,
         { $inc: { usageCount: 1 } }
       );
+      
+      console.log('✅ Plantilla actualizada:', data.templateName);
     }
     
     // Añadir contacto al historial
@@ -56,6 +60,8 @@ export async function POST(request, { params }) {
     lead.lastContactedAt = new Date();
     
     await lead.save();
+    
+    console.log('✅ Contacto registrado para:', lead.name);
     
     return NextResponse.json({
       success: true,
@@ -77,7 +83,7 @@ export async function GET(request, { params }) {
   try {
     await dbConnect();
     
-    const { id } = params;
+    const { id } = await params; // ⚠️ AÑADIR await
     
     const lead = await Lead.findById(id)
       .populate('contactHistory.templateUsed', 'name category');
@@ -109,7 +115,7 @@ export async function PATCH(request, { params }) {
   try {
     await dbConnect();
     
-    const { id } = params;
+    const { id } = await params; // ⚠️ AÑADIR await
     const { contactId, updates } = await request.json();
     
     const lead = await Lead.findById(id);
