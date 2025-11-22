@@ -20,6 +20,35 @@ export async function GET(request, { params }) {
   }
 }
 
+// ✅ Agregar PUT además de PATCH
+export async function PUT(request, { params }) {
+  try {
+    const session = await getServerSession()
+    
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    await dbConnect()
+    
+    const updates = await request.json()
+    
+    const post = await Post.findByIdAndUpdate(
+      params.id,
+      { ...updates, updatedAt: new Date() },
+      { new: true }
+    )
+    
+    if (!post) {
+      return NextResponse.json({ error: 'Post not found' }, { status: 404 })
+    }
+    
+    return NextResponse.json({ message: 'Post updated successfully', post })
+  } catch (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+}
+
 export async function PATCH(request, { params }) {
   try {
     const session = await getServerSession()

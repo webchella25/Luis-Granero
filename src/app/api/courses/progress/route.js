@@ -1,7 +1,7 @@
 // src/app/api/courses/progress/route.js
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { authOptions } from '@/lib/auth';
 import dbConnect from '@/lib/mongodb';
 import CourseProgress from '@/models/CourseProgress';
 import LearningPath from '@/models/LearningPath';
@@ -11,7 +11,7 @@ import User from '@/models/User';
 export async function POST(request) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session) {
       return NextResponse.json(
         { success: false, error: 'No autenticado' },
@@ -20,12 +20,12 @@ export async function POST(request) {
     }
 
     await dbConnect();
-    
+
     const { courseId, courseSlug, articleId, timeSpent = 0 } = await request.json();
-    
+
     // Buscar el progreso del curso
     let progress;
-    
+
     if (courseId) {
       progress = await CourseProgress.findOne({
         userId: session.user.id,
@@ -39,49 +39,49 @@ export async function POST(request) {
           { status: 404 }
         );
       }
-      
+
       progress = await CourseProgress.findOne({
         userId: session.user.id,
         courseId: course._id
       });
     }
-    
+
     if (!progress) {
       return NextResponse.json(
         { success: false, error: 'No estás inscrito en este curso' },
         { status: 404 }
       );
     }
-    
+
     // Marcar artículo como completado usando el método del modelo
     const newProgress = await progress.markArticleCompleted(articleId, timeSpent);
-    
+
     // Actualizar usuario
     const user = await User.findById(session.user.id);
     user.studentProfile.totalStudyTime += timeSpent;
     await user.updateStreak();
-    
+
     // Dar XP por completar lección
     await user.addXP(10);
-    
+
     // Desbloquear logro primera lección
     if (progress.completedArticles.length === 1) {
       await user.unlockAchievement('first_lesson');
     }
-    
+
     // Verificar si completó 50% del curso
     if (newProgress >= 50 && newProgress < 60) {
       await user.unlockAchievement('50_percent');
     }
-    
+
     // Verificar si completó el curso (100%)
     if (newProgress === 100) {
       user.studentProfile.coursesCompleted += 1;
       await user.unlockAchievement('completionist');
-      
+
       // Dar XP bonus por completar curso
       await user.addXP(100);
-      
+
       // Verificar logros de múltiples cursos
       if (user.studentProfile.coursesCompleted === 5) {
         await user.unlockAchievement('5_courses');
@@ -89,17 +89,17 @@ export async function POST(request) {
       if (user.studentProfile.coursesCompleted === 10) {
         await user.unlockAchievement('10_courses');
       }
-      
+
       // Verificar si completó rápido (menos de 7 días)
       const enrolledDate = new Date(progress.enrolledAt);
       const now = new Date();
       const daysDiff = Math.floor((now - enrolledDate) / (1000 * 60 * 60 * 24));
-      
+
       if (daysDiff <= 7) {
         await user.unlockAchievement('fast_learner');
       }
     }
-    
+
     // Verificar hora de estudio para logros
     const hour = new Date().getHours();
     if (hour >= 22 || hour < 6) {
@@ -107,9 +107,9 @@ export async function POST(request) {
     } else if (hour >= 5 && hour < 7) {
       await user.unlockAchievement('early_bird');
     }
-    
+
     console.log(`✅ Progreso actualizado: ${newProgress}% - Usuario: ${session.user.email}`);
-    
+
     return NextResponse.json({
       success: true,
       progress: newProgress,
@@ -121,7 +121,7 @@ export async function POST(request) {
       achievements: user.studentProfile.achievements,
       streak: user.studentProfile.streak.current
     });
-    
+
   } catch (error) {
     console.error('❌ Error actualizando progreso:', error);
     return NextResponse.json(
@@ -135,7 +135,7 @@ export async function POST(request) {
 export async function GET(request) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session) {
       return NextResponse.json(
         { success: false, error: 'No autenticado' },
@@ -144,13 +144,13 @@ export async function GET(request) {
     }
 
     await dbConnect();
-    
+
     const { searchParams } = new URL(request.url);
     const courseId = searchParams.get('courseId');
     const courseSlug = searchParams.get('courseSlug');
-    
+
     let query = { userId: session.user.id };
-    
+
     if (courseId) {
       query.courseId = courseId;
     } else if (courseSlug) {
@@ -168,11 +168,11 @@ export async function GET(request) {
         { status: 400 }
       );
     }
-    
+
     const progress = await CourseProgress.findOne(query)
       .populate('courseId', 'title slug articles duration')
       .populate('completedArticles.articleId', 'title slug');
-    
+
     if (!progress) {
       return NextResponse.json({
         success: true,
@@ -180,7 +180,7 @@ export async function GET(request) {
         progress: null
       });
     }
-    
+
     return NextResponse.json({
       success: true,
       enrolled: true,
@@ -196,7 +196,7 @@ export async function GET(request) {
         certificateIssued: progress.certificateIssued
       }
     });
-    
+
   } catch (error) {
     console.error('❌ Error obteniendo progreso:', error);
     return NextResponse.json(

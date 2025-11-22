@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "seed-packages": "node src/scripts/seed-packages.js",
-	"init-legal": "node scripts/init-legal-pages.js"
+    "init-legal": "node scripts/init-legal-pages.js"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.4",
@@ -48,12 +48,15 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "@types/mongoose": "^5.11.96",
     "@types/node": "^20.19.19",
     "@types/nodemailer": "^7.0.2",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "15.3.4",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "vite-tsconfig-paths": "^5.1.4",
+    "vitest": "^4.0.13"
   }
 }

@@ -2,6 +2,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import RichTextEditor from '../RichTextEditor'
 
 export default function BlogPostForm({ initialData = null, isEditing = false }) {
   const router = useRouter()
@@ -33,7 +34,7 @@ export default function BlogPostForm({ initialData = null, isEditing = false }) 
     try {
       setLoadingCategories(true)
       const response = await fetch('/api/admin/blog/categories')
-      
+
       if (response.ok) {
         const data = await response.json()
         setCategories(data)
@@ -83,7 +84,7 @@ export default function BlogPostForm({ initialData = null, isEditing = false }) 
         .replace(/\s+/g, '-')
         .replace(/-+/g, '-')
         .trim()
-      
+
       setFormData(prev => ({ ...prev, slug }))
     }
 
@@ -132,16 +133,16 @@ export default function BlogPostForm({ initialData = null, isEditing = false }) 
     setLoading(true)
 
     try {
-      const url = isEditing 
+      const url = isEditing
         ? `/api/admin/blog/${initialData._id}`
         : '/api/admin/blog'
-      
+
       const method = isEditing ? 'PUT' : 'POST'
 
       // Procesar tags
       const processedData = {
         ...formData,
-        tags: formData.tags.split(',').map(tag => tag.trim()).filter(Boolean)
+        tags: typeof formData.tags === 'string' ? formData.tags.split(',').map(tag => tag.trim()).filter(Boolean) : formData.tags
       }
 
       const response = await fetch(url, {
@@ -190,9 +191,8 @@ export default function BlogPostForm({ initialData = null, isEditing = false }) 
               name="title"
               value={formData.title}
               onChange={handleInputChange}
-              className={`w-full px-3 py-2 bg-gray-800 border rounded-md text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 ${
-                errors.title ? 'border-red-500' : 'border-gray-600'
-              }`}
+              className={`w-full px-3 py-2 bg-gray-800 border rounded-md text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 ${errors.title ? 'border-red-500' : 'border-gray-600'
+                }`}
               placeholder="Título del post"
             />
             {errors.title && <p className="mt-1 text-sm text-red-400">{errors.title}</p>}
@@ -207,9 +207,8 @@ export default function BlogPostForm({ initialData = null, isEditing = false }) 
               name="slug"
               value={formData.slug}
               onChange={handleInputChange}
-              className={`w-full px-3 py-2 bg-gray-800 border rounded-md text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 ${
-                errors.slug ? 'border-red-500' : 'border-gray-600'
-              }`}
+              className={`w-full px-3 py-2 bg-gray-800 border rounded-md text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 ${errors.slug ? 'border-red-500' : 'border-gray-600'
+                }`}
               placeholder="slug-del-post"
             />
             {errors.slug && <p className="mt-1 text-sm text-red-400">{errors.slug}</p>}
@@ -226,9 +225,8 @@ export default function BlogPostForm({ initialData = null, isEditing = false }) 
             value={formData.excerpt}
             onChange={handleInputChange}
             rows={3}
-            className={`w-full px-3 py-2 bg-gray-800 border rounded-md text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 ${
-              errors.excerpt ? 'border-red-500' : 'border-gray-600'
-            }`}
+            className={`w-full px-3 py-2 bg-gray-800 border rounded-md text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 ${errors.excerpt ? 'border-red-500' : 'border-gray-600'
+              }`}
             placeholder="Breve descripción del post"
           />
           {errors.excerpt && <p className="mt-1 text-sm text-red-400">{errors.excerpt}</p>}
@@ -239,15 +237,9 @@ export default function BlogPostForm({ initialData = null, isEditing = false }) 
           <label className="block text-sm font-medium text-gray-300 mb-2">
             Contenido *
           </label>
-          <textarea
-            name="content"
-            value={formData.content}
-            onChange={handleInputChange}
-            rows={15}
-            className={`w-full px-3 py-2 bg-gray-800 border rounded-md text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 ${
-              errors.content ? 'border-red-500' : 'border-gray-600'
-            }`}
-            placeholder="Contenido del post en Markdown"
+          <RichTextEditor
+            content={formData.content}
+            onChange={(newContent) => setFormData(prev => ({ ...prev, content: newContent }))}
           />
           {errors.content && <p className="mt-1 text-sm text-red-400">{errors.content}</p>}
         </div>
@@ -267,9 +259,8 @@ export default function BlogPostForm({ initialData = null, isEditing = false }) 
                 name="category"
                 value={formData.category}
                 onChange={handleInputChange}
-                className={`w-full px-3 py-2 bg-gray-800 border rounded-md text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 ${
-                  errors.category ? 'border-red-500' : 'border-gray-600'
-                }`}
+                className={`w-full px-3 py-2 bg-gray-800 border rounded-md text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 ${errors.category ? 'border-red-500' : 'border-gray-600'
+                  }`}
               >
                 <option value="">Seleccionar categoría</option>
                 {categories.map((cat) => (
@@ -280,7 +271,7 @@ export default function BlogPostForm({ initialData = null, isEditing = false }) 
               </select>
             )}
             {errors.category && <p className="mt-1 text-sm text-red-400">{errors.category}</p>}
-            
+
             {/* Botón para crear nueva categoría */}
             <button
               type="button"

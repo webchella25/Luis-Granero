@@ -217,12 +217,11 @@ export default function BlogManager() {
                     <EyeIcon className="w-5 h-5" />
                   </Link>
                   <Link
-                    href={`/admin/blog/edit/${post._id}`}
-                    className="p-2 text-gray-400 hover:text-yellow-400 transition-colors"
-                    title="Editar"
-                  >
-                    <PencilIcon className="w-5 h-5" />
-                  </Link>
+  href={`/admin/blog/${post._id}/edit`}  // ✅ Debe usar _id
+  className="text-blue-400 hover:text-blue-300 transition-colors"
+>
+  <PencilIcon className="w-5 h-5" />
+</Link>
                   <button
                     onClick={() => togglePublished(post._id, post.isPublished)}
                     className={`px-3 py-1 rounded text-xs font-semibold ${

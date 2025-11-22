@@ -1,7 +1,7 @@
 // src/app/api/student/achievements/route.js
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { authOptions } from '@/lib/auth';
 import dbConnect from '@/lib/mongodb';
 import User from '@/models/User';
 
@@ -124,7 +124,7 @@ const ACHIEVEMENTS_CATALOG = {
 export async function GET(request) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session) {
       return NextResponse.json(
         { success: false, error: 'No autenticado' },
@@ -133,22 +133,22 @@ export async function GET(request) {
     }
 
     await dbConnect();
-    
+
     const user = await User.findById(session.user.id).lean();
-    
+
     if (!user) {
       return NextResponse.json(
         { success: false, error: 'Usuario no encontrado' },
         { status: 404 }
       );
     }
-    
+
     // Logros desbloqueados
     const unlockedAchievements = user.studentProfile.achievements.map(achievementId => ({
       ...ACHIEVEMENTS_CATALOG[achievementId],
       unlocked: true
     }));
-    
+
     // Logros bloqueados
     const lockedAchievements = Object.values(ACHIEVEMENTS_CATALOG)
       .filter(achievement => !user.studentProfile.achievements.includes(achievement.id))
@@ -156,13 +156,13 @@ export async function GET(request) {
         ...achievement,
         unlocked: false
       }));
-    
+
     // Ordenar por rareza
     const rarityOrder = { common: 1, uncommon: 2, rare: 3, epic: 4, legendary: 5 };
-    
+
     unlockedAchievements.sort((a, b) => rarityOrder[b.rarity] - rarityOrder[a.rarity]);
     lockedAchievements.sort((a, b) => rarityOrder[b.rarity] - rarityOrder[a.rarity]);
-    
+
     return NextResponse.json({
       success: true,
       achievements: {
@@ -176,7 +176,7 @@ export async function GET(request) {
         level: user.studentProfile.level
       }
     });
-    
+
   } catch (error) {
     console.error('❌ Error obteniendo logros:', error);
     return NextResponse.json(
