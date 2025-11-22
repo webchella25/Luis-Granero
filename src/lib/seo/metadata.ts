@@ -1,4 +1,4 @@
-// src/lib/seo/metadata.ts - NUEVO
+// src/lib/seo/metadata.ts
 import SiteSettings from '@/models/SiteSettings';
 import dbConnect from '@/lib/mongodb';
 
@@ -48,7 +48,6 @@ async function getSettings() {
     return settings;
   } catch (error) {
     console.error('Error getting settings for metadata:', error);
-    // Fallback a valores por defecto
     return null;
   }
 }
@@ -62,10 +61,10 @@ export async function generatePageMetadata(
 ): Promise<PageMetadata> {
   const settings = await getSettings();
 
-  // @ts-ignore
+  // Extraer datos con optional chaining y valores por defecto
   const pageData = (settings as any)?.pageMetadata?.[page] || {};
-  const seoData = settings?.seo || {};
-  const ogData = settings?.openGraph || {};
+  const seoData = (settings as any)?.seo || {};
+  const ogData = (settings as any)?.openGraph || {};
 
   const title = customData?.title || pageData.title || seoData.siteName || 'Luis Granero';
   const description = customData?.description || pageData.description || seoData.siteDescription || 'Desarrollo web moderno';
@@ -112,8 +111,8 @@ export async function generatePageMetadata(
  */
 export async function generateBlogPostMetadata(post: any): Promise<PageMetadata> {
   const settings = await getSettings();
-  const seoData = settings?.seo || {};
-  const ogData = settings?.openGraph || {};
+  const seoData = (settings as any)?.seo || {};
+  const ogData = (settings as any)?.openGraph || {};
 
   const title = post.seo?.metaTitle || post.title;
   const description = post.seo?.metaDescription || post.excerpt || seoData.defaultMetaDescription;
@@ -160,8 +159,8 @@ export async function generateBlogPostMetadata(post: any): Promise<PageMetadata>
  */
 export async function generateCourseMetadata(course: any): Promise<PageMetadata> {
   const settings = await getSettings();
-  const seoData = settings?.seo || {};
-  const ogData = settings?.openGraph || {};
+  const seoData = (settings as any)?.seo || {};
+  const ogData = (settings as any)?.openGraph || {};
 
   const title = course.seo?.metaTitle || course.title;
   const description = course.seo?.metaDescription || course.description || seoData.defaultMetaDescription;
@@ -208,8 +207,8 @@ export async function generateCourseMetadata(course: any): Promise<PageMetadata>
  */
 export async function generatePortfolioMetadata(project: any): Promise<PageMetadata> {
   const settings = await getSettings();
-  const seoData = settings?.seo || {};
-  const ogData = settings?.openGraph || {};
+  const seoData = (settings as any)?.seo || {};
+  const ogData = (settings as any)?.openGraph || {};
 
   const title = project.seo?.metaTitle || project.title;
   const description = project.seo?.metaDescription || project.description || seoData.defaultMetaDescription;
