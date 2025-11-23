@@ -1,36 +1,31 @@
 // middleware.js
 import { NextResponse } from 'next/server'
-import { jwtVerify } from 'jose'
 
 export async function middleware(request) {
   const { pathname } = request.nextUrl
   
-  // NO proteger la página de login
-  if (pathname === '/admin/login' || pathname.startsWith('/api/auth/login')) {
+  console.log('🔍 Middleware ejecutado para:', pathname)
+  
+  // NO proteger login
+  if (pathname === '/admin/login' || pathname.startsWith('/api/auth')) {
+    console.log('✅ Ruta pública, permitiendo acceso')
     return NextResponse.next()
   }
   
-  // Proteger rutas admin
+  // Proteger rutas admin - SOLO verificar que cookie existe
   if (pathname.startsWith('/admin') || pathname.startsWith('/api/admin')) {
     const token = request.cookies.get('session')?.value
     
+    console.log('🍪 Cookie session exists:', !!token)
+    console.log('🍪 Cookie value:', token ? token.substring(0, 30) + '...' : 'none')
+    
     if (!token) {
-      console.log('❌ No token found, redirecting to login')
+      console.log('❌ No token, redirect to login')
       return NextResponse.redirect(new URL('/admin/login', request.url))
     }
     
-    try {
-      const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET)
-      await jwtVerify(token, secret)
-      console.log('✅ Token valid for:', pathname)
-      return NextResponse.next()
-    } catch (error) {
-      console.log('❌ Invalid token:', error.message)
-      // Limpiar cookie inválida
-      const response = NextResponse.redirect(new URL('/admin/login', request.url))
-      response.cookies.delete('session')
-      return response
-    }
+    console.log('✅ Token found, allowing access')
+    return NextResponse.next()
   }
   
   return NextResponse.next()
