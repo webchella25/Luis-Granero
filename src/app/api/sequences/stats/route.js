@@ -1,6 +1,6 @@
 // src/app/api/sequences/stats/route.js - VERSIÓN CORREGIDA
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
+import { checkAuth } from '@/lib/checkAuth'
 import dbConnect from '@/lib/mongodb';
 import Sequence from '@/models/Sequence';
 import SequenceEnrollment from '@/models/SequenceEnrollment';
@@ -8,7 +8,7 @@ import EmailLog from '@/models/EmailLog';
 
 export async function GET(request) {
   try {
-    const session = await getServerSession();
+    const session = await checkAuth();
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }

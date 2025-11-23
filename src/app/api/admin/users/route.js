@@ -1,13 +1,12 @@
 // src/app/api/admin/users/route.js
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
 import dbConnect from '@/lib/mongodb';
 import User from '@/models/User';
+import { checkAuth } from '@/lib/checkAuth'
 
 export async function GET(request) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await checkAuth();
 
     if (!session || session.user.role !== 'admin') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

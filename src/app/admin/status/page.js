@@ -1,11 +1,11 @@
 // src/app/admin/status/page.js
 'use client'
-import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 
 export default function AdminStatus() {
-  const { data: session, status } = useSession()
+  // // useSession() // TODO: Auth manual // TODO: Auth manual
+  const session = null; const status = "unauthenticated"
   const router = useRouter()
 
   useEffect(() => {

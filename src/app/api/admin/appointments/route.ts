@@ -1,13 +1,13 @@
 // src/app/api/admin/appointments/route.ts
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
+import { checkAuth } from '@/lib/checkAuth'
 import connectDB from '@/lib/mongodb';
 import Appointment from '@/models/Appointment';
 import Lead from '@/models/Lead'; // 🔥 ESTO REGISTRA EL MODELO
 
 export async function GET(request: Request) {
   try {
-    const session = await getServerSession();
+    const session = await checkAuth();
     if (!session) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
@@ -42,7 +42,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const session = await getServerSession();
+    const session = await checkAuth();
     if (!session) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
@@ -72,7 +72,7 @@ export async function POST(request: Request) {
 
 export async function PUT(request: Request) {
   try {
-    const session = await getServerSession();
+    const session = await checkAuth();
     if (!session) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
@@ -110,7 +110,7 @@ export async function PUT(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
-    const session = await getServerSession();
+    const session = await checkAuth();
     if (!session) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }

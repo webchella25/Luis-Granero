@@ -1,6 +1,5 @@
 // src/app/admin/layout.js - VERSIÓN CORREGIDA
 'use client'
-import { useSession } from 'next-auth/react'
 import { useRouter, usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import AdminSidebar from '@/components/admin/AdminSidebar'
@@ -9,7 +8,8 @@ import AdminLoadingScreen from '@/components/admin/AdminLoadingScreen'
 import { Toaster } from 'react-hot-toast'
 
 export default function AdminLayout({ children }) {
-  const { data: session, status } = useSession()
+  // // useSession() // TODO: Auth manual // TODO: Auth manual
+  const session = null; const status = "unauthenticated"
   const router = useRouter()
   const pathname = usePathname()
   const [sidebarOpen, setSidebarOpen] = useState(false)

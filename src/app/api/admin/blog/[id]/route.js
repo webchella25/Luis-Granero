@@ -1,6 +1,6 @@
 // src/app/api/admin/blog/[id]/route.js
 import { NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
+import { checkAuth } from '@/lib/checkAuth'
 import dbConnect from '@/lib/mongodb'
 import Post from '@/models/Post'
 
@@ -23,7 +23,7 @@ export async function GET(request, { params }) {
 // ✅ Agregar PUT además de PATCH
 export async function PUT(request, { params }) {
   try {
-    const session = await getServerSession()
+    const session = await checkAuth()
     
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -51,7 +51,7 @@ export async function PUT(request, { params }) {
 
 export async function PATCH(request, { params }) {
   try {
-    const session = await getServerSession()
+    const session = await checkAuth()
     
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -79,7 +79,7 @@ export async function PATCH(request, { params }) {
 
 export async function DELETE(request, { params }) {
   try {
-    const session = await getServerSession()
+    const session = await checkAuth()
     
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

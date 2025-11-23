@@ -1,7 +1,6 @@
 // src/app/api/student/achievements/route.js
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { checkAuth } from '@/lib/checkAuth'
 import dbConnect from '@/lib/mongodb';
 import User from '@/models/User';
 
@@ -123,7 +122,7 @@ const ACHIEVEMENTS_CATALOG = {
 
 export async function GET(request) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await checkAuth();
 
     if (!session) {
       return NextResponse.json(

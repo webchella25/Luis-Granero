@@ -1,13 +1,13 @@
 // src/app/api/leads/list/route.ts
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
+import { checkAuth } from '@/lib/checkAuth'
 import connectDB from '@/lib/mongodb';
 import Lead from '@/models/Lead';
 
 export async function GET(request: Request) {
   try {
     // Verificar autenticación
-    const session = await getServerSession();
+    const session = await checkAuth();
     if (!session) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }

@@ -2,11 +2,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 
 export default function CategoriesPage() {
-  const { data: session, status } = useSession();
+  // // useSession() // TODO: Implementar auth manual // TODO: Implementar auth manual;
   const router = useRouter();
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);

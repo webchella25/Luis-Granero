@@ -1,49 +1,41 @@
-// src/app/api/admin/homepage/route.js - VERSIÓN COMPLETA
+// src/app/api/admin/homepage/route.js - VERSIÓN SIMPLIFICADA
 import { NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
-import connectDB from '@/lib/mongodb'
+import { checkAuth } from '@/lib/checkAuth'
+import dbConnect from '@/lib/mongodb'
+import Page from '@/models/Page'
 
-// Modelo simple de Page si no existe
-let Page
-try {
-  Page = require('@/models/Page').default
-} catch {
-  const mongoose = require('mongoose')
-  
-  const pageSchema = new mongoose.Schema({
-    slug: {
-      type: String,
-      required: true,
-      unique: true
+function getDefaultHomepageData() {
+  return {
+    hero: {
+      title: 'Luis Granero - Desarrollador Web',
+      subtitle: 'Desarrollador Full Stack especializado en React, Next.js y TypeScript',
+      description: 'Creo aplicaciones web modernas, rápidas y escalables',
+      ctaText: 'Ver proyectos',
+      ctaLink: '/portfolio',
+      secondaryCtaText: 'Contactar',
+      secondaryCtaLink: '/contacto'
     },
-    title: {
-      type: String,
-      required: true
+    services: {
+      title: 'Servicios',
+      subtitle: 'Lo que puedo hacer por ti',
+      items: []
     },
-    content: {
-      type: mongoose.Schema.Types.Mixed,
-      required: true
+    portfolio: {
+      title: 'Proyectos destacados',
+      subtitle: 'Algunos de mis trabajos recientes',
+      featured: []
     },
-    seo: {
-      metaTitle: String,
-      metaDescription: String,
-      keywords: [String]
-    },
-    isPublished: {
-      type: Boolean,
-      default: true
+    testimonials: {
+      title: 'Testimonios',
+      subtitle: 'Lo que dicen mis clientes',
+      items: []
     }
-  }, {
-    timestamps: true
-  })
-
-  Page = mongoose.models.Page || mongoose.model('Page', pageSchema)
+  }
 }
 
 export async function GET() {
   try {
-    await connectDB()
+    await dbConnect()
     
     const homepage = await Page.findOne({ slug: 'homepage' })
     
@@ -64,17 +56,16 @@ export async function GET() {
 
 export async function POST(request) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await checkAuth()
     
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    await connectDB()
+    await dbConnect()
     
     const data = await request.json()
     
-    // Validar datos básicos
     if (!data.hero || !data.hero.title) {
       return NextResponse.json({ error: 'Hero title is required' }, { status: 400 })
     }
@@ -87,130 +78,30 @@ export async function POST(request) {
         content: data,
         seo: {
           metaTitle: data.hero?.title || 'Luis Granero - Desarrollador Web',
-          metaDescription: data.hero?.description || 'Desarrollador web freelance especializado en React y Next.js',
-          keywords: [
-            'desarrollador web',
-            'react',
-            'next.js',
-            'freelance',
-            'javascript',
-            'typescript',
-            data.hero?.title?.toLowerCase(),
-            ...(data.about?.highlights || []).map(h => h.toLowerCase())
-          ].filter(Boolean)
+          metaDescription: data.hero?.description || 'Desarrollador web freelance',
+          keywords: ['desarrollador web', 'freelance', 'react', 'nextjs']
         },
-        isPublished: true,
-        updatedAt: new Date()
+        isPublished: true
       },
-      { upsert: true, new: true }
+      { 
+        upsert: true, 
+        new: true,
+        runValidators: true
+      }
     )
     
     return NextResponse.json({ 
-      message: 'Homepage updated successfully', 
-      data: homepage,
-      timestamp: new Date().toISOString()
+      success: true, 
+      homepage 
     })
   } catch (error) {
-    console.error('Error saving homepage:', error)
+    console.error('Error updating homepage:', error)
     return NextResponse.json({ 
-      error: 'Internal server error',
-      details: error.message 
+      error: error.message || 'Internal server error' 
     }, { status: 500 })
   }
 }
 
-function getDefaultHomepageData() {
-  return {
-    hero: {
-      title: "Luis Granero",
-      subtitle: "Desarrollador Full Stack",
-      description: "Transformo ideas en aplicaciones web modernas y soluciones personalizadas. Especializado en React, Next.js y arquitecturas escalables.",
-      ctaText: "Ver mis proyectos",
-      ctaLink: "/portfolio",
-      backgroundVideo: "",
-      image: ""
-    },
-    about: {
-      title: "Sobre Mí",
-      subtitle: "Desarrollador apasionado por crear soluciones web innovadoras",
-      description: "Con más de 10 años de experiencia en desarrollo web, me especializo en crear aplicaciones modernas, escalables y de alto rendimiento.",
-      highlights: [
-        "10+ años de experiencia",
-        "50+ proyectos completados",
-        "Especialista en React/Next.js",
-        "Enfoque en performance"
-      ],
-      image: "",
-      skills: [
-        { name: "React/Next.js", level: 95 },
-        { name: "TypeScript", level: 90 },
-        { name: "Node.js", level: 85 },
-        { name: "MongoDB", level: 80 }
-      ],
-      experience: [
-        {
-          company: "Freelance",
-          role: "Desarrollador Full Stack",
-          period: "2020 - Presente",
-          description: "Desarrollo de aplicaciones web personalizadas para startups y empresas."
-        }
-      ]
-    },
-    stats: [
-      { label: "Proyectos", value: "50+", icon: "🚀" },
-      { label: "Años", value: "10+", icon: "📅" },
-      { label: "Clientes", value: "35+", icon: "👥" },
-      { label: "Tecnologías", value: "15+", icon: "⚡" }
-    ],
-    services: [],
-    testimonials: [
-      {
-        id: 1,
-        name: "María González",
-        company: "TechStartup",
-        role: "CEO",
-        content: "Luis transformó completamente nuestro e-commerce. El resultado superó todas nuestras expectativas.",
-        rating: 5,
-        image: "",
-        project: "E-commerce Platform",
-        date: "2024-01-15"
-      }
-    ],
-    cta: {
-      title: "¿Listo para llevar tu proyecto al siguiente nivel?",
-      subtitle: "Trabajemos juntos para crear algo increíble",
-      description: "Con más de 10 años de experiencia, puedo ayudarte a transformar tu idea en una aplicación web exitosa.",
-      primaryButton: {
-        text: "Iniciar Proyecto",
-        link: "/contacto",
-        style: "primary"
-      },
-      secondaryButton: {
-        text: "Ver Portfolio",
-        link: "/portfolio",
-        style: "secondary"
-      },
-      backgroundStyle: "gradient",
-      backgroundImage: "",
-      backgroundColor: "#1F2937",
-      showContactInfo: true,
-      contactInfo: {
-        email: "luis@luisgranero.com",
-        phone: "+34 123 456 789",
-        calendly: "https://calendly.com/luisgranero"
-      },
-      features: [
-        "Consulta inicial gratuita",
-        "Desarrollo personalizado",
-        "Soporte post-lanzamiento",
-        "Garantía de satisfacción"
-      ],
-      urgency: {
-        enabled: false,
-        text: "¡Solo quedan 3 slots para este mes!",
-        countdown: false,
-        date: ""
-      }
-    }
-  }
+export async function PUT(request) {
+  return POST(request)
 }

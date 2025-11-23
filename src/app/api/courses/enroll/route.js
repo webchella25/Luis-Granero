@@ -1,7 +1,6 @@
 // src/app/api/courses/enroll/route.js
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { checkAuth } from '@/lib/checkAuth'
 import dbConnect from '@/lib/mongodb';
 import CourseProgress from '@/models/CourseProgress';
 import LearningPath from '@/models/LearningPath';
@@ -10,7 +9,7 @@ import User from '@/models/User';
 // POST - Inscribir usuario a un curso
 export async function POST(request) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await checkAuth();
 
     if (!session) {
       return NextResponse.json(
@@ -113,7 +112,7 @@ export async function POST(request) {
 // GET - Verificar si el usuario está inscrito en un curso
 export async function GET(request) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await checkAuth();
 
     if (!session) {
       return NextResponse.json(

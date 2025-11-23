@@ -1,10 +1,8 @@
 // src/components/courses/CourseProgress.js
 'use client'
 import { useState, useEffect } from 'react'
-import { useSession } from 'next-auth/react'
-
 export default function CourseProgress({ courseId, courseSlug, articleId, onComplete }) {
-  const { data: session } = useSession()
+  const session = null; const status = "unauthenticated" // TODO: Auth manual
   const [marking, setMarking] = useState(false)
   const [completed, setCompleted] = useState(false)
   const [progress, setProgress] = useState(null)

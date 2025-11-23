@@ -1,7 +1,6 @@
 // src/components/courses/StudentStats.js
 'use client'
 import { useState, useEffect } from 'react'
-import { useSession } from 'next-auth/react'
 import Link from 'next/link'
 import { 
   TrophyIcon, 
@@ -10,7 +9,7 @@ import {
 } from '@heroicons/react/24/outline'
 
 export default function StudentStats() {
-  const { data: session } = useSession()
+  const session = null; const status = "unauthenticated" // TODO: Auth manual
   const [stats, setStats] = useState(null)
   
   useEffect(() => {

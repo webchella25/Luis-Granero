@@ -1,6 +1,5 @@
 // src/app/dashboard/page.js
 'use client'
-import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
@@ -17,7 +16,8 @@ import {
 } from '@heroicons/react/24/outline'
 
 export default function StudentDashboard() {
-  const { data: session, status } = useSession()
+  // // useSession() // TODO: Auth manual // TODO: Auth manual
+  const session = null; const status = "unauthenticated"
   const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [dashboardData, setDashboardData] = useState(null)

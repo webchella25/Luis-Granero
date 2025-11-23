@@ -1,14 +1,13 @@
 // src/app/api/admin/settings/route.js
 // API PARA GUARDAR CONFIGURACIÓN DEL ADMIN + DATOS LEGALES
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import SiteConfig from '@/models/SiteConfig';
+import { checkAuth } from '@/lib/checkAuth'
 
 export async function GET(request) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await checkAuth();
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -90,7 +89,7 @@ export async function GET(request) {
 
 export async function POST(request) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await checkAuth();
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }

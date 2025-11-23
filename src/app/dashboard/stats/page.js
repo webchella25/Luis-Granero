@@ -1,6 +1,5 @@
 // src/app/dashboard/stats/page.js
 'use client'
-import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
@@ -14,7 +13,8 @@ import {
 } from '@heroicons/react/24/outline'
 
 export default function StatsPage() {
-  const { data: session, status } = useSession()
+  // // useSession() // TODO: Auth manual // TODO: Auth manual
+  const session = null; const status = "unauthenticated"
   const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [stats, setStats] = useState(null)

@@ -1,11 +1,8 @@
 // src/app/api/admin/legal/templates/[type]/route.js
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
-
 export async function GET(request, { params }) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await checkAuth();
     
     if (!session) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
@@ -436,6 +433,7 @@ Los derechos de propiedad intelectual de los trabajos desarrollados se transferi
 - Problemas derivados de servicios de terceros (hosting, dominios, etc.)
 
 La responsabilidad máxima se limitará al importe pagado por el servicio.
+import { checkAuth } from '@/lib/checkAuth'
 
 ## 6. Protección de Datos
 

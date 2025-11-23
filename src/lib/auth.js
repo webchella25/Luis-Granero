@@ -1,73 +1,53 @@
-// src/lib/auth.js
-import CredentialsProvider from 'next-auth/providers/credentials'
+// src/lib/auth.js - JWT MANUAL
+import { SignJWT, jwtVerify } from 'jose'
+import { cookies } from 'next/headers'
 import dbConnect from '@/lib/mongodb'
 import User from '@/models/User'
 import bcrypt from 'bcryptjs'
 
-export const authOptions = {
-  providers: [
-    CredentialsProvider({
-      name: 'credentials',
-      credentials: {
-        email: { label: 'Email', type: 'email' },
-        password: { label: 'Password', type: 'password' }
-      },
-      async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
-          return null
-        }
+const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET)
 
-        try {
-          await dbConnect()
-          
-          const user = await User.findOne({ email: credentials.email })
-          
-          if (!user) {
-            return null
-          }
+export async function login(email, password) {
+  await dbConnect()
+  
+  const user = await User.findOne({ email })
+  if (!user) return null
+  
+  const isValid = await bcrypt.compare(password, user.password || '')
+  if (!isValid) return null
+  
+  const token = await new SignJWT({
+    id: user._id.toString(),
+    email: user.email,
+    role: user.role
+  })
+    .setProtectedHeader({ alg: 'HS256' })
+    .setExpirationTime('30d')
+    .sign(secret)
+  
+  return { user, token }
+}
 
-          const isPasswordValid = await bcrypt.compare(
-            credentials.password, 
-            user.password || ''
-          )
-          
-          if (!isPasswordValid) {
-            return null
-          }
-
-          return {
-            id: user._id.toString(),
-            email: user.email,
-            name: user.username,
-            role: user.role
-          }
-        } catch (error) {
-          console.error('Auth error:', error)
-          return null
-        }
+export async function getSession() {
+  const cookieStore = await cookies()
+  const token = cookieStore.get('session')?.value
+  
+  if (!token) return null
+  
+  try {
+    const { payload } = await jwtVerify(token, secret)
+    return {
+      user: {
+        id: payload.id,
+        email: payload.email,
+        role: payload.role
       }
-    })
-  ],
-  session: {
-    strategy: 'jwt'
-  },
-  pages: {
-    signIn: '/admin/login'
-  },
-  callbacks: {
-    async jwt({ token, user }) {
-      if (user) {
-        token.role = user.role
-      }
-      return token
-    },
-    async session({ session, token }) {
-      if (token && session.user) {
-        session.user.id = token.sub
-        session.user.role = token.role
-      }
-      return session
     }
-  },
-  secret: process.env.NEXTAUTH_SECRET
+  } catch {
+    return null
+  }
+}
+
+export async function checkAuth() {
+  return await getSession()
 }

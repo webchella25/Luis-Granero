@@ -1,9 +1,10 @@
-// models/Page.js
+// src/models/Page.js
 import mongoose from 'mongoose'
 
 const PageSchema = new mongoose.Schema({
   slug: {
     type: String,
+    required: true,
     unique: true
   },
   title: {
@@ -11,7 +12,7 @@ const PageSchema = new mongoose.Schema({
     required: true
   },
   content: {
-    type: Object, // Para contenido estructurado
+    type: mongoose.Schema.Types.Mixed,
     required: true
   },
   seo: {

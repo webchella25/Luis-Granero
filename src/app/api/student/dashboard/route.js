@@ -1,7 +1,6 @@
 // src/app/api/student/dashboard/route.js
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { checkAuth } from '@/lib/checkAuth'
 import dbConnect from '@/lib/mongodb';
 import CourseProgress from '@/models/CourseProgress';
 import LearningPath from '@/models/LearningPath';
@@ -9,7 +8,7 @@ import User from '@/models/User';
 
 export async function GET(request) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await checkAuth();
 
     if (!session) {
       return NextResponse.json(

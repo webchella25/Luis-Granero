@@ -1,10 +1,10 @@
 // src/app/admin/debug/page.js
 'use client'
-import { useSession } from 'next-auth/react'
 import { useState, useEffect } from 'react'
 
 export default function DebugPage() {
-  const { data: session, status } = useSession()
+  // // useSession() // TODO: Auth manual // TODO: Auth manual
+  const session = null; const status = "unauthenticated"
   const [envInfo, setEnvInfo] = useState(null)
   
   useEffect(() => {

@@ -1,7 +1,6 @@
 // src/components/courses/EnrollButton.js
 'use client'
 import { useState, useEffect } from 'react'
-import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { 
   AcademicCapIcon, 
@@ -11,7 +10,7 @@ import {
 } from '@heroicons/react/24/outline'
 
 export default function EnrollButton({ courseId, courseSlug, isPremium = false }) {
-  const { data: session, status } = useSession()
+  const session = null; const status = "unauthenticated" // TODO: Auth manual
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [enrolled, setEnrolled] = useState(false)

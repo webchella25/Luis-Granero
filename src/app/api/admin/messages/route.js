@@ -1,12 +1,12 @@
 // src/app/api/admin/messages/route.js
 import { NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
+import { checkAuth } from '@/lib/checkAuth'
 import dbConnect from '@/lib/mongodb'
 import Contact from '@/models/Contact'
 
 export async function GET(request) {
   try {
-    const session = await getServerSession()
+    const session = await checkAuth()
     
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
