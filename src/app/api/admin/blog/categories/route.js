@@ -1,41 +1,9 @@
 // src/app/api/admin/blog/categories/route.js
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
-import { authOptions } from '@/lib/authConfig' // Cambiado aquí
+import { authOptions } from '@/lib/auth'
 import dbConnect from '@/lib/mongodb'
-import mongoose from 'mongoose'
-
-// Schema de Category
-const categorySchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: true,
-    unique: true
-  },
-  slug: {
-    type: String,
-    required: true,
-    unique: true
-  },
-  description: String,
-  color: {
-    type: String,
-    default: '#3B82F6'
-  },
-  icon: String,
-  isActive: {
-    type: Boolean,
-    default: true
-  },
-  postCount: {
-    type: Number,
-    default: 0
-  }
-}, {
-  timestamps: true
-})
-
-const Category = mongoose.models.Category || mongoose.model('Category', categorySchema)
+import Category from '@/models/Category'
 
 const defaultCategories = [
   {
@@ -91,7 +59,6 @@ const defaultCategories = [
 
 export async function GET() {
   try {
-    // ✅ Verificar autenticación
     const session = await getServerSession(authOptions)
     
     if (!session) {
@@ -103,7 +70,9 @@ export async function GET() {
 
     await dbConnect()
     
-    let categories = await Category.find({ isActive: true }).sort({ name: 1 }).lean()
+    let categories = await Category.find({ isActive: true })
+      .sort({ name: 1 })
+      .lean()
     
     if (categories.length === 0) {
       categories = await Category.insertMany(defaultCategories)
@@ -123,7 +92,6 @@ export async function GET() {
 
 export async function POST(request) {
   try {
-    // ✅ Verificar autenticación
     const session = await getServerSession(authOptions)
     
     if (!session) {
