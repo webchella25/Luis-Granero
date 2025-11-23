@@ -3,28 +3,50 @@ import { notFound } from 'next/navigation';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import LearningPathDetail from '@/components/cursos/LearningPathDetail';
+import EmailCourseLanding from '@/components/cursos/EmailCourseLanding';
 import EnrollButton from '@/components/courses/EnrollButton';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-async function getLearningPath(slug: string) {
+async function getCourseData(slug: string) {
+  const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+
+  // Intentar buscar en email courses primero
   try {
-    const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
-    const res = await fetch(`${baseUrl}/api/public/learning-paths/${slug}`, {
+    const emailRes = await fetch(`${baseUrl}/api/public/email-courses/${slug}`, {
       cache: 'no-store',
     });
-    
-    if (!res.ok) {
-      return null;
+    if (emailRes.ok) {
+      const data = await emailRes.json();
+      return { type: 'email', data: data.course };
     }
-    
-    const data = await res.json();
-    return data.path;
+  } catch (error) {
+    console.error('Error fetching email course:', error);
+  }
+
+  // Si no es email course, buscar en learning paths
+  try {
+    const pathRes = await fetch(`${baseUrl}/api/public/learning-paths/${slug}`, {
+      cache: 'no-store',
+    });
+    if (pathRes.ok) {
+      const data = await pathRes.json();
+      return { type: 'learning-path', data: data.path };
+    }
   } catch (error) {
     console.error('Error fetching learning path:', error);
-    return null;
   }
+
+  return null;
+}
+
+async function getLearningPath(slug: string) {
+  const courseData = await getCourseData(slug);
+  if (courseData?.type === 'learning-path') {
+    return courseData.data;
+  }
+  return null;
 }
 
 interface Props {
@@ -55,11 +77,25 @@ export async function generateMetadata({ params }: Props) {
 
 export default async function LearningPathPage({ params }: Props) {
   const resolvedParams = await params;
-  const path = await getLearningPath(resolvedParams.slug);
-  
-  if (!path) {
+  const courseData = await getCourseData(resolvedParams.slug);
+
+  if (!courseData) {
     notFound();
   }
+
+  // Si es un email course, renderizar EmailCourseLanding
+  if (courseData.type === 'email') {
+    return (
+      <>
+        <Header />
+        <EmailCourseLanding course={courseData.data} />
+        <Footer />
+      </>
+    );
+  }
+
+  // Si es un learning path, renderizar la UI completa
+  const path = courseData.data;
 
   return (
     <main className="min-h-screen bg-black">
