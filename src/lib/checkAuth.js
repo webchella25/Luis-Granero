@@ -1,5 +1,4 @@
 // src/lib/checkAuth.js
-import { getServerSession } from 'next-auth/next'
 import { cookies } from 'next/headers'
 import { jwtVerify } from 'jose'
 
