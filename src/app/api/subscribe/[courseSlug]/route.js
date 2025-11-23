@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server'
 import dbConnect from '@/lib/mongodb'
 import Subscriber from '@/models/Subscriber'
 import EmailCourse from '@/models/EmailCourse'
-import { logger } from '@/lib/logger'
+import logger from '@/lib/logger'
 import crypto from 'crypto'
 import nodemailer from 'nodemailer'
 
