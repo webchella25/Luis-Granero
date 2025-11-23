@@ -1,48 +1,42 @@
-// src/app/api/admin/blog/categories/route.js - NUEVA API
+// src/app/api/admin/blog/categories/route.js - VERSIÓN CORREGIDA
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import connectDB from '@/lib/mongodb'
+import dbConnect from '@/lib/mongodb'
+import mongoose from 'mongoose'
 
-// Modelo simple de Category si no existe
-let Category
-try {
-  Category = require('@/models/Category').default
-} catch {
-  // Si no existe el modelo, lo creamos
-  const mongoose = require('mongoose')
-  
-  const categorySchema = new mongoose.Schema({
-    name: {
-      type: String,
-      required: true,
-      unique: true
-    },
-    slug: {
-      type: String,
-      required: true,
-      unique: true
-    },
-    description: String,
-    color: {
-      type: String,
-      default: '#3B82F6' // blue-500
-    },
-    icon: String,
-    isActive: {
-      type: Boolean,
-      default: true
-    },
-    postCount: {
-      type: Number,
-      default: 0
-    }
-  }, {
-    timestamps: true
-  })
+// Definir el schema de Category directamente aquí
+const categorySchema = new mongoose.Schema({
+  name: {
+    type: String,
+    required: true,
+    unique: true
+  },
+  slug: {
+    type: String,
+    required: true,
+    unique: true
+  },
+  description: String,
+  color: {
+    type: String,
+    default: '#3B82F6'
+  },
+  icon: String,
+  isActive: {
+    type: Boolean,
+    default: true
+  },
+  postCount: {
+    type: Number,
+    default: 0
+  }
+}, {
+  timestamps: true
+})
 
-  Category = mongoose.models.Category || mongoose.model('Category', categorySchema)
-}
+// Crear o reutilizar el modelo
+const Category = mongoose.models.Category || mongoose.model('Category', categorySchema)
 
 export async function GET() {
   try {
@@ -51,7 +45,7 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    await connectDB()
+    await dbConnect()
     
     // Obtener categorías existentes
     let categories = await Category.find({ isActive: true }).sort({ name: 1 })
@@ -128,13 +122,15 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    await connectDB()
+    await dbConnect()
     
     const { name, description, color, icon } = await request.json()
     
     // Crear slug a partir del nombre
     const slug = name
       .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '') // Quitar acentos
       .replace(/[^\w\s-]/g, '')
       .replace(/\s+/g, '-')
       .replace(/-+/g, '-')
