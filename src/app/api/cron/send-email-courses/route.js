@@ -4,7 +4,7 @@ import dbConnect from '@/lib/mongodb';
 import EmailCourse from '@/models/EmailCourse';
 import Subscriber from '@/models/Subscriber';
 import nodemailer from 'nodemailer';
-import { logger } from '@/lib/logger';
+import logger from '@/lib/logger';
 
 // Configurar transporter con Brevo
 const transporter = nodemailer.createTransport({
