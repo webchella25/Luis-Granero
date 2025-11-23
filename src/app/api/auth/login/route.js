@@ -5,24 +5,44 @@ import { login } from '@/lib/auth'
 
 export async function POST(request) {
   try {
+    console.log('🔐 Login attempt...')
+    
     const { email, password } = await request.json()
+    console.log('📧 Email:', email)
     
     const result = await login(email, password)
+    console.log('🔍 Login result:', result ? 'SUCCESS' : 'FAILED')
     
     if (!result) {
-      return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 })
+      console.log('❌ Invalid credentials')
+      return NextResponse.json({ error: 'Credenciales inválidas' }, { status: 401 })
     }
     
     const cookieStore = await cookies()
+    
+    console.log('🍪 Setting cookie...')
     cookieStore.set('session', result.token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 30 * 24 * 60 * 60 // 30 días
+      maxAge: 30 * 24 * 60 * 60,
+      path: '/'
     })
     
-    return NextResponse.json({ user: result.user })
+    console.log('✅ Login successful for:', email)
+    
+    return NextResponse.json({ 
+      success: true,
+      user: {
+        email: result.user.email,
+        role: result.user.role
+      }
+    })
   } catch (error) {
-    return NextResponse.json({ error: 'Internal error' }, { status: 500 })
+    console.error('💥 Login error:', error)
+    return NextResponse.json({ 
+      error: 'Error interno del servidor',
+      details: error.message 
+    }, { status: 500 })
   }
 }
