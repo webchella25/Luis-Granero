@@ -1,6 +1,6 @@
 // src/app/admin/login/page.js
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 
@@ -9,6 +9,23 @@ export default function AdminLogin() {
   const [credentials, setCredentials] = useState({ email: '', password: '' })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+
+  // Verificar si ya está autenticado
+  useEffect(() => {
+    checkIfAuthenticated()
+  }, [])
+
+  const checkIfAuthenticated = async () => {
+    try {
+      const res = await fetch('/api/admin/check', { credentials: 'include' })
+      if (res.ok) {
+        // Ya está autenticado, redirigir
+        window.location.href = '/admin'
+      }
+    } catch (err) {
+      // No autenticado, continuar en login
+    }
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -20,14 +37,17 @@ export default function AdminLogin() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(credentials),
-        credentials: 'include' // ⚠️ IMPORTANTE: incluir cookies
+        credentials: 'include'
       })
 
       const data = await res.json()
 
-      if (res.ok) {
-        // Redirigir después de login exitoso
-        window.location.href = '/admin' // Usar window.location para forzar recarga
+      if (res.ok && data.success) {
+        console.log('✅ Login exitoso, redirigiendo...')
+        // Esperar un momento para que la cookie se establezca
+        await new Promise(resolve => setTimeout(resolve, 100))
+        // Forzar redirección con recarga completa
+        window.location.replace('/admin')
       } else {
         setError(data.error || 'Credenciales inválidas')
       }
