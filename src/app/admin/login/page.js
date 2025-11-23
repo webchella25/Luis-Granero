@@ -1,31 +1,12 @@
 // src/app/admin/login/page.js
 'use client'
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState } from 'react'
 import { motion } from 'framer-motion'
 
 export default function AdminLogin() {
-  const router = useRouter()
   const [credentials, setCredentials] = useState({ email: '', password: '' })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-
-  // Verificar si ya está autenticado
-  useEffect(() => {
-    checkIfAuthenticated()
-  }, [])
-
-  const checkIfAuthenticated = async () => {
-    try {
-      const res = await fetch('/api/admin/check', { credentials: 'include' })
-      if (res.ok) {
-        // Ya está autenticado, redirigir
-        window.location.href = '/admin'
-      }
-    } catch (err) {
-      // No autenticado, continuar en login
-    }
-  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -44,17 +25,17 @@ export default function AdminLogin() {
 
       if (res.ok && data.success) {
         console.log('✅ Login exitoso, redirigiendo...')
-        // Esperar un momento para que la cookie se establezca
-        await new Promise(resolve => setTimeout(resolve, 100))
-        // Forzar redirección con recarga completa
-        window.location.replace('/admin')
+        // Esperar 200ms y redirigir
+        setTimeout(() => {
+          window.location.href = '/admin'
+        }, 200)
       } else {
         setError(data.error || 'Credenciales inválidas')
+        setLoading(false)
       }
     } catch (err) {
       console.error('Login error:', err)
       setError('Error al conectar con el servidor')
-    } finally {
       setLoading(false)
     }
   }
@@ -130,6 +111,7 @@ export default function AdminLogin() {
                   className="w-full pl-10 pr-4 py-3 bg-gray-900/50 border border-gray-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all"
                   required
                   autoComplete="email"
+                  disabled={loading}
                 />
               </div>
             </div>
@@ -152,6 +134,7 @@ export default function AdminLogin() {
                   className="w-full pl-10 pr-4 py-3 bg-gray-900/50 border border-gray-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all"
                   required
                   autoComplete="current-password"
+                  disabled={loading}
                 />
               </div>
             </div>
