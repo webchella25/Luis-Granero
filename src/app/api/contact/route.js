@@ -9,6 +9,7 @@ import EmailTemplate from '@/models/EmailTemplate';
 import Appointment from '@/models/Appointment';
 import nodemailer from 'nodemailer';
 import crypto from 'crypto';
+import { checkAuth } from '@/lib/auth';
 
 // ✅ CORREGIDO: Configurar transporter con variables de entorno
 const transporter = nodemailer.createTransport({
@@ -404,8 +405,14 @@ export async function POST(request) {
 // GET para obtener contactos (panel admin)
 export async function GET(request) {
   try {
+    // Verificar autenticación
+    const session = await checkAuth();
+    if (!session) {
+      return Response.json({ error: 'No autorizado' }, { status: 401 });
+    }
+
     await connectDB();
-    
+
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status');
     const priority = searchParams.get('priority');

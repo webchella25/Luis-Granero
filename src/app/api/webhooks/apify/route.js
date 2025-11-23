@@ -15,8 +15,22 @@ const ApifyResult = mongoose.models.ApifyResult || mongoose.model('ApifyResult',
 
 export async function POST(request) {
   try {
+    // Verificar autenticación del webhook
+    const authHeader = request.headers.get('authorization');
+    const webhookSecret = process.env.APIFY_WEBHOOK_SECRET;
+
+    // Si hay webhook secret configurado, validarlo
+    if (webhookSecret) {
+      if (!authHeader || authHeader !== `Bearer ${webhookSecret}`) {
+        console.error('❌ Webhook no autorizado');
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      }
+    } else {
+      console.warn('⚠️ APIFY_WEBHOOK_SECRET no está configurado - el webhook no está protegido');
+    }
+
     const payload = await request.json();
-    
+
     console.log('📥 Webhook recibido de Apify');
     console.log('Event type:', payload.eventType);
     console.log('Run ID:', payload.resource?.id);

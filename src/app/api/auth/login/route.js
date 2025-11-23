@@ -2,11 +2,33 @@
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { login } from '@/lib/auth'
+import { rateLimit, getClientIP } from '@/lib/rateLimit'
 
 export async function POST(request) {
   try {
+    // Rate limiting: 5 intentos por 15 minutos por IP
+    const clientIP = getClientIP(request)
+    const rateLimitResult = rateLimit(clientIP, 5, 15 * 60 * 1000)
+
+    if (!rateLimitResult.success) {
+      const resetIn = Math.ceil((rateLimitResult.resetTime - Date.now()) / 60000)
+      console.log(`🚫 Rate limit exceeded for IP: ${clientIP}`)
+      return NextResponse.json(
+        {
+          error: 'Demasiados intentos de login',
+          message: `Por favor, intenta de nuevo en ${resetIn} minutos`
+        },
+        {
+          status: 429,
+          headers: {
+            'Retry-After': String(Math.ceil((rateLimitResult.resetTime - Date.now()) / 1000))
+          }
+        }
+      )
+    }
+
     console.log('🔐 Login attempt...')
-    
+
     const { email, password } = await request.json()
     console.log('📧 Email:', email)
     
