@@ -2,26 +2,59 @@
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { login } from '@/lib/auth'
+import { rateLimit, getClientIP } from '@/lib/rateLimit'
+import logger from '@/lib/logger'
+import { loginSchema, validate } from '@/lib/validations'
 
 export async function POST(request) {
+  const startTime = Date.now()
+
   try {
-    console.log('🔐 Login attempt...')
-    
-    const { email, password } = await request.json()
-    console.log('📧 Email:', email)
-    
+    // Rate limiting: 5 intentos por 15 minutos por IP
+    const clientIP = getClientIP(request)
+    const rateLimitResult = rateLimit(clientIP, 5, 15 * 60 * 1000)
+
+    if (!rateLimitResult.success) {
+      const resetIn = Math.ceil((rateLimitResult.resetTime - Date.now()) / 60000)
+      logger.warn(`Rate limit exceeded for IP: ${clientIP}`)
+      return NextResponse.json(
+        {
+          error: 'Demasiados intentos de login',
+          message: `Por favor, intenta de nuevo en ${resetIn} minutos`
+        },
+        {
+          status: 429,
+          headers: {
+            'Retry-After': String(Math.ceil((rateLimitResult.resetTime - Date.now()) / 1000))
+          }
+        }
+      )
+    }
+
+    const body = await request.json()
+
+    // Validar input
+    const validation = validate(loginSchema, body)
+    if (!validation.success) {
+      return NextResponse.json({
+        error: 'Datos inválidos',
+        details: validation.errors
+      }, { status: 400 })
+    }
+
+    const { email, password } = validation.data
+
     const result = await login(email, password)
-    console.log('🔍 Login result:', result ? 'SUCCESS' : 'FAILED')
-    
+
     if (!result) {
-      console.log('❌ Invalid credentials')
+      logger.auth('Login failed', { email })
       return NextResponse.json({ error: 'Credenciales inválidas' }, { status: 401 })
     }
-    
+
+    logger.auth('Login successful', { email })
+
     const cookieStore = await cookies()
-    
-    console.log('🍪 Setting cookie...')
-    
+
     // Configuración mejorada de cookie
     cookieStore.set('session', result.token, {
       httpOnly: true,
@@ -31,8 +64,6 @@ export async function POST(request) {
       path: '/',
       // NO establecer domain para que funcione en subdominio
     })
-    
-    console.log('✅ Login successful for:', email)
     
     // Crear respuesta con header adicional para forzar cookie
     const response = NextResponse.json({ 
@@ -53,12 +84,13 @@ export async function POST(request) {
       path: '/'
     })
     
+    logger.api('POST', '/api/auth/login', 200, Date.now() - startTime)
     return response
   } catch (error) {
-    console.error('💥 Login error:', error)
-    return NextResponse.json({ 
+    logger.error('Login error', error)
+    return NextResponse.json({
       error: 'Error interno del servidor',
-      details: error.message 
+      details: process.env.NODE_ENV === 'production' ? undefined : error.message
     }, { status: 500 })
   }
 }

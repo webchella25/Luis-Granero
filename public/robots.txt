@@ -1,0 +1,15 @@
+# robots.txt para luisgranero.com
+
+# Permitir todos los bots en el sitio público
+User-agent: *
+Allow: /
+
+# Bloquear acceso a rutas administrativas
+Disallow: /admin
+Disallow: /api/
+
+# Permitir acceso a páginas principales
+Allow: /api/public/
+
+# Sitemap
+Sitemap: https://luisgranero.com/sitemap.xml

@@ -4,51 +4,11 @@ import Link from 'next/link';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { ArrowLeftIcon, ArrowTopRightOnSquareIcon } from '@heroicons/react/24/outline';
+import ReactMarkdown from 'react-markdown';
 
 // Forzar renderizado dinámico
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
-
-// Función simple para renderizar Markdown a HTML
-function renderMarkdown(markdown: string): string {
-  if (!markdown) return '';
-  
-  let html = markdown
-    // Headers
-    .replace(/^### (.*$)/gim, '<h3>$1</h3>')
-    .replace(/^## (.*$)/gim, '<h2>$1</h2>')
-    .replace(/^# (.*$)/gim, '<h1>$1</h1>')
-    // Bold
-    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-    .replace(/__(.+?)__/g, '<strong>$1</strong>')
-    // Italic
-    .replace(/\*(.+?)\*/g, '<em>$1</em>')
-    .replace(/_(.+?)_/g, '<em>$1</em>')
-    // Links
-    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>')
-    // Code blocks
-    .replace(/```([^`]+)```/g, '<pre><code>$1</code></pre>')
-    // Inline code
-    .replace(/`([^`]+)`/g, '<code>$1</code>')
-    // Blockquotes
-    .replace(/^> (.+)$/gim, '<blockquote>$1</blockquote>')
-    // Lists
-    .replace(/^\* (.+)$/gim, '<li>$1</li>')
-    .replace(/^- (.+)$/gim, '<li>$1</li>');
-  
-  // Wrap consecutive list items in ul tags
-  html = html.replace(/(<li>.*?<\/li>\n?)+/g, (match) => `<ul>${match}</ul>`);
-  
-  // Line breaks - convert double newlines to paragraphs
-  html = html.replace(/\n\n/g, '</p><p>');
-  
-  // Wrap in paragraphs if not already wrapped
-  if (!html.startsWith('<h') && !html.startsWith('<ul') && !html.startsWith('<ol') && !html.startsWith('<blockquote')) {
-    html = `<p>${html}</p>`;
-  }
-  
-  return html;
-}
 
 // Función para obtener un proyecto por slug
 async function getProjectBySlug(slug: string) {
@@ -323,7 +283,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
             <div className="container mx-auto px-4">
               <div className="max-w-5xl mx-auto">
                 <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-xl p-8">
-                  <div 
+                  <ReactMarkdown
                     className="prose prose-invert prose-cyan max-w-none
                       prose-headings:text-white prose-headings:font-bold
                       prose-h1:text-3xl prose-h1:mb-6 prose-h1:gradient-text
@@ -338,8 +298,9 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                       prose-ol:text-gray-300 prose-ol:list-decimal prose-ol:pl-6
                       prose-li:mb-2
                       prose-blockquote:border-l-4 prose-blockquote:border-cyan-500 prose-blockquote:pl-4 prose-blockquote:italic prose-blockquote:text-gray-400"
-                    dangerouslySetInnerHTML={{ __html: renderMarkdown(project.content) }}
-                  />
+                  >
+                    {project.content}
+                  </ReactMarkdown>
                 </div>
               </div>
             </div>

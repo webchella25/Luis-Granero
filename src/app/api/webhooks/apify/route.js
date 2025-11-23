@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import mongoose from 'mongoose';
+import logger from '@/lib/logger';
 
 // Modelo temporal para guardar resultados
 const ApifyResultSchema = new mongoose.Schema({
@@ -15,34 +16,49 @@ const ApifyResult = mongoose.models.ApifyResult || mongoose.model('ApifyResult',
 
 export async function POST(request) {
   try {
+    // Verificar autenticación del webhook
+    const authHeader = request.headers.get('authorization');
+    const webhookSecret = process.env.APIFY_WEBHOOK_SECRET;
+
+    // Si hay webhook secret configurado, validarlo
+    if (webhookSecret) {
+      if (!authHeader || authHeader !== `Bearer ${webhookSecret}`) {
+        logger.warn('Apify webhook unauthorized attempt');
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      }
+    } else {
+      logger.warn('APIFY_WEBHOOK_SECRET not configured - webhook is unprotected');
+    }
+
     const payload = await request.json();
-    
-    console.log('📥 Webhook recibido de Apify');
-    console.log('Event type:', payload.eventType);
-    console.log('Run ID:', payload.resource?.id);
+
+    logger.info('Apify webhook received', {
+      eventType: payload.eventType,
+      runId: payload.resource?.id
+    });
     
     await dbConnect();
     
     const runId = payload.resource?.id;
     const status = payload.resource?.status;
-    
+
     if (!runId) {
-      console.error('❌ No runId en webhook');
+      logger.error('Webhook missing runId');
       return NextResponse.json({ error: 'No runId' }, { status: 400 });
     }
-    
+
     // Si el run fue exitoso, obtener resultados
     if (status === 'SUCCEEDED') {
-      console.log('✅ Run exitoso, obteniendo resultados...');
-      
+      logger.info('Apify run succeeded, fetching results', { runId });
+
       const API_TOKEN = process.env.APIFY_API_TOKEN;
       const dataResponse = await fetch(
         `https://api.apify.com/v2/actor-runs/${runId}/dataset/items?token=${API_TOKEN}`
       );
-      
+
       const results = await dataResponse.json();
-      console.log(`📊 ${results.length} items recibidos`);
-      
+      logger.info(`Apify results received: ${results.length} items`, { runId });
+
       // Guardar en DB temporal
       await ApifyResult.findOneAndUpdate(
         { runId },
@@ -53,11 +69,11 @@ export async function POST(request) {
         },
         { upsert: true, new: true }
       );
-      
-      console.log('💾 Resultados guardados en DB temporal');
-      
+
+      logger.db('Apify results saved', { runId, count: results.length });
+
     } else if (status === 'FAILED') {
-      console.log('❌ Run falló');
+      logger.error('Apify run failed', { runId });
       
       await ApifyResult.findOneAndUpdate(
         { runId },
@@ -71,9 +87,9 @@ export async function POST(request) {
     }
     
     return NextResponse.json({ success: true });
-    
+
   } catch (error) {
-    console.error('❌ Error en webhook:', error);
+    logger.error('Webhook error', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

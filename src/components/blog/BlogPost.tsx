@@ -3,6 +3,7 @@
 
 import Link from 'next/link';
 import { ArrowLeftIcon, ClockIcon, EyeIcon, TagIcon } from '@heroicons/react/24/outline';
+import DOMPurify from 'isomorphic-dompurify';
 
 interface BlogPostData {
   _id: string;
@@ -115,9 +116,9 @@ export default function BlogPost({ post }: Props) {
 
           {/* Content */}
           <div className="prose prose-lg prose-invert max-w-none">
-            <div 
+            <div
               className="text-gray-300 leading-relaxed"
-              dangerouslySetInnerHTML={{ __html: post.content }}
+              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(post.content) }}
             />
           </div>
 
