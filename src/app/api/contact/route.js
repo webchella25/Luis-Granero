@@ -10,6 +10,8 @@ import Appointment from '@/models/Appointment';
 import nodemailer from 'nodemailer';
 import crypto from 'crypto';
 import { checkAuth } from '@/lib/auth';
+import { contactSchema, validate } from '@/lib/validations';
+import logger from '@/lib/logger';
 
 // ✅ CORREGIDO: Configurar transporter con variables de entorno
 const transporter = nodemailer.createTransport({
@@ -96,7 +98,19 @@ function replaceShortcodes(text, data, magicLink = '') {
 export async function POST(request) {
   try {
     await connectDB();
-    const data = await request.json();
+    const body = await request.json();
+
+    // Validar datos del formulario
+    const validation = validate(contactSchema, body);
+    if (!validation.success) {
+      logger.warn('Contact form validation failed', validation.errors);
+      return Response.json({
+        error: 'Datos del formulario inválidos',
+        details: validation.errors
+      }, { status: 400 });
+    }
+
+    const data = validation.data;
     
     // Validación básica
     const message = data.message || data.description;
