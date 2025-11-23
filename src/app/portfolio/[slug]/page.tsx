@@ -283,24 +283,25 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
             <div className="container mx-auto px-4">
               <div className="max-w-5xl mx-auto">
                 <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-xl p-8">
-                  <ReactMarkdown
-                    className="prose prose-invert prose-cyan max-w-none
-                      prose-headings:text-white prose-headings:font-bold
-                      prose-h1:text-3xl prose-h1:mb-6 prose-h1:gradient-text
-                      prose-h2:text-2xl prose-h2:mb-4 prose-h2:text-cyan-400
-                      prose-h3:text-xl prose-h3:mb-3 prose-h3:text-cyan-300
-                      prose-p:text-gray-300 prose-p:leading-relaxed prose-p:mb-4
-                      prose-a:text-cyan-400 prose-a:no-underline hover:prose-a:text-cyan-300
-                      prose-strong:text-white prose-strong:font-semibold
-                      prose-code:text-cyan-400 prose-code:bg-gray-800 prose-code:px-2 prose-code:py-1 prose-code:rounded
-                      prose-pre:bg-gray-800 prose-pre:border prose-pre:border-gray-700 prose-pre:rounded-lg
-                      prose-ul:text-gray-300 prose-ul:list-disc prose-ul:pl-6
-                      prose-ol:text-gray-300 prose-ol:list-decimal prose-ol:pl-6
-                      prose-li:mb-2
-                      prose-blockquote:border-l-4 prose-blockquote:border-cyan-500 prose-blockquote:pl-4 prose-blockquote:italic prose-blockquote:text-gray-400"
+                  <div className="prose prose-invert prose-cyan max-w-none
+                    prose-headings:text-white prose-headings:font-bold
+                    prose-h1:text-3xl prose-h1:mb-6 prose-h1:gradient-text
+                    prose-h2:text-2xl prose-h2:mb-4 prose-h2:text-cyan-400
+                    prose-h3:text-xl prose-h3:mb-3 prose-h3:text-cyan-300
+                    prose-p:text-gray-300 prose-p:leading-relaxed prose-p:mb-4
+                    prose-a:text-cyan-400 prose-a:no-underline hover:prose-a:text-cyan-300
+                    prose-strong:text-white prose-strong:font-semibold
+                    prose-code:text-cyan-400 prose-code:bg-gray-800 prose-code:px-2 prose-code:py-1 prose-code:rounded
+                    prose-pre:bg-gray-800 prose-pre:border prose-pre:border-gray-700 prose-pre:rounded-lg
+                    prose-ul:text-gray-300 prose-ul:list-disc prose-ul:pl-6
+                    prose-ol:text-gray-300 prose-ol:list-decimal prose-ol:pl-6
+                    prose-li:mb-2
+                    prose-blockquote:border-l-4 prose-blockquote:border-cyan-500 prose-blockquote:pl-4 prose-blockquote:italic prose-blockquote:text-gray-400"
                   >
-                    {project.content}
-                  </ReactMarkdown>
+                    <ReactMarkdown>
+                      {project.content}
+                    </ReactMarkdown>
+                  </div>
                 </div>
               </div>
             </div>
