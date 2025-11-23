@@ -9,36 +9,39 @@ export default function AdminLogin() {
   const [loading, setLoading] = useState(false)
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    setLoading(true)
-    setError('')
+  e.preventDefault()
+  setLoading(true)
+  setError('')
 
-    try {
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(credentials),
-        credentials: 'include'
-      })
+  try {
+    const res = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(credentials),
+      credentials: 'include'
+    })
 
-      const data = await res.json()
+    const data = await res.json()
 
-      if (res.ok && data.success) {
-        console.log('✅ Login exitoso, redirigiendo...')
-        // Esperar 200ms y redirigir
-        setTimeout(() => {
-          window.location.href = '/admin'
-        }, 200)
-      } else {
-        setError(data.error || 'Credenciales inválidas')
-        setLoading(false)
-      }
-    } catch (err) {
-      console.error('Login error:', err)
-      setError('Error al conectar con el servidor')
+    if (res.ok && data.success) {
+      console.log('✅ Login exitoso, cookie establecida')
+      console.log('📍 Redirigiendo a:', data.redirect || '/admin')
+      
+      // Esperar 500ms para asegurar que la cookie se establezca
+      await new Promise(resolve => setTimeout(resolve, 500))
+      
+      // Redirigir con recarga completa
+      window.location.href = data.redirect || '/admin'
+    } else {
+      setError(data.error || 'Credenciales inválidas')
       setLoading(false)
     }
+  } catch (err) {
+    console.error('Login error:', err)
+    setError('Error al conectar con el servidor')
+    setLoading(false)
   }
+}
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black flex items-center justify-center p-4 relative overflow-hidden">
