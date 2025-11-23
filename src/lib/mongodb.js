@@ -1,13 +1,12 @@
-// src/lib/mongodb.js - Conexión a MongoDB con pre-carga de modelos
+// src/lib/mongodb.js
 import mongoose from 'mongoose';
 
 const MONGODB_URI = process.env.MONGODB_URI;
 
 if (!MONGODB_URI) {
-  throw new Error('Please define the MONGODB_URI environment variable inside .env.local');
+  throw new Error('Please define the MONGODB_URI environment variable');
 }
 
-// Cache de conexión para entornos serverless
 let cached = global.mongoose;
 
 if (!cached) {
@@ -27,47 +26,20 @@ async function connectDB() {
       socketTimeoutMS: 45000,
     };
 
-    cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongooseInstance) => {
+    cached.promise = mongoose.connect(MONGODB_URI, opts).then(async (mongooseInstance) => {
       console.log('✅ MongoDB conectado exitosamente');
       
-      // 🔥 PRE-CARGAR MODELOS para evitar "Schema hasn't been registered"
-      // Esto es crítico en entornos serverless como Vercel
+      // Pre-cargar modelos con imports dinámicos
       try {
-        // Cargar modelos principales explícitamente
-        if (!mongoose.models.Lead) {
-          require('@/models/Lead');
-          console.log('✅ Modelo Lead cargado');
-        }
-        
-        if (!mongoose.models.Appointment) {
-          require('@/models/Appointment');
-          console.log('✅ Modelo Appointment cargado');
-        }
-        
-        if (!mongoose.models.BlogPost) {
-          require('@/models/BlogPost');
-          console.log('✅ Modelo BlogPost cargado');
-        }
-        
-        if (!mongoose.models.LearningPath) {
-          require('@/models/LearningPath');
-          console.log('✅ Modelo LearningPath cargado');
-        }
-        
-        if (!mongoose.models.MessageTemplate) {
-          require('@/models/MessageTemplate');
-          console.log('✅ Modelo MessageTemplate cargado');
-        }
-        
-        if (!mongoose.models.User) {
-          require('@/models/User');
-          console.log('✅ Modelo User cargado');
-        }
-        
-        console.log('✅ Todos los modelos registrados correctamente');
+        await import('@/models/User');
+        await import('@/models/Lead');
+        await import('@/models/Appointment');
+        await import('@/models/BlogPost');
+        await import('@/models/LearningPath');
+        await import('@/models/MessageTemplate');
+        console.log('✅ Modelos cargados correctamente');
       } catch (error) {
-        console.warn('⚠️ Advertencia al cargar algunos modelos:', error.message);
-        // No lanzar error, solo advertir
+        console.warn('⚠️ Error cargando modelos:', error.message);
       }
       
       return mongooseInstance.connection;
