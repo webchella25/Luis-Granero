@@ -2,7 +2,7 @@
 import { NextResponse } from 'next/server'
 import dbConnect from '@/lib/mongodb'
 import Subscriber from '@/models/Subscriber'
-import { sendBrevoEmail } from '@/lib/email/brevo-client'
+import { addContactToBrevoList } from '@/lib/brevo-client'
 
 export async function POST(request) {
   try {
@@ -39,7 +39,7 @@ export async function POST(request) {
       )
     }
 
-    // Guardar suscriptor en DB
+    // Guardar en MongoDB
     const subscriber = await Subscriber.create({
       email: email.toLowerCase(),
       name,
@@ -49,52 +49,26 @@ export async function POST(request) {
       subscribedAt: new Date()
     })
 
-    // Enviar email de bienvenida + Día 1
-    await sendBrevoEmail({
-      to: [{ email, name }],
-      templateId: 1, // ID de tu template en Brevo
-      params: {
-        FIRSTNAME: name,
-        COURSE_NAME: 'React en 5 Días'
-      }
-    })
+    console.log('✅ Suscriptor guardado en MongoDB:', subscriber._id)
 
-    // Agregar a lista de Brevo para campaña automática
-    if (process.env.BREVO_API_KEY) {
-      try {
-        const brevoResponse = await fetch('https://api.brevo.com/v3/contacts', {
-          method: 'POST',
-          headers: {
-            'api-key': process.env.BREVO_API_KEY,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            email: email.toLowerCase(),
-            attributes: {
-              FIRSTNAME: name,
-              CURSO: 'react-5-dias'
-            },
-            listIds: [parseInt(process.env.BREVO_LIST_REACT_5_DIAS || '2')],
-            updateEnabled: true
-          })
-        })
+    // Añadir a lista de Brevo (esto dispara la automatización)
+    const brevoResult = await addContactToBrevoList(
+      email,
+      name,
+      process.env.BREVO_LIST_ID
+    )
 
-        if (!brevoResponse.ok) {
-          console.error('Error adding to Brevo:', await brevoResponse.text())
-        }
-      } catch (brevoError) {
-        console.error('Brevo API error:', brevoError)
-        // No fallar si Brevo falla, ya tenemos el suscriptor en DB
-      }
+    if (!brevoResult.success) {
+      console.error('⚠️ Error añadiendo a Brevo, pero usuario guardado en DB')
     }
 
     return NextResponse.json({
       success: true,
-      message: 'Suscripción exitosa. Revisa tu email.'
+      message: 'Suscripción exitosa. Revisa tu email en 1 minuto.'
     })
 
   } catch (error) {
-    console.error('Error en suscripción:', error)
+    console.error('❌ Error en suscripción:', error)
     return NextResponse.json(
       { error: 'Error al procesar la suscripción' },
       { status: 500 }
