@@ -16,45 +16,40 @@ const SubscriberSchema = new mongoose.Schema({
   course: {
     type: String,
     required: true,
-    enum: ['react-5-dias', 'newsletter', 'nextjs-avanzado']
+    default: 'react-5-dias'
   },
-  source: {
-    type: String,
-    default: 'website'
+
+  // Tracking de emails enviados por día
+  emailsSent: {
+    day1: { sent: { type: Boolean, default: false }, sentAt: Date },
+    day2: { sent: { type: Boolean, default: false }, sentAt: Date },
+    day3: { sent: { type: Boolean, default: false }, sentAt: Date },
+    day4: { sent: { type: Boolean, default: false }, sentAt: Date },
+    day5: { sent: { type: Boolean, default: false }, sentAt: Date }
   },
+
+  currentDay: {
+    type: Number,
+    default: 0
+  },
+
   status: {
     type: String,
-    enum: ['active', 'unsubscribed', 'bounced'],
+    enum: ['active', 'completed', 'unsubscribed'],
     default: 'active'
   },
+
   subscribedAt: {
     type: Date,
     default: Date.now
   },
-  unsubscribedAt: Date,
-  
-  // Tracking de emails
-  emailsSent: [{
-    subject: String,
-    sentAt: Date,
-    opened: Boolean,
-    openedAt: Date,
-    clicked: Boolean,
-    clickedAt: Date
-  }],
-  
-  // Progreso (opcional para futuro)
-  progress: {
-    currentDay: {
-      type: Number,
-      default: 0
-    },
-    completedLessons: [{
-      type: Number
-    }],
-    lastActivity: Date
+
+  unsubscribeToken: {
+    type: String,
+    unique: true,
+    sparse: true
   },
-  
+
   // Metadata
   metadata: {
     userAgent: String,
@@ -63,14 +58,14 @@ const SubscriberSchema = new mongoose.Schema({
     utmMedium: String,
     utmCampaign: String
   }
-  
+
 }, {
   timestamps: true
 })
 
 // Índices
 SubscriberSchema.index({ email: 1, course: 1 }, { unique: true })
-SubscriberSchema.index({ status: 1 })
+SubscriberSchema.index({ status: 1, currentDay: 1 })
 SubscriberSchema.index({ subscribedAt: -1 })
 
 export default mongoose.models.Subscriber || mongoose.model('Subscriber', SubscriberSchema)
