@@ -44,7 +44,7 @@ const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://luisgranero.com';
 async function getSettings() {
   try {
     await dbConnect();
-    const settings = await SiteSettings.getSettings();
+    const settings = await (SiteSettings as any).getSettings();
     return settings;
   } catch (error) {
     console.error('Error getting settings for metadata:', error);
