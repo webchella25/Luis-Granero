@@ -10,7 +10,8 @@ export default function AdminSidebar({ isOpen, onClose }) {
   const [collapsed, setCollapsed] = useState({
     web: false,
     crm: false,
-    analytics: false
+    analytics: false,
+    students: false
   })
 
   const toggleSection = (section) => {
@@ -53,6 +54,16 @@ export default function AdminSidebar({ isOpen, onClose }) {
         { name: 'Email Analytics', href: '/admin/email-analytics', icon: '📊', badge: 'new' },
         { name: 'Metricas', href: '/admin/analytics', icon: '📈' },
         { name: 'Usuarios', href: '/admin/users', icon: '👥' }
+      ]
+    },
+    students: {
+      title: 'Estudiantes',
+      icon: '🎓',
+      badge: 'NEW',
+      items: [
+        { name: 'Dashboard', href: '/admin/estudiantes', icon: '📊', badge: 'new' },
+        { name: 'Lista Estudiantes', href: '/admin/estudiantes/lista', icon: '👥' },
+        { name: 'Certificados', href: '/admin/certificados', icon: '🏆' }
       ]
     }
   }
