@@ -27,9 +27,10 @@ export default function AdminSidebar({ isOpen, onClose }) {
       items: [
         { name: 'Blog', href: '/admin/blog', icon: '📝' },
         { name: 'Portfolio', href: '/admin/portfolio', icon: '💼' },
+        { name: 'Cursos Email', href: '/admin/email-courses', icon: '📧', badge: 'new' },
         { name: 'Mensajes', href: '/admin/messages', icon: '📬' },
         { name: 'Calculadora', href: '/admin/calculator', icon: '🧮', badge: 'new' },
-        { name: 'Páginas Legales', href: '/admin/legal', icon: '⚖️', badge: 'new' }, // 🔥 AÑADIDO
+        { name: 'Páginas Legales', href: '/admin/legal', icon: '⚖️', badge: 'new' },
         { name: 'Configuracion', href: '/admin/settings', icon: '⚙️' }
       ]
     },
