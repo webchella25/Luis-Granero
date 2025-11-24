@@ -3,7 +3,6 @@ import { Suspense } from 'react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import HeroSection from '@/components/hero/HeroSection';
-import StatsSection from '@/components/home/StatsSection';
 import FeaturedCourse from '@/components/home/FeaturedCourse';
 import FeaturedProjects from '@/components/home/FeaturedProjects';
 import LatestPosts from '@/components/home/LatestPosts';
@@ -73,7 +72,7 @@ async function getFeaturedProjects() {
 async function getLatestPosts() {
   try {
     const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
-    const res = await fetch(`${baseUrl}/api/public/posts`, {
+    const res = await fetch(`${baseUrl}/api/public/blog`, {
       cache: 'no-store',
       next: { revalidate: 3600 }
     });
@@ -107,9 +106,6 @@ export default async function HomePage() {
       <Suspense fallback={<SectionSkeleton />}>
         <HeroSection />
       </Suspense>
-
-      {/* Stats Section */}
-      <StatsSection />
 
       {/* Featured Course - Curso de React */}
       <FeaturedCourse course={featuredCourse} />

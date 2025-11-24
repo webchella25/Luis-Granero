@@ -84,57 +84,28 @@ export default function TechStackStats() {
           </div>
         </div>
 
-        {/* Stats + Availability */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-          
-          {/* Stats */}
-          <div className="text-center lg:text-left">
-            <h3 className="text-3xl font-bold text-white mb-8">
-              Experiencia comprobada
-            </h3>
-            <div className="grid grid-cols-2 gap-6">
-              <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-6 text-center">
-                <div className="text-3xl font-bold gradient-text mb-2">50+</div>
-                <div className="text-gray-400 text-sm">Proyectos completados</div>
-              </div>
-              <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-6 text-center">
-                <div className="text-3xl font-bold gradient-text mb-2">10+</div>
-                <div className="text-gray-400 text-sm">Años de experiencia</div>
-              </div>
-              <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-6 text-center">
-                <div className="text-3xl font-bold gradient-text mb-2">35+</div>
-                <div className="text-gray-400 text-sm">Clientes satisfechos</div>
-              </div>
-              <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-6 text-center">
-                <div className="text-3xl font-bold gradient-text mb-2">15+</div>
-                <div className="text-gray-400 text-sm">Tecnologías dominadas</div>
-              </div>
+        {/* Availability status */}
+        <div className="flex justify-center mt-12">
+          <div className="inline-flex flex-col items-center">
+            <div className="flex items-center space-x-3 bg-green-900/20 border border-green-500/30 rounded-full px-6 py-4 mb-4">
+              <div className="w-4 h-4 bg-green-400 rounded-full animate-pulse"></div>
+              <span className="text-green-400 font-semibold text-lg">
+                Disponible para nuevos proyectos
+              </span>
             </div>
-          </div>
 
-          {/* Availability status */}
-          <div className="text-center lg:text-right">
-            <div className="inline-flex flex-col items-center lg:items-end">
-              <div className="flex items-center space-x-3 bg-green-900/20 border border-green-500/30 rounded-full px-6 py-4 mb-4">
-                <div className="w-4 h-4 bg-green-400 rounded-full animate-pulse"></div>
-                <span className="text-green-400 font-semibold text-lg">
-                  Disponible para nuevos proyectos
-                </span>
+            <div className="flex flex-wrap justify-center gap-6 text-gray-400">
+              <div className="flex items-center space-x-2">
+                <span className="text-xl">⚡</span>
+                <span>Respuesta en 24 horas</span>
               </div>
-              
-              <div className="space-y-2 text-gray-400">
-                <div className="flex items-center space-x-2">
-                  <span className="text-xl">⚡</span>
-                  <span>Respuesta en 24 horas</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <span className="text-xl">💬</span>
-                  <span>Consulta gratuita</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <span className="text-xl">🚀</span>
-                  <span>Inicio inmediato</span>
-                </div>
+              <div className="flex items-center space-x-2">
+                <span className="text-xl">💬</span>
+                <span>Consulta gratuita</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <span className="text-xl">🚀</span>
+                <span>Inicio inmediato</span>
               </div>
             </div>
           </div>
