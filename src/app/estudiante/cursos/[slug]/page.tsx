@@ -1,7 +1,7 @@
 // src/app/estudiante/cursos/[slug]/page.tsx
 'use client'
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import Header from '@/components/layout/Header'
 import Footer from '@/components/layout/Footer'
@@ -39,8 +39,10 @@ interface CourseProgressData {
   articles: Article[]
 }
 
-export default function CourseProgressPage({ params }: { params: { slug: string } }) {
+export default function CourseProgressPage() {
   const router = useRouter()
+  const params = useParams()
+  const slug = params.slug as string
   const [loading, setLoading] = useState(true)
   const [data, setData] = useState<CourseProgressData | null>(null)
   const [error, setError] = useState('')
@@ -48,11 +50,11 @@ export default function CourseProgressPage({ params }: { params: { slug: string 
 
   useEffect(() => {
     fetchCourseProgress()
-  }, [params.slug])
+  }, [slug])
 
   const fetchCourseProgress = async () => {
     try {
-      const res = await fetch(`/api/student/courses/${params.slug}/progress`)
+      const res = await fetch(`/api/student/courses/${slug}/progress`)
 
       if (res.status === 401) {
         router.push('/estudiante/login')
@@ -76,7 +78,7 @@ export default function CourseProgressPage({ params }: { params: { slug: string 
   const toggleArticleCompletion = async (articleSlug: string, isCompleted: boolean) => {
     setUpdatingArticle(articleSlug)
     try {
-      const res = await fetch(`/api/student/courses/${params.slug}/articles/${articleSlug}/complete`, {
+      const res = await fetch(`/api/student/courses/${slug}/articles/${articleSlug}/complete`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ completed: !isCompleted })
@@ -281,7 +283,7 @@ export default function CourseProgressPage({ params }: { params: { slug: string 
                             #{article.order.toString().padStart(2, '0')}
                           </span>
                           <Link
-                            href={`/cursos/${params.slug}/${article.slug}`}
+                            href={`/cursos/${slug}/${article.slug}`}
                             className={`text-lg font-bold transition-colors ${
                               article.isCompleted
                                 ? 'text-green-400 hover:text-green-300'
@@ -306,7 +308,7 @@ export default function CourseProgressPage({ params }: { params: { slug: string 
 
                       {/* Action Button */}
                       <Link
-                        href={`/cursos/${params.slug}/${article.slug}`}
+                        href={`/cursos/${slug}/${article.slug}`}
                         className={`px-6 py-2 rounded-lg font-semibold transition-colors ${
                           article.isCompleted
                             ? 'bg-gray-700 hover:bg-gray-600 text-gray-300'
