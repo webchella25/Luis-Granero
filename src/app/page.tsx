@@ -3,6 +3,10 @@ import { Suspense } from 'react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import HeroSection from '@/components/hero/HeroSection';
+import StatsSection from '@/components/home/StatsSection';
+import FeaturedCourse from '@/components/home/FeaturedCourse';
+import FeaturedProjects from '@/components/home/FeaturedProjects';
+import LatestPosts from '@/components/home/LatestPosts';
 import ServicesPreview from '@/components/home/ServicesPreview';
 import TechStackStats from '@/components/home/TechStackStats';
 import ContactCTA from '@/components/home/ContactCTA';
@@ -26,18 +30,99 @@ function SectionSkeleton() {
   );
 }
 
+// Función para obtener el curso de React
+async function getFeaturedCourse() {
+  try {
+    const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+    const res = await fetch(`${baseUrl}/api/public/email-courses`, {
+      cache: 'no-store',
+      next: { revalidate: 3600 } // Revalidar cada hora
+    });
+
+    if (!res.ok) return null;
+
+    const data = await res.json();
+    const reactCourse = data.courses?.find((c: any) => c.slug === 'react-5-dias');
+    return reactCourse || null;
+  } catch (error) {
+    console.error('Error fetching featured course:', error);
+    return null;
+  }
+}
+
+// Función para obtener proyectos destacados
+async function getFeaturedProjects() {
+  try {
+    const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+    const res = await fetch(`${baseUrl}/api/public/projects`, {
+      cache: 'no-store',
+      next: { revalidate: 3600 }
+    });
+
+    if (!res.ok) return [];
+
+    const data = await res.json();
+    return data.projects?.slice(0, 3) || [];
+  } catch (error) {
+    console.error('Error fetching featured projects:', error);
+    return [];
+  }
+}
+
+// Función para obtener últimos posts
+async function getLatestPosts() {
+  try {
+    const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+    const res = await fetch(`${baseUrl}/api/public/posts`, {
+      cache: 'no-store',
+      next: { revalidate: 3600 }
+    });
+
+    if (!res.ok) return [];
+
+    const data = await res.json();
+    return data.posts?.slice(0, 3) || [];
+  } catch (error) {
+    console.error('Error fetching latest posts:', error);
+    return [];
+  }
+}
+
 // Componente principal de la HomePage
-export default function HomePage() {
+export default async function HomePage() {
+  // Obtener datos en paralelo
+  const [featuredCourse, featuredProjects, latestPosts] = await Promise.all([
+    getFeaturedCourse(),
+    getFeaturedProjects(),
+    getLatestPosts()
+  ]);
+
   return (
     <main className="min-h-screen bg-black">
-      
+
       {/* Header */}
       <Header />
-      
+
       {/* Hero Section */}
       <Suspense fallback={<SectionSkeleton />}>
         <HeroSection />
       </Suspense>
+
+      {/* Stats Section */}
+      <StatsSection />
+
+      {/* Featured Course - Curso de React */}
+      <FeaturedCourse course={featuredCourse} />
+
+      {/* Featured Projects */}
+      {featuredProjects.length > 0 && (
+        <FeaturedProjects projects={featuredProjects} />
+      )}
+
+      {/* Latest Blog Posts */}
+      {latestPosts.length > 0 && (
+        <LatestPosts posts={latestPosts} />
+      )}
 
       {/* Services Preview */}
       <Suspense fallback={<SectionSkeleton />}>
@@ -63,15 +148,15 @@ export default function HomePage() {
 
 // Metadata estática
 export const metadata = {
-  title: 'Luis Granero - Desarrollador Full Stack',
-  description: 'Transformo ideas en aplicaciones web modernas y soluciones personalizadas. Especializado en React, Next.js y arquitecturas escalables.',
-  keywords: ['desarrollo web', 'react', 'next.js', 'freelance', 'aplicaciones web', 'e-commerce'],
+  title: 'Luis Granero - Desarrollador Full Stack | React, Next.js & Web Development',
+  description: 'Transformo ideas en aplicaciones web modernas. Cursos gratuitos, proyectos reales y soluciones personalizadas. Especializado en React, Next.js y arquitecturas escalables.',
+  keywords: ['desarrollo web', 'react', 'next.js', 'freelance', 'aplicaciones web', 'e-commerce', 'cursos react', 'tutorial javascript'],
   authors: [{ name: 'Luis Granero' }],
   creator: 'Luis Granero',
   publisher: 'Luis Granero',
   openGraph: {
     title: 'Luis Granero - Desarrollador Full Stack',
-    description: 'Transformo ideas en aplicaciones web modernas y soluciones personalizadas.',
+    description: 'Transformo ideas en aplicaciones web modernas. Cursos gratuitos, proyectos reales y soluciones personalizadas.',
     url: 'https://luisgranero.com',
     siteName: 'Luis Granero - Desarrollador Web',
     locale: 'es_ES',
@@ -80,7 +165,7 @@ export const metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Luis Granero - Desarrollador Full Stack',
-    description: 'Transformo ideas en aplicaciones web modernas y soluciones personalizadas.',
+    description: 'Transformo ideas en aplicaciones web modernas. Cursos gratuitos y soluciones personalizadas.',
   },
   robots: {
     index: true,
