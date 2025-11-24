@@ -60,8 +60,9 @@ async function getFeaturedProjects() {
 
     if (!res.ok) return [];
 
-    const data = await res.json();
-    return data.projects?.slice(0, 3) || [];
+    const projects = await res.json();
+    // El endpoint devuelve un array directamente
+    return Array.isArray(projects) ? projects.slice(0, 3) : [];
   } catch (error) {
     console.error('Error fetching featured projects:', error);
     return [];
