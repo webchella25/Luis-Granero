@@ -166,7 +166,7 @@ function HeroSection() {
           </div>
 
           {/* STATS ÉPICAS CON ANIMACIONES */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-4xl mx-auto">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-4xl mx-auto mb-20">
             {heroContent.stats.map((stat, index) => (
               <div
                 key={index}
@@ -179,10 +179,10 @@ function HeroSection() {
                 <div className="text-gray-400 text-sm md:text-base uppercase tracking-wider font-semibold">
                   {stat.label}
                 </div>
-                
+
                 {/* Barra de progreso animada */}
                 <div className="mt-3 w-full bg-gray-800 rounded-full h-1 overflow-hidden">
-                  <div 
+                  <div
                     className="h-full bg-gradient-to-r from-cyan-400 to-green-400 rounded-full animate-progress-bar"
                     style={{ animationDelay: `${index * 300}ms` }}
                   />
@@ -192,12 +192,10 @@ function HeroSection() {
           </div>
 
           {/* INDICADOR DE SCROLL */}
-          <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
-            <div className="flex flex-col items-center text-gray-400">
-              <span className="text-sm mb-2 font-mono">Explora mi trabajo</span>
-              <div className="w-6 h-10 border-2 border-gray-400 rounded-full flex justify-center">
-                <div className="w-1 h-3 bg-cyan-400 rounded-full mt-2 animate-pulse" />
-              </div>
+          <div className="flex flex-col items-center text-gray-400 animate-bounce">
+            <span className="text-sm mb-2 font-mono">Explora mi trabajo</span>
+            <div className="w-6 h-10 border-2 border-gray-400 rounded-full flex justify-center">
+              <div className="w-1 h-3 bg-cyan-400 rounded-full mt-2 animate-pulse" />
             </div>
           </div>
         </div>

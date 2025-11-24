@@ -2,12 +2,13 @@
 'use client'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { 
-  PlusIcon, 
-  PencilIcon, 
-  TrashIcon, 
+import {
+  PlusIcon,
+  PencilIcon,
+  TrashIcon,
   AcademicCapIcon,
-  EyeIcon 
+  EyeIcon,
+  UserGroupIcon
 } from '@heroicons/react/24/outline'
 
 export default function LearningPathsManager() {
@@ -223,7 +224,7 @@ export default function LearningPathsManager() {
             </div>
 
             {/* Actions */}
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between mb-3">
               <div className="flex space-x-2">
                 <button
                   onClick={() => togglePublished(path._id, path.isPublished)}
@@ -235,7 +236,7 @@ export default function LearningPathsManager() {
                 >
                   {path.isPublished ? 'Publicada' : 'Borrador'}
                 </button>
-                
+
                 {path.isPublished && (
                   <button
                     onClick={() => toggleFeatured(path._id, path.isFeatured)}
@@ -256,6 +257,15 @@ export default function LearningPathsManager() {
                 </span>
               )}
             </div>
+
+            {/* Ver Estudiantes Button */}
+            <Link
+              href={`/admin/cursos/${path._id}/estudiantes`}
+              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg text-sm font-semibold transition-colors"
+            >
+              <UserGroupIcon className="w-4 h-4" />
+              Ver Estudiantes ({path.enrollments || 0})
+            </Link>
           </div>
         ))}
 
