@@ -1,6 +1,6 @@
 // src/app/api/admin/email-courses/[id]/subscribers/route.js
 import { NextResponse } from 'next/server'
-import { verifyAuth } from '@/lib/auth'
+import { checkAuth } from '@/lib/checkAuth'
 import dbConnect from '@/lib/mongodb'
 import EmailCourse from '@/models/EmailCourse'
 import Subscriber from '@/models/Subscriber'
@@ -9,8 +9,8 @@ import logger from '@/lib/logger'
 // GET - Obtener suscriptores de un curso
 export async function GET(request, { params }) {
   try {
-    const user = await verifyAuth(request)
-    if (!user) {
+    const session = await checkAuth()
+    if (!session) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
     }
 

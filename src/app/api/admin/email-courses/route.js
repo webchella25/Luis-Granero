@@ -1,6 +1,6 @@
 // src/app/api/admin/email-courses/route.js
 import { NextResponse } from 'next/server'
-import { verifyAuth } from '@/lib/auth'
+import { checkAuth } from '@/lib/checkAuth'
 import dbConnect from '@/lib/mongodb'
 import EmailCourse from '@/models/EmailCourse'
 import logger from '@/lib/logger'
@@ -8,8 +8,8 @@ import logger from '@/lib/logger'
 // GET - Listar todos los cursos de email
 export async function GET(request) {
   try {
-    const user = await verifyAuth(request)
-    if (!user) {
+    const session = await checkAuth()
+    if (!session) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
     }
 
@@ -28,8 +28,8 @@ export async function GET(request) {
 // POST - Crear nuevo curso
 export async function POST(request) {
   try {
-    const user = await verifyAuth(request)
-    if (!user) {
+    const session = await checkAuth()
+    if (!session) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
     }
 
