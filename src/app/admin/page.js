@@ -352,11 +352,20 @@ export default function AdminDashboard() {
         {/* Grid de Navegación */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
           <NavigationCard
+            title="CRM Analytics Avanzado"
+            description="Análisis completo del pipeline de leads"
+            href="/admin/crm-analytics"
+            icon="📈"
+            color="from-cyan-400 to-blue-600"
+            stats="✨ Nuevo!"
+          />
+
+          <NavigationCard
             title="Gestión de Leads"
             description="Ver, filtrar y gestionar todos tus leads"
             href="/admin/leads"
             icon="📊"
-            color="from-blue-500 to-cyan-500"
+            color="from-blue-500 to-indigo-600"
             stats={`${stats.leads.total} leads`}
           />
           

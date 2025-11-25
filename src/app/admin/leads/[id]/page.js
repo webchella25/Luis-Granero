@@ -11,6 +11,7 @@ import LeadContactInfo from './components/LeadContactInfo';
 import LeadWebAnalysis from './components/LeadWebAnalysis';
 import LeadContactHistory from './components/LeadContactHistory';
 import LeadActionsSidebar from './components/LeadActionsSidebar';
+import LeadEnrichment from './components/LeadEnrichment';
 
 // Modals
 import EmailModal from './components/modals/EmailModal';
@@ -139,6 +140,7 @@ export default function LeadDetailPage() {
           <div className="lg:col-span-2 space-y-8">
             <LeadContactInfo lead={lead} />
             {lead.webAnalysis && <LeadWebAnalysis analysis={lead.webAnalysis} />}
+            <LeadEnrichment lead={lead} onRefresh={fetchLead} />
             <LeadContactHistory history={lead.contactHistory} />
           </div>
 
