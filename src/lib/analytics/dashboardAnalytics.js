@@ -1,6 +1,6 @@
 // src/lib/analytics/dashboardAnalytics.js
 import Lead from '@/models/Lead';
-import { connectDB } from '@/lib/mongodb';
+import connectDB from '@/lib/mongodb';
 
 /**
  * DASHBOARD ANALYTICS
