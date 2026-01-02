@@ -57,7 +57,16 @@ function replaceShortcodes(text, lead, magicLink = '') {
 async function handleRequest(request) {
   try {
     await dbConnect();
-    
+
+    // SEGURIDAD: Verificar que CRON_SECRET esté configurado
+    if (!process.env.CRON_SECRET) {
+      console.error('CRON_SECRET not configured');
+      return NextResponse.json(
+        { success: false, error: 'Cron authentication not configured' },
+        { status: 500 }
+      );
+    }
+
     // Verificar autenticación
     const authHeader = request.headers.get('authorization');
     if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {

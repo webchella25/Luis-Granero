@@ -20,14 +20,16 @@ export async function POST(request) {
     const authHeader = request.headers.get('authorization');
     const webhookSecret = process.env.APIFY_WEBHOOK_SECRET;
 
-    // Si hay webhook secret configurado, validarlo
-    if (webhookSecret) {
-      if (!authHeader || authHeader !== `Bearer ${webhookSecret}`) {
-        logger.warn('Apify webhook unauthorized attempt');
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-      }
-    } else {
-      logger.warn('APIFY_WEBHOOK_SECRET not configured - webhook is unprotected');
+    // SEGURIDAD: Webhook secret es obligatorio
+    if (!webhookSecret) {
+      logger.error('APIFY_WEBHOOK_SECRET not configured - rejecting webhook');
+      return NextResponse.json({ error: 'Webhook authentication not configured' }, { status: 500 });
+    }
+
+    // Validar token
+    if (!authHeader || authHeader !== `Bearer ${webhookSecret}`) {
+      logger.warn('Apify webhook unauthorized attempt');
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const payload = await request.json();
@@ -53,7 +55,12 @@ export async function POST(request) {
 
       const API_TOKEN = process.env.APIFY_API_TOKEN;
       const dataResponse = await fetch(
-        `https://api.apify.com/v2/actor-runs/${runId}/dataset/items?token=${API_TOKEN}`
+        `https://api.apify.com/v2/actor-runs/${runId}/dataset/items`,
+        {
+          headers: {
+            'Authorization': `Bearer ${API_TOKEN}`
+          }
+        }
       );
 
       const results = await dataResponse.json();

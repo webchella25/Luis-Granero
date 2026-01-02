@@ -22,7 +22,7 @@ export async function login(email, password) {
     role: user.role
   })
     .setProtectedHeader({ alg: 'HS256' })
-    .setExpirationTime('30d')
+    .setExpirationTime('14d') // Reducido de 30d a 14d por seguridad
     .sign(secret)
   
   return { user, token }
