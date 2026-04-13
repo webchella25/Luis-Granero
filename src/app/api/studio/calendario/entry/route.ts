@@ -32,7 +32,6 @@ export async function PATCH(request: NextRequest): Promise<NextResponse> {
       return NextResponse.json({ error: 'entryId inválido' }, { status: 400 });
     }
 
-    console.log('Actualizando id:', entryId, 'field:', field, 'value:', value);
 
     await connectDB();
     const result = await StudioCalendario.updateOne(
@@ -40,7 +39,6 @@ export async function PATCH(request: NextRequest): Promise<NextResponse> {
       { $set: { [`entries.$.${field}`]: value, actualizado_en: new Date() } }
     );
 
-    console.log('Resultado update:', JSON.stringify(result));
 
     return NextResponse.json({ success: true });
   } catch (error) {

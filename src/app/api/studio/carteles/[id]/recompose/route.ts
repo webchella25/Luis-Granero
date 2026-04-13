@@ -40,7 +40,7 @@ export async function POST(
     };
 
     await connectDB();
-    const cartel = await StudioCartel.findById(id);
+    const cartel = await StudioCartel.findOne({ _id: id, canal_id: session.canal_id });
     if (!cartel) return NextResponse.json({ error: 'Cartel no encontrado' }, { status: 404 });
     if (!cartel.fondo_path) return NextResponse.json({ error: 'Sin fondo generado' }, { status: 400 });
 

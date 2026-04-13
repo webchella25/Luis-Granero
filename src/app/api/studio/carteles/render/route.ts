@@ -129,7 +129,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     // Actualizar MongoDB si se proporciona cartel_id
     if (body.cartel_id) {
-      await StudioCartel.findByIdAndUpdate(body.cartel_id, { cartel_path: cartelPath });
+      await StudioCartel.findOneAndUpdate(
+        { _id: body.cartel_id, canal_id: session.canal_id },
+        { cartel_path: cartelPath }
+      );
     }
 
     return NextResponse.json({ success: true, cartelPath });

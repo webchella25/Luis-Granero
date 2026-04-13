@@ -15,7 +15,7 @@ export async function GET(
   try {
     const { id } = await params;
     await connectDB();
-    const cartel = await StudioCartel.findById(id).lean();
+    const cartel = await StudioCartel.findOne({ _id: id, canal_id: session.canal_id }).lean();
     if (!cartel) return NextResponse.json({ error: 'No encontrado' }, { status: 404 });
     const dj = await StudioDj.findById(cartel.dj_id).lean();
     return NextResponse.json({ cartel: { ...cartel, dj } });
@@ -33,7 +33,7 @@ export async function DELETE(
   try {
     const { id } = await params;
     await connectDB();
-    const cartel = await StudioCartel.findById(id);
+    const cartel = await StudioCartel.findOne({ _id: id, canal_id: session.canal_id });
     if (!cartel) return NextResponse.json({ error: 'No encontrado' }, { status: 404 });
 
     const publicDir = path.join(process.cwd(), 'public');
