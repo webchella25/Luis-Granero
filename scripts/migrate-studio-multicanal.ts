@@ -139,13 +139,13 @@ async function main() {
     config.imagen_motor = imageEngineConfig;
   }
 
-  const almasResult = await db.collection('studiocanales').insertOne(almasCorruptasDoc);
+  const almasResult = await db.collection('studiocanals').insertOne(almasCorruptasDoc);
   const almasCanalId = almasResult.insertedId;
   console.log(`  Canal "Almas Corruptas" created: ${almasCanalId}`);
 
   // ── Step 7: Create canal "Sabores Saludables" ─────────────────────────────
   console.log('Creating canal "Sabores Saludables"...');
-  const saboresResult = await db.collection('studiocanales').insertOne({
+  const saboresResult = await db.collection('studiocanals').insertOne({
     workspace_id: workspaceId,
     nombre: 'Sabores Saludables',
     nicho: 'nutricion y cocina saludable',
