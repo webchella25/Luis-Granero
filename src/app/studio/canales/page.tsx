@@ -1,0 +1,175 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import StudioLayout from '@/components/studio/StudioLayout';
+
+interface Canal {
+  _id: string;
+  nombre: string;
+  nicho: string;
+  descripcion: string;
+  youtube_conectado: boolean;
+  creado_en: string;
+}
+
+const EMOJIS: Record<string, string> = { 'Almas Corruptas': '🎭', 'Sabores Saludables': '🍎' };
+function getEmoji(nombre: string) { return EMOJIS[nombre] ?? '📺'; }
+
+export default function CanalesPage() {
+  const [canales, setCanales] = useState<Canal[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showNuevo, setShowNuevo] = useState(false);
+  const [form, setForm] = useState({ nombre: '', nicho: '', tono: '', system_prompt_guion: '', idioma: 'es-ES' });
+  const [creating, setCreating] = useState(false);
+  const [error, setError] = useState('');
+
+  async function loadCanales() {
+    const res = await fetch('/api/studio/canales');
+    const d = (await res.json()) as { canales?: Canal[] };
+    if (d.canales) setCanales(d.canales);
+    setLoading(false);
+  }
+
+  useEffect(() => { loadCanales(); }, []);
+
+  async function createCanal(e: React.FormEvent) {
+    e.preventDefault();
+    setCreating(true);
+    setError('');
+    try {
+      const res = await fetch('/api/studio/canales', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      });
+      if (res.ok) {
+        setShowNuevo(false);
+        setForm({ nombre: '', nicho: '', tono: '', system_prompt_guion: '', idioma: 'es-ES' });
+        await loadCanales();
+      } else {
+        const d = (await res.json()) as { error?: string };
+        setError(d.error ?? 'Error creando canal');
+      }
+    } finally {
+      setCreating(false);
+    }
+  }
+
+  async function enterCanal(canal_id: string) {
+    const res = await fetch('/api/studio/canal/select', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ canal_id }),
+    });
+    if (res.ok) window.location.href = '/studio';
+  }
+
+  return (
+    <StudioLayout>
+      <div className="max-w-2xl mx-auto px-6 py-10">
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-xl font-bold text-white">Canales</h1>
+            <p className="text-gray-500 text-sm mt-1">Gestiona los canales de tu workspace</p>
+          </div>
+          <button
+            onClick={() => setShowNuevo(!showNuevo)}
+            className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white text-sm font-semibold rounded-xl transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
+            Nuevo canal
+          </button>
+        </div>
+
+        {/* Formulario nuevo canal */}
+        {showNuevo && (
+          <div className="mb-6 bg-white/[0.03] border border-violet-500/20 rounded-2xl p-6">
+            <h2 className="text-base font-semibold text-white mb-4">Nuevo canal</h2>
+            <form onSubmit={createCanal} className="space-y-4">
+              <div>
+                <label className="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-1.5">Nombre *</label>
+                <input type="text" value={form.nombre} onChange={(e) => setForm({ ...form, nombre: e.target.value })}
+                  placeholder="Mi canal" required
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-600 focus:outline-none focus:border-violet-500 text-sm" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-1.5">Nicho / Temática</label>
+                <input type="text" value={form.nicho} onChange={(e) => setForm({ ...form, nicho: e.target.value })}
+                  placeholder="true crime, recetas, tecnología..."
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-600 focus:outline-none focus:border-violet-500 text-sm" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-1.5">Tono</label>
+                <input type="text" value={form.tono} onChange={(e) => setForm({ ...form, tono: e.target.value })}
+                  placeholder="Oscuro y serio, amigable, divulgativo..."
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-600 focus:outline-none focus:border-violet-500 text-sm" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-1.5">System prompt del guión</label>
+                <textarea value={form.system_prompt_guion} onChange={(e) => setForm({ ...form, system_prompt_guion: e.target.value })}
+                  placeholder="Instrucciones para Claude al generar guiones (dejar vacío para usar el prompt por defecto)"
+                  rows={4}
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-600 focus:outline-none focus:border-violet-500 text-sm resize-none" />
+              </div>
+              {error && <p className="text-red-400 text-sm">{error}</p>}
+              <div className="flex gap-3">
+                <button type="submit" disabled={creating}
+                  className="flex-1 py-3 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white font-semibold rounded-xl text-sm transition-colors">
+                  {creating ? 'Creando...' : 'Crear canal'}
+                </button>
+                <button type="button" onClick={() => setShowNuevo(false)}
+                  className="px-6 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-gray-400 rounded-xl text-sm transition-colors">
+                  Cancelar
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
+
+        {/* Lista de canales */}
+        {loading ? (
+          <div className="flex justify-center py-12">
+            <div className="w-8 h-8 rounded-full border-2 border-violet-500 border-t-transparent animate-spin" />
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {canales.map((canal) => (
+              <div key={canal._id} className="bg-white/[0.03] border border-white/8 rounded-2xl p-5">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">{getEmoji(canal.nombre)}</span>
+                    <div>
+                      <h3 className="font-semibold text-white">{canal.nombre}</h3>
+                      {canal.nicho && <p className="text-xs text-gray-500 mt-0.5">{canal.nicho}</p>}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className={`text-xs px-2 py-1 rounded-full border ${
+                      canal.youtube_conectado
+                        ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20'
+                        : 'text-gray-600 bg-white/5 border-white/8'
+                    }`}>
+                      {canal.youtube_conectado ? 'YouTube ✓' : 'Sin YouTube'}
+                    </span>
+                  </div>
+                </div>
+                <div className="flex gap-2 mt-4">
+                  <button onClick={() => enterCanal(canal._id)}
+                    className="flex-1 py-2 bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium rounded-xl transition-colors">
+                    Entrar
+                  </button>
+                  <a href={`/studio/canales/${canal._id}/editar`}
+                    className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 text-gray-400 text-sm rounded-xl transition-colors">
+                    Editar
+                  </a>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </StudioLayout>
+  );
+}
