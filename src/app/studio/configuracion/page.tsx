@@ -19,7 +19,7 @@ interface ElevenLabsStatus {
   error?: string;
 }
 
-type PreferredEngine = 'auto' | 'elevenlabs' | 'edge-tts';
+type PreferredEngine = 'auto' | 'elevenlabs' | 'edge-tts' | 'gemini-tts';
 type ImageEngine = 'auto' | 'freepik' | 'huggingface';
 
 interface ImageEngineConfig {
@@ -65,6 +65,22 @@ function ConfigContent() {
   const [savingCanal, setSavingCanal] = useState(false);
   const [canalSaved, setCanalSaved] = useState(false);
 
+  // LLM motor
+  const [llmMotor, setLlmMotor] = useState<'claude' | 'openai' | 'openrouter' | 'gemini'>('claude');
+  const [openaiKey, setOpenaiKey] = useState('');
+  const [openrouterKey, setOpenrouterKey] = useState('');
+  const [geminiKey, setGeminiKey] = useState('');
+  const [savingLLM, setSavingLLM] = useState(false);
+  const [llmSaved, setLlmSaved] = useState(false);
+  const [canalId, setCanalId] = useState<string | null>(null);
+
+  // ComfyUI
+  const [comfyuiKey, setComfyuiKey] = useState('');
+  const [savingComfyui, setSavingComfyui] = useState(false);
+  const [comfyuiSaved, setComfyuiSaved] = useState(false);
+  const [comfyuiWorkflows, setComfyuiWorkflows] = useState<Record<string, string>>({});
+  const [uploadingWorkflow, setUploadingWorkflow] = useState<string | null>(null);
+
   const justConnected = searchParams.get('connected') === '1';
   const oauthError = searchParams.get('error');
 
@@ -102,7 +118,7 @@ function ConfigContent() {
         }
       })
       .then((r) => r?.json())
-      .then((d: { canal?: CanalConfigData & { config?: { system_prompt_guion?: string; tono?: string } } } | undefined) => {
+      .then((d: { canal?: CanalConfigData & { config?: { system_prompt_guion?: string; tono?: string; llm_motor?: string } } } | undefined) => {
         if (d?.canal) {
           setCanalConfig({
             _id: d.canal._id,
@@ -111,6 +127,14 @@ function ConfigContent() {
             system_prompt_guion: d.canal.config?.system_prompt_guion ?? '',
             tono: d.canal.config?.tono ?? '',
           });
+          setCanalId(d.canal._id);
+          setLlmMotor((d.canal.config?.llm_motor ?? 'claude') as 'claude' | 'openai' | 'openrouter' | 'gemini');
+          const overrides = (d.canal as unknown as { config?: { comfyui_workflow_overrides?: Record<string, string> } }).config?.comfyui_workflow_overrides ?? {};
+          const overrideNames: Record<string, string> = {};
+          for (const key of Object.keys(overrides)) {
+            overrideNames[key] = 'personalizado';
+          }
+          setComfyuiWorkflows(overrideNames);
         }
       })
       .catch(() => null);
@@ -180,6 +204,99 @@ function ConfigContent() {
     } finally {
       setTestingHF(false);
     }
+  }
+
+  async function saveLLMConfig() {
+    if (!canalId) return;
+    setSavingLLM(true);
+    try {
+      const body: Record<string, string> = { llm_motor: llmMotor };
+      if (llmMotor === 'openai' && openaiKey.trim()) {
+        body.openai_api_key = openaiKey.trim();
+      }
+      if (llmMotor === 'openrouter' && openrouterKey.trim()) {
+        body.openrouter_api_key = openrouterKey.trim();
+      }
+      if (llmMotor === 'gemini' && geminiKey.trim()) {
+        body.gemini_api_key = geminiKey.trim();
+      }
+      await fetch(`/api/studio/canales/${canalId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      setOpenaiKey('');
+      setOpenrouterKey('');
+      setGeminiKey('');
+      setLlmSaved(true);
+      setTimeout(() => setLlmSaved(false), 2500);
+    } finally {
+      setSavingLLM(false);
+    }
+  }
+
+  async function saveComfyuiKey() {
+    if (!canalId || !comfyuiKey.trim()) return;
+    setSavingComfyui(true);
+    try {
+      await fetch(`/api/studio/canales/${canalId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ comfyui_api_key: comfyuiKey.trim() }),
+      });
+      setComfyuiKey('');
+      setComfyuiSaved(true);
+      setTimeout(() => setComfyuiSaved(false), 2500);
+    } finally {
+      setSavingComfyui(false);
+    }
+  }
+
+  async function handleWorkflowUpload(tipo: string, file: File) {
+    if (!canalId) return;
+    setUploadingWorkflow(tipo);
+    try {
+      const text = await file.text();
+      JSON.parse(text);
+      const current = await fetch(`/api/studio/canales/${canalId}`)
+        .then((r) => r.json())
+        .then((d: { canal?: { config?: { comfyui_workflow_overrides?: Record<string, string> } } }) =>
+          d.canal?.config?.comfyui_workflow_overrides ?? {}
+        );
+      await fetch(`/api/studio/canales/${canalId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          comfyui_workflow_overrides: { ...current, [tipo]: text },
+        }),
+      });
+      setComfyuiWorkflows((prev) => ({ ...prev, [tipo]: file.name }));
+    } catch {
+      alert('JSON inválido — revisa el fichero de workflow');
+    } finally {
+      setUploadingWorkflow(null);
+    }
+  }
+
+  async function removeWorkflowOverride(tipo: string) {
+    if (!canalId) return;
+    const current = await fetch(`/api/studio/canales/${canalId}`)
+      .then((r) => r.json())
+      .then((d: { canal?: { config?: { comfyui_workflow_overrides?: Record<string, string> } } }) =>
+        d.canal?.config?.comfyui_workflow_overrides ?? {}
+      );
+    const updated = { ...current };
+    delete updated[tipo];
+    await fetch(`/api/studio/canales/${canalId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ comfyui_workflow_overrides: updated }),
+    });
+    setComfyuiWorkflows((prev) => {
+      const next = { ...prev };
+      delete next[tipo];
+      return next;
+    });
   }
 
   async function saveCanalConfig() {
@@ -416,6 +533,173 @@ function ConfigContent() {
         )}
       </div>
 
+      {/* Motor de IA (guiones) */}
+      <div className="bg-white/[0.03] border border-white/8 rounded-2xl p-6 space-y-5">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
+            <svg className="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
+            </svg>
+          </div>
+          <div>
+            <h2 className="text-base font-semibold text-white">Motor de IA</h2>
+            <p className="text-xs text-gray-500">Modelo usado para generar guiones, SEO y hooks</p>
+          </div>
+          {savingLLM && <span className="ml-auto text-xs text-gray-600 animate-pulse">Guardando...</span>}
+          {llmSaved && <span className="ml-auto text-xs text-emerald-400">Guardado ✓</span>}
+        </div>
+
+        {/* Selector */}
+        <div className="grid grid-cols-2 gap-3">
+          {([
+            { id: 'claude', label: 'Claude', desc: 'Anthropic · sonnet-4-5/4-6' },
+            { id: 'openai', label: 'ChatGPT', desc: 'OpenAI · gpt-4o' },
+            { id: 'openrouter', label: 'OpenRouter', desc: 'Modelos gratuitos' },
+            { id: 'gemini', label: 'Gemini', desc: 'Google · gemini-2.0-flash' },
+          ] as const).map((motor) => (
+            <button
+              key={motor.id}
+              onClick={() => setLlmMotor(motor.id)}
+              className={`flex flex-col items-start gap-1 p-4 rounded-xl border transition-all text-left ${
+                llmMotor === motor.id
+                  ? 'bg-emerald-500/10 border-emerald-500/40 text-white'
+                  : 'bg-white/[0.02] border-white/8 text-gray-400 hover:border-white/20'
+              }`}
+            >
+              <span className="text-sm font-semibold">{motor.label}</span>
+              <span className="text-xs opacity-70">{motor.desc}</span>
+            </button>
+          ))}
+        </div>
+
+        {/* API key de OpenAI (write-only) */}
+        {llmMotor === 'openai' && (
+          <div>
+            <label className="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-1.5">
+              OpenAI API Key
+            </label>
+            <input
+              type="password"
+              value={openaiKey}
+              onChange={(e) => setOpenaiKey(e.target.value)}
+              placeholder="sk-... (dejar vacío para mantener la actual)"
+              className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-emerald-500 transition-colors font-mono"
+            />
+            <p className="mt-1.5 text-xs text-gray-600">La key se guarda cifrada y no se muestra de nuevo. Déjalo vacío si no quieres cambiarla.</p>
+          </div>
+        )}
+
+        {/* API key de OpenRouter (write-only) */}
+        {llmMotor === 'openrouter' && (
+          <div>
+            <label className="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-1.5">
+              OpenRouter API Key
+            </label>
+            <input
+              type="password"
+              value={openrouterKey}
+              onChange={(e) => setOpenrouterKey(e.target.value)}
+              placeholder="sk-or-... (dejar vacío para mantener la actual)"
+              className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-emerald-500 transition-colors font-mono"
+            />
+            <p className="mt-1.5 text-xs text-gray-600">Usa modelos gratuitos por defecto (DeepSeek V3 · Llama 4). La key no se muestra de nuevo.</p>
+          </div>
+        )}
+
+        {/* API key de Gemini (write-only) */}
+        {llmMotor === 'gemini' && (
+          <div>
+            <label className="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-1.5">
+              Gemini API Key
+            </label>
+            <input
+              type="password"
+              value={geminiKey}
+              onChange={(e) => setGeminiKey(e.target.value)}
+              placeholder="AIza... (dejar vacío para mantener la actual)"
+              className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-emerald-500 transition-colors font-mono"
+            />
+            <p className="mt-1.5 text-xs text-gray-600">Consigue tu key gratis en aistudio.google.com. 1.500 peticiones/día sin coste. La key no se muestra de nuevo.</p>
+          </div>
+        )}
+
+        <button
+          onClick={saveLLMConfig}
+          disabled={savingLLM}
+          className="flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white text-sm font-semibold rounded-xl transition-colors"
+        >
+          {savingLLM ? 'Guardando...' : 'Guardar motor de IA'}
+        </button>
+      </div>
+
+      {/* ComfyUI Cloud */}
+      {canalId && (
+        <div className="bg-white/[0.03] border border-white/8 rounded-2xl p-6 space-y-5">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center">
+              <svg className="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+              </svg>
+            </div>
+            <div>
+              <h2 className="text-base font-semibold text-white">ComfyUI Cloud</h2>
+              <p className="text-xs text-gray-500">Motor de imágenes avanzado · cloud.comfy.org</p>
+            </div>
+            {savingComfyui && <span className="ml-auto text-xs text-gray-600 animate-pulse">Guardando...</span>}
+            {comfyuiSaved && <span className="ml-auto text-xs text-emerald-400">Guardada ✓</span>}
+          </div>
+
+          <div className="flex gap-2">
+            <input
+              type="password"
+              placeholder="API Key de ComfyUI Cloud"
+              value={comfyuiKey}
+              onChange={(e) => setComfyuiKey(e.target.value)}
+              className="flex-1 px-3 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-indigo-500 transition-colors font-mono"
+            />
+            <button
+              onClick={saveComfyuiKey}
+              disabled={savingComfyui || !comfyuiKey.trim()}
+              className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-sm font-semibold rounded-xl transition-colors"
+            >
+              {savingComfyui ? 'Guardando...' : comfyuiSaved ? 'Guardada ✓' : 'Guardar key'}
+            </button>
+          </div>
+
+          <div className="space-y-2">
+            <p className="text-xs font-medium text-gray-400 uppercase tracking-wider">Workflows personalizados</p>
+            {(['thumbnail', 'cartel', 'fondo', 'video', 'edit_image', 'dj_photo'] as const).map((tipo) => (
+              <div key={tipo} className="flex items-center justify-between bg-white/[0.02] border border-white/8 rounded-xl px-4 py-2.5">
+                <span className="text-sm text-gray-300 capitalize">{tipo.replace('_', ' ')}</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-500">{comfyuiWorkflows[tipo] ?? 'default'}</span>
+                  {comfyuiWorkflows[tipo] && (
+                    <button onClick={() => void removeWorkflowOverride(tipo)} className="text-xs text-red-400 hover:text-red-300">✕</button>
+                  )}
+                  <label className="cursor-pointer bg-white/10 hover:bg-white/20 px-2 py-1 rounded text-xs text-white transition-colors">
+                    {uploadingWorkflow === tipo ? '...' : 'Subir'}
+                    <input
+                      type="file"
+                      accept=".json"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) void handleWorkflowUpload(tipo, file);
+                      }}
+                    />
+                  </label>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <p className="text-xs text-gray-500">
+            Para activar ComfyUI, cambia el motor de imagen del canal a &quot;comfyui&quot; desde la API o la BD.
+            Los workflows deben exportarse desde ComfyUI en formato API (no workflow).
+          </p>
+        </div>
+      )}
+
       {/* Motores de narración */}
       <div className="bg-white/[0.03] border border-white/8 rounded-2xl p-6 space-y-5">
         <div className="flex items-center gap-3">
@@ -486,6 +770,7 @@ function ConfigContent() {
               { value: 'auto', label: 'Auto', desc: 'ElevenLabs si hay créditos, Edge TTS si no' },
               { value: 'elevenlabs', label: 'ElevenLabs', desc: 'Mejor calidad de voz' },
               { value: 'edge-tts', label: 'Edge TTS', desc: 'Gratuito, es-ES-AlvaroNeural' },
+              { value: 'gemini-tts', label: 'Gemini TTS', desc: 'Google · voz expresiva multilingüe' },
             ] as { value: PreferredEngine; label: string; desc: string }[]).map((opt) => (
               <button
                 key={opt.value}
