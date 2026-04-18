@@ -32,7 +32,13 @@ export async function PATCH(request: NextRequest, { params }: Params): Promise<N
   if (body.tono !== undefined) update['config.tono'] = body.tono;
   if (body.voz_motor !== undefined) update['config.voz_motor'] = body.voz_motor;
   if (body.imagen_motor !== undefined) update['config.imagen_motor'] = body.imagen_motor;
+  if (body.llm_motor !== undefined) update['config.llm_motor'] = body.llm_motor;
+  if (body.openai_api_key !== undefined) update['config.openai_api_key'] = body.openai_api_key;
+  if (body.openrouter_api_key !== undefined) update['config.openrouter_api_key'] = body.openrouter_api_key;
+  if (body.gemini_api_key !== undefined) update['config.gemini_api_key'] = body.gemini_api_key;
   if (body.idioma !== undefined) update['config.idioma'] = body.idioma;
+  if (body.comfyui_api_key !== undefined) update['config.comfyui_api_key'] = body.comfyui_api_key;
+  if (body.comfyui_workflow_overrides !== undefined) update['config.comfyui_workflow_overrides'] = body.comfyui_workflow_overrides;
 
   await connectDB();
   const canal = await StudioCanal.findOneAndUpdate(
