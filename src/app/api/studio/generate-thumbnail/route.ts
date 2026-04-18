@@ -2,9 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getStudioSession } from '@/lib/studio/session';
 import path from 'path';
 import fs from 'fs';
-import Anthropic from '@anthropic-ai/sdk';
 import connectDB from '@/lib/mongodb';
 import StudioScript from '@/models/StudioScript';
+import StudioCanal from '@/models/StudioCanal';
+import { callLLM, extractJSON, type LLMConfig } from '@/lib/studio/llm-client';
+import { runComfyWorkflow } from '@/lib/studio/comfyui-client';
 
 const FONT_PATH = path.join(process.cwd(), 'public/studio/fonts/BebasNeue-Regular.ttf');
 const THUMBNAILS_DIR = path.join(process.cwd(), 'public/studio/thumbnails');
@@ -31,33 +33,31 @@ function generateFallbackTexts(personaje: string, epoca: string): ThumbnailTexts
 }
 
 async function generateThumbnailTexts(
-  anthropic: Anthropic,
+  canalConfig: LLMConfig,
   personaje: string,
   epoca: string,
   guionHook: string
 ): Promise<ThumbnailTexts> {
   try {
-    const response = await anthropic.messages.create({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 200,
+    const raw = await callLLM({
+      system: 'Eres un copywriter experto en YouTube. Respondes SOLO con JSON válido, sin texto extra ni bloques de código.',
       messages: [
         {
           role: 'user',
-          content: `Eres un copywriter experto en YouTube. Crea textos de miniatura para un documental histórico sobre ${personaje} (${epoca}).
+          content: `Crea textos de miniatura para un documental histórico sobre ${personaje} (${epoca}).
 
-Devuelve SOLO este JSON (sin texto extra, sin bloques de código):
+Devuelve SOLO este JSON:
 {"texto_principal":"FRASE CORTA EN MAYÚSCULAS","subtitulo":"SUBTÍTULO IMPACTANTE","contexto":"LUGAR, AÑO"}
 
 Contexto del documental: ${guionHook.substring(0, 200)}`,
         },
       ],
+      maxTokens: 200,
+      model: 'fast',
+      canalConfig,
     });
 
-    const content = response.content[0];
-    if (content.type !== 'text') return generateFallbackTexts(personaje, epoca);
-
-    // Eliminar bloques de código markdown si los hay
-    const cleaned = content.text.replace(/```(?:json)?\s*/gi, '').replace(/```/g, '').trim();
+    const cleaned = extractJSON(raw);
     const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
     if (!jsonMatch) return generateFallbackTexts(personaje, epoca);
 
@@ -70,25 +70,24 @@ Contexto del documental: ${guionHook.substring(0, 200)}`,
 }
 
 async function generateFluxPrompt(
-  anthropic: Anthropic,
+  canalConfig: LLMConfig,
   personaje: string,
   epoca: string,
   guionHook: string
 ): Promise<string> {
-  const response = await anthropic.messages.create({
-    model: 'claude-haiku-4-5-20251001',
-    max_tokens: 150,
+  const raw = await callLLM({
+    system: 'You generate short English image prompts. Return ONLY the prompt text, no explanations.',
     messages: [
       {
         role: 'user',
         content: `Generate a short English image prompt (max 50 words) for a dramatic portrait of ${personaje} from ${epoca} in the style: "Dramatic cinematic portrait of [character description], ${epoca}, black and white with red accents, extreme close up face, dark menacing expression, dark atmospheric background, dramatic chiaroscuro lighting, photorealistic, high detail, no text, no watermark, film noir style, intimidating". Context: ${guionHook}. Return ONLY the prompt text.`,
       },
     ],
+    maxTokens: 150,
+    model: 'fast',
+    canalConfig,
   });
-
-  const content = response.content[0];
-  if (content.type !== 'text') throw new Error('Respuesta inesperada');
-  return content.text.trim();
+  return raw.trim();
 }
 
 async function generateBaseImageWithFlux(prompt: string, outputPath: string): Promise<void> {
@@ -316,12 +315,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       return NextResponse.json({ error: 'scriptId es obligatorio' }, { status: 400 });
     }
 
-    const anthropicKey = process.env.ANTHROPIC_API_KEY;
-    if (!anthropicKey) {
-      return NextResponse.json({ error: 'ANTHROPIC_API_KEY no configurada' }, { status: 500 });
-    }
-
     await connectDB();
+    const canal = await StudioCanal.findById(session.canal_id).lean();
+    const canalConfig = ((canal as { config?: LLMConfig } | null)?.config ?? {}) as LLMConfig;
+
     const script = await StudioScript.findById(scriptId);
     if (!script) {
       return NextResponse.json({ error: 'Guión no encontrado' }, { status: 404 });
@@ -340,17 +337,15 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     // Ejecutar en background
     (async () => {
       try {
-        const anthropic = new Anthropic({ apiKey: anthropicKey });
-
         // Extraer hook del primer párrafo del guión
         const primerSeccion = script.guion_json?.[0];
         const guionHook = primerSeccion
           ? `${primerSeccion.title}: ${primerSeccion.content.substring(0, 200)}`
           : `${script.personaje}, ${script.epoca}`;
 
-        // Paso 1: Generar textos con Claude
+        // Paso 1: Generar textos con LLM del canal
         const texts = await generateThumbnailTexts(
-          anthropic,
+          canalConfig,
           script.personaje,
           script.epoca,
           guionHook
@@ -358,15 +353,25 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
         // Paso 2: Generar prompt FLUX
         const fluxPrompt = await generateFluxPrompt(
-          anthropic,
+          canalConfig,
           script.personaje,
           script.epoca,
           guionHook
         );
 
-        // Paso 3: Generar imagen base con FLUX
+        // Paso 3: Generar imagen base
         const basePath = path.join(THUMBNAILS_DIR, `${scriptId}-base.jpg`);
-        await generateBaseImageWithFlux(fluxPrompt, basePath);
+        const rawCanal = canal as { config?: { imagen_motor?: string; comfyui_api_key?: string; comfyui_workflow_overrides?: Record<string, string> } } | null;
+        if (rawCanal?.config?.imagen_motor === 'comfyui') {
+          const comfyKey = rawCanal.config.comfyui_api_key;
+          if (!comfyKey) throw new Error('API key ComfyUI no configurada');
+          const overrides = rawCanal.config.comfyui_workflow_overrides ?? {};
+          const imgBuffer = await runComfyWorkflow('thumbnail', { prompt: fluxPrompt }, comfyKey, overrides.thumbnail);
+          fs.mkdirSync(path.dirname(basePath), { recursive: true });
+          fs.writeFileSync(basePath, imgBuffer);
+        } else {
+          await generateBaseImageWithFlux(fluxPrompt, basePath);
+        }
 
         // Paso 4: Componer miniatura final con Sharp
         const finalPath = path.join(THUMBNAILS_DIR, `${scriptId}.jpg`);
