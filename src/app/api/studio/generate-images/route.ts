@@ -5,6 +5,8 @@ import path from 'path';
 import connectDB from '@/lib/mongodb';
 import StudioScript from '@/models/StudioScript';
 import StudioConfig from '@/models/StudioConfig';
+import StudioCanal from '@/models/StudioCanal';
+import { type LLMConfig } from '@/lib/studio/llm-client';
 import { generateImagesHFBackground } from '@/lib/studio/hf-images';
 import {
   getAudioDurationSeconds,
@@ -12,7 +14,9 @@ import {
   calculateImageCount,
   generateDistributedPrompts,
   STYLE_PREFIX_FREEPIK,
+  STYLE_PREFIX_HF,
 } from '@/lib/studio/image-prompts';
+import { runComfyWorkflow } from '@/lib/studio/comfyui-client';
 
 // ── Config de motor ──────────────────────────────────────────────────────────
 
@@ -131,10 +135,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       return NextResponse.json({ error: 'scriptId es obligatorio' }, { status: 400 });
     }
 
-    const anthropicKey = process.env.ANTHROPIC_API_KEY;
-    if (!anthropicKey) return NextResponse.json({ error: 'ANTHROPIC_API_KEY no configurada' }, { status: 500 });
-
     await connectDB();
+    const canal = await StudioCanal.findById(session.canal_id).lean();
+    const canalConfig = ((canal as { config?: LLMConfig } | null)?.config ?? {}) as LLMConfig;
+
     const script = await StudioScript.findById(scriptId);
     if (!script) return NextResponse.json({ error: 'Guión no encontrado' }, { status: 404 });
 
@@ -157,6 +161,66 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const numImages = calculateImageCount(durationSec);
     const imageDuration = durationSec / numImages;
 
+    // ── Modo ComfyUI ─────────────────────────────────────────────────────────
+    const rawCanal = canal as { config?: { imagen_motor?: string; comfyui_api_key?: string; comfyui_workflow_overrides?: Record<string, string> } } | null;
+    if (rawCanal?.config?.imagen_motor === 'comfyui') {
+      const comfyKey = rawCanal.config.comfyui_api_key;
+      if (!comfyKey) {
+        return NextResponse.json({ error: 'API key ComfyUI no configurada para este canal' }, { status: 500 });
+      }
+      const overrides = rawCanal.config.comfyui_workflow_overrides ?? {};
+
+      script.images_status = 'processing';
+      script.images_progress = 0;
+      script.images_count = numImages;
+      script.images_duration = imageDuration;
+      script.images_error = undefined;
+      await script.save();
+
+      const sid = scriptId;
+      (async () => {
+        try {
+          const prompts = await generateDistributedPrompts(
+            script.guion_json, numImages, script.personaje, script.epoca, canalConfig, STYLE_PREFIX_HF
+          );
+          const imagesDir = path.join(publicDir, 'studio', 'images', sid);
+          await fs.mkdir(imagesDir, { recursive: true });
+          const imagesPaths: string[] = [];
+          for (let i = 0; i < prompts.length; i++) {
+            const buffer = await runComfyWorkflow('thumbnail', { prompt: prompts[i] }, comfyKey, overrides.thumbnail);
+            const filename = `seccion-${i}.png`;
+            await fs.writeFile(path.join(imagesDir, filename), buffer);
+            imagesPaths.push(`/api/studio/image/${sid}/${filename}`);
+            await connectDB();
+            const s = await StudioScript.findById(sid);
+            if (s) { s.images_progress = i + 1; await s.save(); }
+          }
+          await connectDB();
+          const s = await StudioScript.findById(sid);
+          if (s) {
+            s.images_paths = imagesPaths;
+            s.images_count = imagesPaths.length;
+            s.images_duration = imageDuration;
+            s.images_status = 'ready';
+            s.images_progress = imagesPaths.length;
+            await s.save();
+          }
+        } catch (err: unknown) {
+          const msg = err instanceof Error ? err.message : 'Error ComfyUI';
+          await connectDB();
+          const s = await StudioScript.findById(sid);
+          if (s) { s.images_status = 'error'; s.images_error = msg.slice(0, 500); await s.save(); }
+        }
+      })();
+
+      return NextResponse.json({
+        status: 'processing',
+        engine: 'comfyui',
+        images_count: numImages,
+        images_duration: Math.round(imageDuration),
+      });
+    }
+
     const engine = await getImageEngine();
 
     // ── Modo HuggingFace (async) ────────────────────────────────────────────
@@ -174,7 +238,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
       const sid = scriptId;
       generateImagesHFBackground(
-        sid, script.guion_json, script.personaje, script.epoca, anthropicKey, numImages, imageDuration
+        sid, script.guion_json, script.personaje, script.epoca, canalConfig, numImages, imageDuration
       ).catch(async (err: unknown) => {
         const msg = err instanceof Error ? err.message : 'Error desconocido';
         await connectDB();
@@ -199,7 +263,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     if (freepikKey) {
       try {
         const prompts = await generateDistributedPrompts(
-          script.guion_json, numImages, script.personaje, script.epoca, anthropicKey, STYLE_PREFIX_FREEPIK
+          script.guion_json, numImages, script.personaje, script.epoca, canalConfig, STYLE_PREFIX_FREEPIK
         );
 
         const imagesDir = path.join(publicDir, 'studio', 'images', scriptId);
@@ -242,7 +306,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
           const sid = scriptId;
           generateImagesHFBackground(
-            sid, script.guion_json, script.personaje, script.epoca, anthropicKey, numImages, imageDuration
+            sid, script.guion_json, script.personaje, script.epoca, canalConfig, numImages, imageDuration
           ).catch(async (err: unknown) => {
             const msg = err instanceof Error ? err.message : 'Error desconocido';
             await connectDB();
@@ -273,7 +337,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
       const sid = scriptId;
       generateImagesHFBackground(
-        sid, script.guion_json, script.personaje, script.epoca, anthropicKey, numImages, imageDuration
+        sid, script.guion_json, script.personaje, script.epoca, canalConfig, numImages, imageDuration
       ).catch(async (err: unknown) => {
         const msg = err instanceof Error ? err.message : 'Error desconocido';
         await connectDB();
