@@ -3,8 +3,9 @@ import { getStudioSession } from '@/lib/studio/session';
 import connectDB from '@/lib/mongodb';
 import StudioCanal from '@/models/StudioCanal';
 import { runComfyWorkflow } from '@/lib/studio/comfyui-client';
-import fs from 'fs';
+import { promises as fsp, mkdirSync } from 'fs';
 import path from 'path';
+import { randomBytes } from 'crypto';
 
 const CARTELES_IA_DIR = path.join(process.cwd(), 'public', 'studio', 'carteles', 'ia');
 
@@ -70,8 +71,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       };
     } | null;
 
-    fs.mkdirSync(CARTELES_IA_DIR, { recursive: true });
-    const filename = `${Date.now()}.jpg`;
+    mkdirSync(CARTELES_IA_DIR, { recursive: true });
+    const filename = `${Date.now()}-${randomBytes(4).toString('hex')}.jpg`;
     const outputPath = path.join(CARTELES_IA_DIR, filename);
 
     if (engine === 'comfyui') {
@@ -79,7 +80,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       if (!comfyKey) return NextResponse.json({ error: 'API key ComfyUI no configurada' }, { status: 400 });
       const overrides = rawCanal?.config?.comfyui_workflow_overrides ?? {};
       const buffer = await runComfyWorkflow('cartel', { prompt }, comfyKey, overrides.cartel);
-      fs.writeFileSync(outputPath, buffer);
+      await fsp.writeFile(outputPath, buffer);
     } else if (engine === 'huggingface') {
       await generateWithHuggingFace(prompt, outputPath);
     } else {
@@ -99,7 +100,7 @@ async function generateWithHuggingFace(prompt: string, outputPath: string): Prom
   const hfToken = process.env.HUGGINGFACE_TOKEN;
   if (!hfToken) throw new Error('HUGGINGFACE_TOKEN no configurado');
 
-  for (let attempt = 0; attempt < 3; attempt++) {
+  for (let attempt = 1; attempt <= 3; attempt++) {
     const response = await fetch(
       'https://router.huggingface.co/hf-inference/models/black-forest-labs/FLUX.1-schnell',
       {
@@ -122,6 +123,7 @@ async function generateWithHuggingFace(prompt: string, outputPath: string): Prom
     );
 
     if (response.status === 503) {
+      if (attempt === 3) throw new Error('HuggingFace: modelo no disponible tras 3 intentos');
       await new Promise((r) => setTimeout(r, 20000));
       continue;
     }
@@ -133,11 +135,9 @@ async function generateWithHuggingFace(prompt: string, outputPath: string): Prom
 
     const buffer = Buffer.from(await response.arrayBuffer());
     if (buffer.length < 1000) throw new Error('Imagen demasiado pequeña');
-    fs.writeFileSync(outputPath, buffer);
+    await fsp.writeFile(outputPath, buffer);
     return;
   }
-
-  throw new Error('HuggingFace: demasiados reintentos');
 }
 
 // ── Freepik Mystic ────────────────────────────────────────────────────────────
@@ -167,6 +167,7 @@ async function generateWithFreepik(prompt: string, outputPath: string): Promise<
       image: { size: 'portrait_3_4' },
       styling: { style: 'photo' },
     }),
+    signal: AbortSignal.timeout(30000),
   });
 
   if (!createRes.ok) {
@@ -180,9 +181,10 @@ async function generateWithFreepik(prompt: string, outputPath: string): Promise<
   if (Array.isArray(createData.data)) {
     const first = (createData as FreepikSyncResponse).data[0];
     if (first?.base64) {
-      fs.writeFileSync(outputPath, Buffer.from(first.base64, 'base64'));
+      await fsp.writeFile(outputPath, Buffer.from(first.base64, 'base64'));
       return;
     }
+    throw new Error('Freepik: respuesta recibida pero sin datos de imagen');
   }
 
   // Respuesta asíncrona (polling)
@@ -195,7 +197,12 @@ async function generateWithFreepik(prompt: string, outputPath: string): Promise<
     const pollRes = await fetch(`https://api.freepik.com/v1/ai/text-to-image/${taskId}`, {
       headers: { 'x-freepik-api-key': apiKey, Accept: 'application/json' },
     });
-    if (!pollRes.ok) continue;
+    if (!pollRes.ok) {
+      if (pollRes.status >= 400 && pollRes.status < 500) {
+        throw new Error(`Freepik: error ${pollRes.status} consultando tarea`);
+      }
+      continue;
+    }
 
     const pollData = await pollRes.json() as {
       data?: { status?: string; generated?: Array<{ base64?: string }> };
@@ -205,7 +212,7 @@ async function generateWithFreepik(prompt: string, outputPath: string): Promise<
     if (status === 'DONE' || status === 'completed') {
       const base64 = pollData.data?.generated?.[0]?.base64;
       if (base64) {
-        fs.writeFileSync(outputPath, Buffer.from(base64, 'base64'));
+        await fsp.writeFile(outputPath, Buffer.from(base64, 'base64'));
         return;
       }
     }
