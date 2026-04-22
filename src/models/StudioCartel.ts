@@ -70,6 +70,10 @@ export interface IStudioCartel extends Document {
   usar_logo_local: boolean;
   usar_logo_dj: boolean;
   canal_id?: string | null;
+
+  // Campos para IA
+  tipo: 'manual' | 'ia';
+  prompt_ia: string;
 }
 
 const TextoCampoSchema = {
@@ -85,10 +89,10 @@ const TextoCampoConSizeSchema = {
 
 const StudioCartelSchema = new Schema<IStudioCartel>({
   // Campos originales
-  dj_id: { type: String, required: true },
+  dj_id: { type: String, default: '' },
   nombre_evento: { type: String, required: true, trim: true },
   fecha: { type: String, required: true },
-  hora_inicio: { type: String, required: true },
+  hora_inicio: { type: String, default: '' },
   hora_fin: { type: String, default: null },
   lugar: { type: String, default: 'Cero Ocho Pub, C/ Obispo Pastor Pérez 8, Valencia' },
   tematica: { type: String, default: '' },
@@ -144,6 +148,10 @@ const StudioCartelSchema = new Schema<IStudioCartel>({
   usar_logo_local: { type: Boolean, default: true },
   usar_logo_dj: { type: Boolean, default: true },
   canal_id: { type: String, index: true, default: null },
+
+  // Campos para IA
+  tipo: { type: String, enum: ['manual', 'ia'], default: 'manual' },
+  prompt_ia: { type: String, default: '' },
 });
 
 const StudioCartel: Model<IStudioCartel> =
