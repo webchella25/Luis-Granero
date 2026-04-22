@@ -26,3 +26,38 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: String(e) }, { status: 500 });
   }
 }
+
+export async function POST(request: NextRequest): Promise<NextResponse> {
+  const session = getStudioSession(request);
+  if (!session?.canal_id) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+  try {
+    const body = await request.json() as {
+      nombre_evento: string;
+      nombre_dj?: string;
+      fecha: string;
+      cartel_path: string;
+      prompt_ia?: string;
+    };
+
+    if (!body.nombre_evento || !body.fecha || !body.cartel_path) {
+      return NextResponse.json({ error: 'Faltan campos obligatorios' }, { status: 400 });
+    }
+
+    await connectDB();
+    const cartel = await StudioCartel.create({
+      dj_id: '',
+      nombre_evento: body.nombre_evento.trim(),
+      fecha: body.fecha.trim(),
+      hora_inicio: '',
+      canal_id: session.canal_id,
+      cartel_path: body.cartel_path,
+      tipo: 'ia',
+      prompt_ia: body.prompt_ia ?? '',
+      prompt_usuario: body.nombre_dj ?? '',
+    });
+
+    return NextResponse.json({ cartel }, { status: 201 });
+  } catch (e) {
+    return NextResponse.json({ error: String(e) }, { status: 500 });
+  }
+}
