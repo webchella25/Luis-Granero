@@ -28,6 +28,7 @@ export default function NuevoCartelIAPage() {
   const [prompt, setPrompt] = useState('');
   const [engines, setEngines] = useState<Engine[]>([]);
   const [selectedEngine, setSelectedEngine] = useState<Engine>('freepik');
+  const [enginesLoaded, setEnginesLoaded] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [genError, setGenError] = useState('');
 
@@ -47,7 +48,8 @@ export default function NuevoCartelIAPage() {
           setSelectedEngine(d.default ?? d.engines[0]);
         }
       })
-      .catch(() => null);
+      .catch(() => null)
+      .finally(() => setEnginesLoaded(true));
   }, []);
 
   async function handleGeneratePrompt() {
@@ -284,6 +286,12 @@ export default function NuevoCartelIAPage() {
               </p>
             )}
 
+            {enginesLoaded && engines.length === 0 && (
+              <p className="text-sm text-amber-400 bg-amber-500/10 border border-amber-500/20 rounded-lg px-4 py-3">
+                No hay motores de imagen configurados. Añade una API key en Configuración.
+              </p>
+            )}
+
             {genError && (
               <p className="text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-4 py-3">
                 {genError}
@@ -299,7 +307,7 @@ export default function NuevoCartelIAPage() {
               </button>
               <button
                 onClick={handleGenerateImage}
-                disabled={generating || !prompt.trim()}
+                disabled={generating || !prompt.trim() || (enginesLoaded && engines.length === 0)}
                 className="flex-1 py-3 rounded-xl bg-violet-600 hover:bg-violet-700 disabled:bg-violet-900/50 disabled:text-violet-700 text-white font-medium transition-colors text-sm flex items-center justify-center gap-2"
               >
                 {generating ? (

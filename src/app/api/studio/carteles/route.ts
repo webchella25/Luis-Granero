@@ -12,13 +12,13 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const carteles = await StudioCartel.find({ canal_id: session.canal_id }).sort({ creado_en: -1 }).lean();
 
     // Enriquecer con nombre del DJ
-    const djIds = [...new Set(carteles.map((c) => c.dj_id))];
+    const djIds = [...new Set(carteles.map((c) => c.dj_id))].filter(Boolean);
     const djs = await StudioDj.find({ _id: { $in: djIds } }).lean();
     const djMap = Object.fromEntries(djs.map((d) => [String(d._id), d.nombre]));
 
     const enriched = carteles.map((c) => ({
       ...c,
-      dj_nombre: djMap[c.dj_id] ?? 'DJ',
+      dj_nombre: c.dj_id ? (djMap[c.dj_id] ?? 'DJ') : 'IA',
     }));
 
     return NextResponse.json({ carteles: enriched });
@@ -39,7 +39,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       prompt_ia?: string;
     };
 
-    if (!body.nombre_evento || !body.fecha || !body.cartel_path) {
+    if (!body.nombre_evento || !body.cartel_path) {
       return NextResponse.json({ error: 'Faltan campos obligatorios' }, { status: 400 });
     }
 
@@ -47,7 +47,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const cartel = await StudioCartel.create({
       dj_id: '',
       nombre_evento: body.nombre_evento.trim(),
-      fecha: body.fecha.trim(),
+      fecha: body.fecha?.trim() ?? '',
       hora_inicio: '',
       canal_id: session.canal_id,
       cartel_path: body.cartel_path,

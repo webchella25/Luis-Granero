@@ -1,27 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getStudioSession } from '@/lib/studio/session';
 import fs from 'fs/promises';
 import path from 'path';
+
+const CARTELES_IA_DIR = path.join(process.cwd(), 'public', 'studio', 'carteles', 'ia');
 
 interface RouteParams {
   params: Promise<{ filename: string }>;
 }
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: RouteParams
 ): Promise<NextResponse> {
+  const session = getStudioSession(request);
+  if (!session?.canal_id) return new NextResponse(null, { status: 401 });
+
   try {
     const { filename } = await params;
     const safeFilename = path.basename(filename);
+    const filePath = path.join(CARTELES_IA_DIR, safeFilename);
 
-    const filePath = path.join(
-      process.cwd(),
-      'public',
-      'studio',
-      'carteles',
-      'ia',
-      safeFilename
-    );
+    if (!filePath.startsWith(CARTELES_IA_DIR + path.sep)) {
+      return new NextResponse(null, { status: 400 });
+    }
 
     const buffer = await fs.readFile(filePath);
     const ext = path.extname(safeFilename).toLowerCase();

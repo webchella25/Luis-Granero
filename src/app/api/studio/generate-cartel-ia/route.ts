@@ -58,8 +58,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     const { prompt, engine } = await request.json() as GenerateRequest;
 
-    if (!prompt || !engine) {
-      return NextResponse.json({ error: 'prompt y engine son obligatorios' }, { status: 400 });
+    const VALID_ENGINES = ['freepik', 'huggingface', 'comfyui'] as const;
+    if (!prompt || !engine || !VALID_ENGINES.includes(engine as typeof VALID_ENGINES[number])) {
+      return NextResponse.json({ error: 'prompt y engine son obligatorios y válidos' }, { status: 400 });
     }
 
     await connectDB();
