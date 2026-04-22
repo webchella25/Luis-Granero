@@ -4,14 +4,6 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
-interface ApiStatus {
-  anthropic: boolean;
-  elevenlabs: boolean;
-  freepik: boolean;
-  huggingface: boolean;
-  youtube: boolean;
-}
-
 interface CanalInfo { _id: string; nombre: string; nicho: string }
 const CANAL_EMOJIS: Record<string, string> = { 'Almas Corruptas': '🎭', 'Sabores Saludables': '🍎' };
 function getCanalEmoji(nombre: string): string { return CANAL_EMOJIS[nombre] ?? '📺'; }
@@ -80,28 +72,14 @@ const NAV_ITEMS = [
   },
 ];
 
-const API_LABELS: { key: keyof ApiStatus; label: string }[] = [
-  { key: 'anthropic', label: 'Anthropic' },
-  { key: 'elevenlabs', label: 'ElevenLabs' },
-  { key: 'freepik', label: 'Freepik' },
-  { key: 'huggingface', label: 'HuggingFace' },
-  { key: 'youtube', label: 'YouTube' },
-];
-
 export default function StudioLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const [apiStatus, setApiStatus] = useState<ApiStatus | null>(null);
   const [canales, setCanales] = useState<CanalInfo[]>([]);
   const [canalActivo, setCanalActivo] = useState<CanalInfo | null>(null);
   const [showCanalDropdown, setShowCanalDropdown] = useState(false);
   const [switchingCanal, setSwitchingCanal] = useState(false);
 
   useEffect(() => {
-    fetch('/api/studio/api-status')
-      .then((r) => r.json())
-      .then((d) => setApiStatus(d as ApiStatus))
-      .catch(() => null);
-
     fetch('/api/studio/canales')
       .then((r) => r.json())
       .then((d: { canales?: CanalInfo[] }) => { if (d.canales) setCanales(d.canales); })
@@ -240,25 +218,8 @@ export default function StudioLayout({ children }: { children: React.ReactNode }
           })}
         </nav>
 
-        {/* Bottom: API status + logout */}
+        {/* Bottom: logout + version */}
         <div className="px-4 py-4 border-t border-white/[0.06] space-y-3">
-          {/* API status dots */}
-          <div className="space-y-1.5">
-            <p className="text-[10px] text-gray-700 uppercase tracking-wider font-medium mb-2">APIs</p>
-            {API_LABELS.map(({ key, label }) => (
-              <div key={key} className="flex items-center justify-between">
-                <span className="text-xs text-gray-600">{label}</span>
-                {apiStatus === null ? (
-                  <span className="w-1.5 h-1.5 rounded-full bg-gray-800" />
-                ) : apiStatus[key] ? (
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" title="Configurado" />
-                ) : (
-                  <span className="w-1.5 h-1.5 rounded-full bg-red-500/60" title="No configurado" />
-                )}
-              </div>
-            ))}
-          </div>
-
           {/* Logout */}
           <button
             onClick={handleLogout}
