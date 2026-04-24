@@ -9,7 +9,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
   await connectDB();
   const canales = await StudioCanal.find({ workspace_id: session.workspace_id })
-    .select('_id nombre nicho descripcion youtube_tokens creado_en')
+    .select('_id nombre nicho descripcion pipeline_tipo youtube_tokens creado_en')
     .lean();
 
   const result = canales.map((c) => ({
@@ -17,6 +17,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     nombre: c.nombre,
     nicho: c.nicho,
     descripcion: c.descripcion,
+    pipeline_tipo: c.pipeline_tipo ?? 'narrativo',
     youtube_conectado: !!c.youtube_tokens,
     creado_en: c.creado_en,
   }));
@@ -35,6 +36,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     tono?: string;
     system_prompt_guion?: string;
     idioma?: string;
+    pipeline_tipo?: 'narrativo' | 'musica_ambiental';
   };
 
   if (!body.nombre?.trim()) {
@@ -47,6 +49,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     nombre: body.nombre.trim(),
     nicho: body.nicho?.trim() ?? '',
     descripcion: body.descripcion?.trim() ?? '',
+    pipeline_tipo: body.pipeline_tipo ?? 'narrativo',
     youtube_tokens: null,
     config: {
       voz_motor: 'elevenlabs',

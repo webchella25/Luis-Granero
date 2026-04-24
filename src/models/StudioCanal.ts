@@ -30,6 +30,18 @@ export interface CanalConfig {
     edit_image?: string;
     dj_photo?: string;
   };
+  thumbnail_accent_color?: string;
+  thumbnail_style_prompt?: string;
+  icono?: string;
+  telegram_bot_token?: string;
+  telegram_chat_id?: string;
+  notificaciones?: {
+    alerta_1000_vistas: boolean;
+    alerta_despegando: boolean;
+    alerta_short_viral: boolean;
+    alerta_suscriptores: boolean;
+    alerta_calendario_vacio: boolean;
+  };
 }
 
 export interface IStudioCanal extends Document {
@@ -37,6 +49,8 @@ export interface IStudioCanal extends Document {
   nombre: string;
   descripcion: string;
   nicho: string;
+  pipeline_tipo: 'narrativo' | 'musica_ambiental';
+  logo_url: string;
   youtube_tokens: YoutubeTokensCanal | null;
   config: CanalConfig;
   creado_en: Date;
@@ -47,6 +61,8 @@ const StudioCanalSchema = new Schema<IStudioCanal>({
   nombre: { type: String, required: true, trim: true },
   descripcion: { type: String, default: '' },
   nicho: { type: String, default: '' },
+  pipeline_tipo: { type: String, enum: ['narrativo', 'musica_ambiental'], default: 'narrativo' },
+  logo_url: { type: String, default: '' },
   youtube_tokens: { type: Schema.Types.Mixed, default: null },
   config: {
     voz_motor: { type: String, enum: ['elevenlabs', 'edge-tts', 'gemini-tts'], default: 'elevenlabs' },
@@ -61,6 +77,18 @@ const StudioCanalSchema = new Schema<IStudioCanal>({
     idioma: { type: String, default: 'es-ES' },
     comfyui_api_key: { type: String, default: '' },
     comfyui_workflow_overrides: { type: Schema.Types.Mixed, default: {} },
+    thumbnail_accent_color: { type: String, default: '#CC0000' },
+    thumbnail_style_prompt: { type: String, default: '' },
+    icono: { type: String, default: '' },
+    telegram_bot_token: { type: String, default: '' },
+    telegram_chat_id: { type: String, default: '' },
+    notificaciones: {
+      alerta_1000_vistas: { type: Boolean, default: true },
+      alerta_despegando: { type: Boolean, default: true },
+      alerta_short_viral: { type: Boolean, default: true },
+      alerta_suscriptores: { type: Boolean, default: false },
+      alerta_calendario_vacio: { type: Boolean, default: true },
+    },
   },
   creado_en: { type: Date, default: Date.now },
 });
