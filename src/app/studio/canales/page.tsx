@@ -8,6 +8,7 @@ interface Canal {
   nombre: string;
   nicho: string;
   descripcion: string;
+  pipeline_tipo: 'narrativo' | 'musica_ambiental';
   youtube_conectado: boolean;
   creado_en: string;
 }
@@ -19,7 +20,7 @@ export default function CanalesPage() {
   const [canales, setCanales] = useState<Canal[]>([]);
   const [loading, setLoading] = useState(true);
   const [showNuevo, setShowNuevo] = useState(false);
-  const [form, setForm] = useState({ nombre: '', nicho: '', tono: '', system_prompt_guion: '', idioma: 'es-ES' });
+  const [form, setForm] = useState({ nombre: '', nicho: '', tono: '', system_prompt_guion: '', idioma: 'es-ES', pipeline_tipo: 'narrativo' });
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState('');
 
@@ -44,7 +45,7 @@ export default function CanalesPage() {
       });
       if (res.ok) {
         setShowNuevo(false);
-        setForm({ nombre: '', nicho: '', tono: '', system_prompt_guion: '', idioma: 'es-ES' });
+        setForm({ nombre: '', nicho: '', tono: '', system_prompt_guion: '', idioma: 'es-ES', pipeline_tipo: 'narrativo' });
         await loadCanales();
       } else {
         const d = (await res.json()) as { error?: string };
@@ -55,13 +56,17 @@ export default function CanalesPage() {
     }
   }
 
-  async function enterCanal(canal_id: string) {
+  async function enterCanal(canal_id: string, pipeline_tipo: string) {
     const res = await fetch('/api/studio/canal/select', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ canal_id }),
     });
-    if (res.ok) window.location.href = '/studio';
+    if (res.ok) {
+      window.location.href = pipeline_tipo === 'musica_ambiental'
+        ? '/studio/musica-ambiental/nuevo'
+        : '/studio';
+    }
   }
 
   return (
@@ -107,6 +112,29 @@ export default function CanalesPage() {
                   className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-600 focus:outline-none focus:border-violet-500 text-sm" />
               </div>
               <div>
+                <label className="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-1.5">Tipo de pipeline</label>
+                <div className="flex gap-2">
+                  {[
+                    { value: 'narrativo', label: 'Narrativo', desc: 'True crime, educativo, entrevistas' },
+                    { value: 'musica_ambiental', label: 'Música ambiental', desc: 'Lo-fi, ambient, estudio' },
+                  ].map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => setForm({ ...form, pipeline_tipo: opt.value })}
+                      className={`flex-1 px-3 py-3 rounded-xl border text-left transition-colors ${
+                        form.pipeline_tipo === opt.value
+                          ? 'border-violet-500/50 bg-violet-500/10 text-white'
+                          : 'border-white/10 bg-white/[0.02] text-gray-500 hover:border-white/20'
+                      }`}
+                    >
+                      <p className="text-sm font-medium">{opt.label}</p>
+                      <p className="text-xs mt-0.5 opacity-60">{opt.desc}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
                 <label className="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-1.5">System prompt del guión</label>
                 <textarea value={form.system_prompt_guion} onChange={(e) => setForm({ ...form, system_prompt_guion: e.target.value })}
                   placeholder="Instrucciones para Claude al generar guiones (dejar vacío para usar el prompt por defecto)"
@@ -147,6 +175,13 @@ export default function CanalesPage() {
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <span className={`text-xs px-2 py-1 rounded-full border ${
+                      canal.pipeline_tipo === 'musica_ambiental'
+                        ? 'text-cyan-400 bg-cyan-500/10 border-cyan-500/20'
+                        : 'text-violet-400 bg-violet-500/10 border-violet-500/20'
+                    }`}>
+                      {canal.pipeline_tipo === 'musica_ambiental' ? 'Música ambiental' : 'Narrativo'}
+                    </span>
+                    <span className={`text-xs px-2 py-1 rounded-full border ${
                       canal.youtube_conectado
                         ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20'
                         : 'text-gray-600 bg-white/5 border-white/8'
@@ -156,7 +191,7 @@ export default function CanalesPage() {
                   </div>
                 </div>
                 <div className="flex gap-2 mt-4">
-                  <button onClick={() => enterCanal(canal._id)}
+                  <button onClick={() => enterCanal(canal._id, canal.pipeline_tipo)}
                     className="flex-1 py-2 bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium rounded-xl transition-colors">
                     Entrar
                   </button>
