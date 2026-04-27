@@ -37,11 +37,16 @@ export async function PATCH(request: NextRequest, { params }: Params): Promise<N
   if (body.openai_api_key !== undefined) update['config.openai_api_key'] = body.openai_api_key;
   if (body.openrouter_api_key !== undefined) update['config.openrouter_api_key'] = body.openrouter_api_key;
   if (body.gemini_api_key !== undefined) update['config.gemini_api_key'] = body.gemini_api_key;
+  if (body.nvidia_api_key !== undefined) update['config.nvidia_api_key'] = body.nvidia_api_key;
+  if (body.nvidia_voice !== undefined) update['config.nvidia_voice'] = body.nvidia_voice;
   if (body.idioma !== undefined) update['config.idioma'] = body.idioma;
   if (body.comfyui_api_key !== undefined) update['config.comfyui_api_key'] = body.comfyui_api_key;
   if (body.comfyui_workflow_overrides !== undefined) update['config.comfyui_workflow_overrides'] = body.comfyui_workflow_overrides;
   if (body.thumbnail_accent_color !== undefined) update['config.thumbnail_accent_color'] = body.thumbnail_accent_color;
   if (body.thumbnail_style_prompt !== undefined) update['config.thumbnail_style_prompt'] = body.thumbnail_style_prompt;
+  if (body.imagen_referencia_url !== undefined) update['config.imagen_referencia_url'] = body.imagen_referencia_url;
+  if (body.secciones_personalizadas !== undefined) update['config.secciones_personalizadas'] = body.secciones_personalizadas;
+  if (body.tipos_guion !== undefined) update['config.tipos_guion'] = body.tipos_guion;
   if (body.logo_url !== undefined) update['logo_url'] = body.logo_url;
   if (body.icono !== undefined) update['config.icono'] = body.icono;
   if (body.telegram_bot_token !== undefined) update['config.telegram_bot_token'] = body.telegram_bot_token;
