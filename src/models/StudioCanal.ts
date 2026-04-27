@@ -11,13 +11,15 @@ export interface YoutubeTokensCanal {
 }
 
 export interface CanalConfig {
-  voz_motor: 'elevenlabs' | 'edge-tts' | 'gemini-tts';
+  voz_motor: 'elevenlabs' | 'edge-tts' | 'gemini-tts' | 'nvidia-tts';
   voz_id: string;
   imagen_motor: 'huggingface' | 'freepik' | 'comfyui';
   llm_motor: 'claude' | 'openai' | 'openrouter' | 'gemini';
   openai_api_key: string;
   openrouter_api_key: string;
   gemini_api_key: string;
+  nvidia_api_key: string;
+  nvidia_voice: string;
   system_prompt_guion: string;
   tono: string;
   idioma: string;
@@ -32,6 +34,9 @@ export interface CanalConfig {
   };
   thumbnail_accent_color?: string;
   thumbnail_style_prompt?: string;
+  imagen_referencia_url?: string;
+  secciones_personalizadas?: string;
+  tipos_guion?: string;
   icono?: string;
   telegram_bot_token?: string;
   telegram_chat_id?: string;
@@ -65,13 +70,15 @@ const StudioCanalSchema = new Schema<IStudioCanal>({
   logo_url: { type: String, default: '' },
   youtube_tokens: { type: Schema.Types.Mixed, default: null },
   config: {
-    voz_motor: { type: String, enum: ['elevenlabs', 'edge-tts', 'gemini-tts'], default: 'elevenlabs' },
+    voz_motor: { type: String, enum: ['elevenlabs', 'edge-tts', 'gemini-tts', 'nvidia-tts'], default: 'elevenlabs' },
     voz_id: { type: String, default: '' },
     imagen_motor: { type: String, enum: ['huggingface', 'freepik', 'comfyui'], default: 'freepik' },
     llm_motor: { type: String, enum: ['claude', 'openai', 'openrouter', 'gemini'], default: 'claude' },
     openai_api_key: { type: String, default: '' },
     openrouter_api_key: { type: String, default: '' },
     gemini_api_key: { type: String, default: '' },
+    nvidia_api_key: { type: String, default: '' },
+    nvidia_voice: { type: String, default: 'Magpie-Multilingual.ES-US.Leo' },
     system_prompt_guion: { type: String, default: '' },
     tono: { type: String, default: '' },
     idioma: { type: String, default: 'es-ES' },
@@ -79,6 +86,9 @@ const StudioCanalSchema = new Schema<IStudioCanal>({
     comfyui_workflow_overrides: { type: Schema.Types.Mixed, default: {} },
     thumbnail_accent_color: { type: String, default: '#CC0000' },
     thumbnail_style_prompt: { type: String, default: '' },
+    imagen_referencia_url: { type: String, default: '' },
+    secciones_personalizadas: { type: String, default: '' },
+    tipos_guion: { type: String, default: '' },
     icono: { type: String, default: '' },
     telegram_bot_token: { type: String, default: '' },
     telegram_chat_id: { type: String, default: '' },
