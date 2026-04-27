@@ -28,6 +28,43 @@ interface ImageEngineConfig {
   hf_token_preview: string | null;
 }
 
+const TIPOS_GUION_PRESETS = [
+  {
+    id: 'divulgativo',
+    nombre: 'Divulgativo mejorado',
+    secciones: [
+      { id: 'hook_impacto', titulo: 'Hook de impacto (0-30s)', instruccion: 'Gancho de 50-70 palabras. Arranca con el dato más sorprendente, la pregunta que más pica, o el beneficio más obvio del tema. Sin presentaciones. El espectador decide en 5 segundos si sigue.' },
+      { id: 'beneficio_directo', titulo: 'Por qué te importa esto', instruccion: '100-150 palabras. Conecta el tema directamente con la vida del espectador. ¿Qué problema resuelve? ¿Qué puede mejorar en su día a día? Concreto, sin rodeos.' },
+      { id: 'dato_ciencia', titulo: 'El dato / La ciencia detrás', instruccion: '200-300 palabras. Explica qué hay detrás del tema con datos, estudios o mecanismos reales. Usa cifras concretas. Nada de generalidades como "los expertos dicen".' },
+      { id: 'como_aplicarlo', titulo: 'Cómo aplicarlo hoy', instruccion: '200-300 palabras. Pasos prácticos y específicos que el espectador puede usar ahora mismo. Ejemplos reales. Nada de "depende" o "consulta a un profesional".' },
+      { id: 'error_comun', titulo: 'El error que comete todo el mundo', instruccion: '150-200 palabras. Identifica el error o mito más común relacionado con el tema. Explica por qué es un error y qué hacer en su lugar.' },
+      { id: 'cta_accionable', titulo: 'Cierre + CTA accionable', instruccion: '80-120 palabras. Cierre con una idea que se lleven a casa. Pregunta retórica o dato final. CTA natural para suscribirse o guardar el vídeo.' },
+    ],
+  },
+  {
+    id: 'receta',
+    nombre: 'Receta individual',
+    secciones: [
+      { id: 'hook_visual', titulo: 'Hook visual (0-15s)', instruccion: '40-60 palabras. Arranca describiendo el resultado final con lenguaje sensorial: color, textura, sabor. Incluye el tiempo de preparación o el beneficio principal. Ejemplo: "Este smoothie de 3 ingredientes tiene más proteína que un yogur y se hace en 2 minutos".' },
+      { id: 'ingredientes', titulo: 'Ingredientes', instruccion: '80-120 palabras. Lista todos los ingredientes con cantidades exactas y posibles sustitutos para los más inaccesibles. Menciona brevemente por qué cada ingrediente clave está ahí (nutricionalmente o por sabor).' },
+      { id: 'preparacion', titulo: 'Preparación paso a paso', instruccion: '200-300 palabras. Pasos numerados, claros y ordenados. Tiempo de cada paso. Temperatura si aplica. Describe texturas y señales visuales ("hasta que quede dorado", "cuando espese"). Sin tecnicismos.' },
+      { id: 'truco_secreto', titulo: 'Truco o variante', instruccion: '100-150 palabras. Un truco de chef o variante que mejore la receta o la adapte a distintos gustos: versión vegana, sin gluten, más económica, o más rápida.' },
+      { id: 'resultado_cta', titulo: 'Resultado + CTA', instruccion: '60-80 palabras. Describe el resultado final con entusiasmo: sabor, textura, beneficios. Invita al espectador a probarla y a comentar su resultado. CTA para guardar o compartir el vídeo.' },
+    ],
+  },
+  {
+    id: 'top_recetas',
+    nombre: 'Top recetas',
+    secciones: [
+      { id: 'hook_promesa', titulo: 'Hook + promesa del top', instruccion: '50-70 palabras. Arranca con la promesa del top. Ejemplo: "5 recetas que te cambiarán los desayunos para siempre". Menciona el criterio del ranking para crear expectativa.' },
+      { id: 'por_que_este_top', titulo: 'Por qué este top', instruccion: '100-150 palabras. Explica el criterio de selección: facilidad, sabor, beneficio nutricional. Crea expectativa sobre las posiciones.' },
+      { id: 'recetas_lista', titulo: 'Las recetas del top (1 a N)', instruccion: 'Para cada receta: nombre, ingredientes clave, tiempo de preparación, y 1-2 frases sobre por qué está en el top. Cada receta ocupa 60-100 palabras. Ordena de menor a mayor impacto para mantener la atención.' },
+      { id: 'la_favorita', titulo: 'La favorita / ganadora', instruccion: '150-200 palabras. La receta número 1 merece más detalle: ingredientes principales, preparación en 3-4 pasos, y por qué es la mejor. Crea el momento de reveal con algo de drama.' },
+      { id: 'cta_top', titulo: 'Cierre + CTA', instruccion: '60-80 palabras. Invita al espectador a probar su favorita y a compartir en comentarios cuál es la suya. CTA para guardar el vídeo o suscribirse.' },
+    ],
+  },
+];
+
 function ConfigContent() {
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState<'integraciones' | 'motores' | 'canal'>('integraciones');
@@ -69,6 +106,7 @@ function ConfigContent() {
   const [canalConfig, setCanalConfig] = useState<CanalConfigData | null>(null);
   const [savingCanal, setSavingCanal] = useState(false);
   const [canalSaved, setCanalSaved] = useState(false);
+  const [tiposGuion, setTiposGuion] = useState<typeof TIPOS_GUION_PRESETS>([]);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [imagenReferenciaUrl, setImagenReferenciaUrl] = useState<string | null>(null);
@@ -160,6 +198,13 @@ function ConfigContent() {
           });
           setCanalId(d.canal._id);
           setLogoUrl((d.canal as unknown as { logo_url?: string }).logo_url || null);
+          const tiposRaw = (d.canal.config as { tipos_guion?: string })?.tipos_guion?.trim();
+          if (tiposRaw) {
+            try {
+              const parsed = JSON.parse(tiposRaw);
+              if (Array.isArray(parsed)) setTiposGuion(parsed);
+            } catch { setTiposGuion([]); }
+          }
           setImagenReferenciaUrl((d.canal as unknown as { config?: { imagen_referencia_url?: string } }).config?.imagen_referencia_url || null);
           setLlmMotor((d.canal.config?.llm_motor ?? 'claude') as 'claude' | 'openai' | 'openrouter' | 'gemini');
           setNvidiaKey((d.canal as unknown as { config?: { nvidia_api_key?: string } }).config?.nvidia_api_key ?? '');
@@ -409,6 +454,7 @@ function ConfigContent() {
           thumbnail_accent_color: canalConfig.thumbnail_accent_color,
           thumbnail_style_prompt: canalConfig.thumbnail_style_prompt,
           secciones_personalizadas: canalConfig.secciones_personalizadas,
+          tipos_guion: JSON.stringify(tiposGuion),
         }),
       });
       setCanalSaved(true);
@@ -1217,6 +1263,52 @@ function ConfigContent() {
               className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white text-sm font-mono focus:outline-none focus:border-violet-500 transition-colors resize-none"
             />
             <p className="text-gray-500 text-xs mt-1.5">JSON array con campos <code className="text-gray-400">id</code>, <code className="text-gray-400">titulo</code> e <code className="text-gray-400">instruccion</code>. Mínimo 2 secciones. Si el JSON es inválido se usará la estructura por defecto.</p>
+          </div>
+          )}
+
+          {canalConfig.pipeline_tipo !== 'musica_ambiental' && (
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <label className="block text-xs font-medium text-gray-400 uppercase tracking-wider">Tipos de guión</label>
+              {tiposGuion.length === 0 && (
+                <button
+                  type="button"
+                  onClick={() => setTiposGuion(TIPOS_GUION_PRESETS)}
+                  className="text-xs text-violet-400 hover:text-violet-300 transition-colors"
+                >
+                  + Cargar presets por defecto
+                </button>
+              )}
+            </div>
+            {tiposGuion.length === 0 ? (
+              <p className="text-gray-600 text-xs">Sin tipos configurados. Pulsa &quot;Cargar presets&quot; para añadir Divulgativo, Receta y Top recetas.</p>
+            ) : (
+              <div className="space-y-2">
+                {tiposGuion.map((tipo, idx) => (
+                  <div key={tipo.id} className="flex items-center justify-between px-3 py-2.5 bg-white/5 border border-white/10 rounded-xl">
+                    <div>
+                      <span className="text-sm text-white font-medium">{tipo.nombre}</span>
+                      <span className="ml-2 text-xs text-gray-500">{tipo.secciones.length} secciones</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setTiposGuion(tiposGuion.filter((_, i) => i !== idx))}
+                      className="text-xs text-red-400 hover:text-red-300 transition-colors ml-4"
+                    >
+                      Eliminar
+                    </button>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => setTiposGuion(TIPOS_GUION_PRESETS)}
+                  className="text-xs text-gray-500 hover:text-gray-400 transition-colors mt-1"
+                >
+                  Restaurar presets por defecto
+                </button>
+              </div>
+            )}
+            <p className="text-gray-600 text-xs mt-2">Se guardan al pulsar &quot;Guardar configuración del canal&quot;.</p>
           </div>
           )}
 
