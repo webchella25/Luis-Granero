@@ -19,8 +19,8 @@ interface ElevenLabsStatus {
   error?: string;
 }
 
-type PreferredEngine = 'auto' | 'elevenlabs' | 'edge-tts' | 'gemini-tts';
-type ImageEngine = 'auto' | 'freepik' | 'huggingface';
+type PreferredEngine = 'auto' | 'elevenlabs' | 'edge-tts' | 'gemini-tts' | 'nvidia-tts';
+type ImageEngine = 'auto' | 'freepik' | 'huggingface' | 'comfyui';
 
 interface ImageEngineConfig {
   image_engine: ImageEngine;
@@ -30,6 +30,7 @@ interface ImageEngineConfig {
 
 function ConfigContent() {
   const searchParams = useSearchParams();
+  const [activeTab, setActiveTab] = useState<'integraciones' | 'motores' | 'canal'>('integraciones');
 
   // YouTube
   const [ytStatus, setYtStatus] = useState<YoutubeStatus | null>(null);
@@ -59,17 +60,29 @@ function ConfigContent() {
     nombre: string;
     nicho: string;
     system_prompt_guion: string;
+    secciones_personalizadas: string;
     tono: string;
+    thumbnail_accent_color: string;
+    thumbnail_style_prompt: string;
+    pipeline_tipo: string;
   }
   const [canalConfig, setCanalConfig] = useState<CanalConfigData | null>(null);
   const [savingCanal, setSavingCanal] = useState(false);
   const [canalSaved, setCanalSaved] = useState(false);
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [imagenReferenciaUrl, setImagenReferenciaUrl] = useState<string | null>(null);
+  const [uploadingImagenRef, setUploadingImagenRef] = useState(false);
 
   // LLM motor
   const [llmMotor, setLlmMotor] = useState<'claude' | 'openai' | 'openrouter' | 'gemini'>('claude');
   const [openaiKey, setOpenaiKey] = useState('');
   const [openrouterKey, setOpenrouterKey] = useState('');
   const [geminiKey, setGeminiKey] = useState('');
+  const [nvidiaKey, setNvidiaKey] = useState('');
+  const [nvidiaVoice, setNvidiaVoice] = useState('Magpie-Multilingual.ES-ES.Leo');
+  const [savingNvidia, setSavingNvidia] = useState(false);
+  const [nvidiaSaved, setNvidiaSaved] = useState(false);
   const [savingLLM, setSavingLLM] = useState(false);
   const [llmSaved, setLlmSaved] = useState(false);
   const [canalId, setCanalId] = useState<string | null>(null);
@@ -80,6 +93,20 @@ function ConfigContent() {
   const [comfyuiSaved, setComfyuiSaved] = useState(false);
   const [comfyuiWorkflows, setComfyuiWorkflows] = useState<Record<string, string>>({});
   const [uploadingWorkflow, setUploadingWorkflow] = useState<string | null>(null);
+
+  // Telegram / Notificaciones
+  const [telegramToken, setTelegramToken] = useState('');
+  const [telegramChatId, setTelegramChatId] = useState('');
+  const [notifToggles, setNotifToggles] = useState({
+    alerta_1000_vistas: true,
+    alerta_despegando: true,
+    alerta_short_viral: true,
+    alerta_suscriptores: false,
+    alerta_calendario_vacio: true,
+  });
+  const [savingTelegram, setSavingTelegram] = useState(false);
+  const [telegramSaved, setTelegramSaved] = useState(false);
+  const [testingTelegram, setTestingTelegram] = useState(false);
 
   const justConnected = searchParams.get('connected') === '1';
   const oauthError = searchParams.get('error');
@@ -125,20 +152,57 @@ function ConfigContent() {
             nombre: d.canal.nombre,
             nicho: d.canal.nicho ?? '',
             system_prompt_guion: d.canal.config?.system_prompt_guion ?? '',
+            secciones_personalizadas: (d.canal.config as { secciones_personalizadas?: string })?.secciones_personalizadas ?? '',
             tono: d.canal.config?.tono ?? '',
+            thumbnail_accent_color: (d.canal.config as { thumbnail_accent_color?: string })?.thumbnail_accent_color ?? '#CC0000',
+            thumbnail_style_prompt: (d.canal.config as { thumbnail_style_prompt?: string })?.thumbnail_style_prompt ?? '',
+            pipeline_tipo: (d.canal as unknown as { pipeline_tipo?: string }).pipeline_tipo ?? 'narrativo',
           });
           setCanalId(d.canal._id);
+          setLogoUrl((d.canal as unknown as { logo_url?: string }).logo_url || null);
+          setImagenReferenciaUrl((d.canal as unknown as { config?: { imagen_referencia_url?: string } }).config?.imagen_referencia_url || null);
           setLlmMotor((d.canal.config?.llm_motor ?? 'claude') as 'claude' | 'openai' | 'openrouter' | 'gemini');
+          setNvidiaKey((d.canal as unknown as { config?: { nvidia_api_key?: string } }).config?.nvidia_api_key ?? '');
+          setNvidiaVoice((d.canal as unknown as { config?: { nvidia_voice?: string } }).config?.nvidia_voice ?? 'Magpie-Multilingual.ES-ES.Leo');
           const overrides = (d.canal as unknown as { config?: { comfyui_workflow_overrides?: Record<string, string> } }).config?.comfyui_workflow_overrides ?? {};
           const overrideNames: Record<string, string> = {};
           for (const key of Object.keys(overrides)) {
             overrideNames[key] = 'personalizado';
           }
           setComfyuiWorkflows(overrideNames);
+          setTelegramToken((d.canal as unknown as { config?: { telegram_bot_token?: string } }).config?.telegram_bot_token ?? '');
+          setTelegramChatId((d.canal as unknown as { config?: { telegram_chat_id?: string } }).config?.telegram_chat_id ?? '');
+          const notif = (d.canal as unknown as { config?: { notificaciones?: Record<string, boolean> } }).config?.notificaciones;
+          if (notif) {
+            setNotifToggles({
+              alerta_1000_vistas: notif.alerta_1000_vistas ?? true,
+              alerta_despegando: notif.alerta_despegando ?? true,
+              alerta_short_viral: notif.alerta_short_viral ?? true,
+              alerta_suscriptores: notif.alerta_suscriptores ?? false,
+              alerta_calendario_vacio: notif.alerta_calendario_vacio ?? true,
+            });
+          }
         }
       })
       .catch(() => null);
   }, []);
+
+  async function saveNvidiaConfig() {
+    if (!canalId) return;
+    setSavingNvidia(true);
+    setNvidiaSaved(false);
+    try {
+      await fetch(`/api/studio/canales/${canalId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nvidia_api_key: nvidiaKey.trim(), nvidia_voice: nvidiaVoice }),
+      });
+      setNvidiaSaved(true);
+      setTimeout(() => setNvidiaSaved(false), 2000);
+    } finally {
+      setSavingNvidia(false);
+    }
+  }
 
   async function saveEngine(engine: PreferredEngine) {
     setPreferredEngine(engine);
@@ -299,6 +363,37 @@ function ConfigContent() {
     });
   }
 
+  async function uploadLogo(file: File) {
+    setUploadingLogo(true);
+    try {
+      const fd = new FormData();
+      fd.append('logo', file);
+      const res = await fetch('/api/studio/canal/logo', { method: 'POST', body: fd });
+      const data = await res.json() as { logo_url?: string; error?: string };
+      if (data.logo_url) setLogoUrl(data.logo_url + '?t=' + Date.now());
+    } finally {
+      setUploadingLogo(false);
+    }
+  }
+
+  async function uploadImagenReferencia(file: File) {
+    setUploadingImagenRef(true);
+    try {
+      const fd = new FormData();
+      fd.append('imagen', file);
+      const res = await fetch('/api/studio/canal/imagen-referencia', { method: 'POST', body: fd });
+      const data = await res.json() as { imagen_referencia_url?: string; error?: string };
+      if (data.imagen_referencia_url) setImagenReferenciaUrl(data.imagen_referencia_url + '?t=' + Date.now());
+    } finally {
+      setUploadingImagenRef(false);
+    }
+  }
+
+  async function deleteImagenReferencia() {
+    await fetch('/api/studio/canal/imagen-referencia', { method: 'DELETE' });
+    setImagenReferenciaUrl(null);
+  }
+
   async function saveCanalConfig() {
     if (!canalConfig) return;
     setSavingCanal(true);
@@ -311,6 +406,9 @@ function ConfigContent() {
           nicho: canalConfig.nicho,
           system_prompt_guion: canalConfig.system_prompt_guion,
           tono: canalConfig.tono,
+          thumbnail_accent_color: canalConfig.thumbnail_accent_color,
+          thumbnail_style_prompt: canalConfig.thumbnail_style_prompt,
+          secciones_personalizadas: canalConfig.secciones_personalizadas,
         }),
       });
       setCanalSaved(true);
@@ -320,10 +418,66 @@ function ConfigContent() {
     }
   }
 
-  return (
-    <div className="max-w-2xl mx-auto px-6 py-10 space-y-8">
+  async function saveTelegramConfig() {
+    if (!canalId) return;
+    setSavingTelegram(true);
+    try {
+      await fetch(`/api/studio/canales/${canalId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          telegram_bot_token: telegramToken,
+          telegram_chat_id: telegramChatId,
+          notificaciones: notifToggles,
+        }),
+      });
+      setTelegramSaved(true);
+      setTimeout(() => setTelegramSaved(false), 2500);
+    } finally {
+      setSavingTelegram(false);
+    }
+  }
 
-      {/* YouTube OAuth */}
+  async function testTelegramConfig() {
+    if (!telegramToken || !telegramChatId) return;
+    setTestingTelegram(true);
+    try {
+      await fetch(`https://api.telegram.org/bot${telegramToken}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: telegramChatId,
+          text: '✅ Notificaciones de Studio configuradas correctamente.',
+          parse_mode: 'HTML',
+        }),
+      });
+    } finally {
+      setTestingTelegram(false);
+    }
+  }
+
+  return (
+    <div className="max-w-2xl mx-auto px-6 py-10 space-y-6">
+
+      {/* Tab bar */}
+      <div className="flex gap-1 p-1 bg-white/[0.03] border border-white/8 rounded-2xl">
+        {(['integraciones', 'motores', 'canal'] as const).map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className={`flex-1 py-2 px-3 rounded-xl text-sm font-medium transition-all ${
+              activeTab === tab
+                ? 'bg-violet-600 text-white'
+                : 'text-gray-400 hover:text-white'
+            }`}
+          >
+            {tab === 'integraciones' ? 'Integraciones' : tab === 'motores' ? 'Motores IA' : 'Canal'}
+          </button>
+        ))}
+      </div>
+
+      {activeTab === 'integraciones' && (
+      <>{/* YouTube OAuth */}
       <div className="bg-white/[0.03] border border-white/8 rounded-2xl p-6">
         <div className="flex items-center gap-3 mb-6">
           <div className="w-10 h-10 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center">
@@ -392,7 +546,9 @@ function ConfigContent() {
           </div>
         )}
       </div>
+      </>)}
 
+      {activeTab === 'motores' && (<>
       {/* Motor de imágenes */}
       <div className="bg-white/[0.03] border border-white/8 rounded-2xl p-6 space-y-5">
         <div className="flex items-center gap-3">
@@ -403,7 +559,7 @@ function ConfigContent() {
           </div>
           <div>
             <h2 className="text-base font-semibold text-white">Motor de imágenes</h2>
-            <p className="text-xs text-gray-500">Freepik AI · HuggingFace FLUX.1-schnell</p>
+            <p className="text-xs text-gray-500">Freepik AI · HuggingFace FLUX.1-schnell · ComfyUI Cloud</p>
           </div>
           {imageConfig && (
             <span className={`ml-auto text-xs px-2.5 py-1 rounded-full border font-medium ${
@@ -411,9 +567,11 @@ function ConfigContent() {
                 ? 'text-yellow-400 bg-yellow-500/10 border-yellow-500/20'
                 : imageConfig.image_engine === 'freepik'
                 ? 'text-amber-400 bg-amber-500/10 border-amber-500/20'
+                : imageConfig.image_engine === 'comfyui'
+                ? 'text-purple-400 bg-purple-500/10 border-purple-500/20'
                 : 'text-gray-400 bg-gray-500/10 border-gray-500/20'
             }`}>
-              {imageConfig.image_engine === 'auto' ? 'Auto' : imageConfig.image_engine === 'freepik' ? 'Freepik' : 'HuggingFace'}
+              {imageConfig.image_engine === 'auto' ? 'Auto' : imageConfig.image_engine === 'freepik' ? 'Freepik' : imageConfig.image_engine === 'comfyui' ? 'ComfyUI' : 'HuggingFace'}
             </span>
           )}
         </div>
@@ -430,6 +588,7 @@ function ConfigContent() {
               { value: 'auto', label: 'Auto', desc: 'Freepik primero · HuggingFace si falla' },
               { value: 'freepik', label: 'Freepik', desc: 'Síncrono · Alta calidad estilo foto' },
               { value: 'huggingface', label: 'HuggingFace FLUX.1', desc: 'Asíncrono · Gratuito · 3-6 min' },
+              { value: 'comfyui', label: 'ComfyUI Cloud', desc: 'Workflows personalizados · cloud.comfy.org' },
             ] as { value: ImageEngine; label: string; desc: string }[]).map((opt) => (
               <button
                 key={opt.value}
@@ -533,8 +692,8 @@ function ConfigContent() {
         )}
       </div>
 
-      {/* Motor de IA (guiones) */}
-      <div className="bg-white/[0.03] border border-white/8 rounded-2xl p-6 space-y-5">
+      {/* Motor de IA (guiones) — solo narrativo */}
+      {canalConfig?.pipeline_tipo !== 'musica_ambiental' && <div className="bg-white/[0.03] border border-white/8 rounded-2xl p-6 space-y-5">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
             <svg className="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -630,7 +789,7 @@ function ConfigContent() {
         >
           {savingLLM ? 'Guardando...' : 'Guardar motor de IA'}
         </button>
-      </div>
+      </div>}
 
       {/* ComfyUI Cloud */}
       {canalId && (
@@ -756,6 +915,15 @@ function ConfigContent() {
               <p className="text-xs text-gray-500 mb-1">Gratuito · ilimitado</p>
               <p className="text-xs text-gray-600">Voz: es-ES-AlvaroNeural</p>
             </div>
+
+            <div className="bg-white/[0.03] border border-white/8 rounded-xl p-4">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium text-white">NVIDIA TTS</span>
+                <span className={`w-2 h-2 rounded-full ${nvidiaKey ? 'bg-emerald-400' : 'bg-gray-600'}`} />
+              </div>
+              <p className="text-xs text-gray-500 mb-1">Magpie Multilingual · es-ES</p>
+              <p className="text-xs text-gray-600">{nvidiaKey ? 'API key configurada' : 'Sin API key'}</p>
+            </div>
           </div>
         </div>
 
@@ -771,6 +939,7 @@ function ConfigContent() {
               { value: 'elevenlabs', label: 'ElevenLabs', desc: 'Mejor calidad de voz' },
               { value: 'edge-tts', label: 'Edge TTS', desc: 'Gratuito, es-ES-AlvaroNeural' },
               { value: 'gemini-tts', label: 'Gemini TTS', desc: 'Google · voz expresiva multilingüe' },
+              { value: 'nvidia-tts', label: 'NVIDIA TTS', desc: 'Magpie Multilingual · es-ES · alta calidad' },
             ] as { value: PreferredEngine; label: string; desc: string }[]).map((opt) => (
               <button
                 key={opt.value}
@@ -797,6 +966,70 @@ function ConfigContent() {
         </div>
       </div>
 
+      {/* NVIDIA TTS config */}
+      <div className="bg-white/[0.03] border border-white/8 rounded-2xl p-6 space-y-5">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-green-500/10 border border-green-500/20 flex items-center justify-center">
+            <svg className="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23-.693L5 14.5m14.8.8l1.402 1.402c1 1 .03 2.248-1.403 2.248H4.201c-1.431 0-2.402-1.248-1.403-2.248L4.2 15.3" />
+            </svg>
+          </div>
+          <div>
+            <h2 className="text-base font-semibold text-white">NVIDIA TTS</h2>
+            <p className="text-xs text-gray-500">Magpie Multilingual · Español de España</p>
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          <div>
+            <label className="block text-xs font-medium text-gray-400 mb-1.5">API Key</label>
+            <input
+              type="password"
+              placeholder="nvapi-xxxxxxxxxxxxxxxxxxxx"
+              value={nvidiaKey}
+              onChange={(e) => setNvidiaKey(e.target.value)}
+              className="w-full bg-white/[0.04] border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-white/25"
+            />
+            <p className="text-xs text-gray-600 mt-1">Obtén tu clave en <span className="text-gray-500">build.nvidia.com/settings/api-keys</span></p>
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-gray-400 mb-1.5">Voz</label>
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                { value: 'Magpie-Multilingual.ES-ES.Leo', label: 'Leo', desc: 'Masculina · grave · true crime' },
+                { value: 'Magpie-Multilingual.ES-ES.Jason', label: 'Jason', desc: 'Masculina · clara' },
+                { value: 'Magpie-Multilingual.ES-ES.Sofia', label: 'Sofia', desc: 'Femenina · natural' },
+                { value: 'Magpie-Multilingual.ES-ES.Aria', label: 'Aria', desc: 'Femenina · expresiva' },
+              ].map((v) => (
+                <button
+                  key={v.value}
+                  onClick={() => setNvidiaVoice(v.value)}
+                  className={`px-3 py-2.5 rounded-xl border text-left transition-colors ${
+                    nvidiaVoice === v.value
+                      ? 'bg-green-600/10 border-green-500/30 text-white'
+                      : 'bg-white/[0.02] border-white/8 text-gray-400 hover:border-white/15'
+                  }`}
+                >
+                  <p className="text-sm font-medium">{v.label}</p>
+                  <p className="text-xs text-gray-600 mt-0.5">{v.desc}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <button
+            onClick={saveNvidiaConfig}
+            disabled={savingNvidia}
+            className="w-full py-2.5 rounded-xl bg-green-600/20 border border-green-500/30 text-green-400 text-sm font-medium hover:bg-green-600/30 transition-colors disabled:opacity-50"
+          >
+            {savingNvidia ? 'Guardando...' : nvidiaSaved ? 'Guardado ✓' : 'Guardar configuración NVIDIA'}
+          </button>
+        </div>
+      </div>
+      </>)}
+
+      {activeTab === 'integraciones' && (<>
       {/* Info cuotas */}
       <div className="bg-white/[0.02] border border-white/5 rounded-xl p-5 space-y-2">
         <h3 className="text-xs font-medium text-gray-400 uppercase tracking-wider">Cuotas de APIs</h3>
@@ -814,9 +1047,10 @@ function ConfigContent() {
           ))}
         </div>
       </div>
+      </>)}
 
       {/* Configuración del canal */}
-      {canalConfig && (
+      {activeTab === 'canal' && canalConfig && (
         <div className="bg-white/[0.03] border border-white/8 rounded-2xl p-6 space-y-5">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-violet-500/10 border border-violet-500/20 flex items-center justify-center">
@@ -830,6 +1064,34 @@ function ConfigContent() {
             </div>
             {savingCanal && <span className="ml-auto text-xs text-gray-600 animate-pulse">Guardando...</span>}
             {canalSaved && <span className="ml-auto text-xs text-emerald-400">Guardado ✓</span>}
+          </div>
+
+          {/* Logo del canal */}
+          <div>
+            <label className="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">Logo del canal</label>
+            <div className="flex items-center gap-4">
+              <div className="w-20 h-20 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden flex-shrink-0">
+                {logoUrl ? (
+                  <img src={logoUrl} alt="Logo" className="w-full h-full object-contain p-1" />
+                ) : (
+                  <svg className="w-8 h-8 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+                  </svg>
+                )}
+              </div>
+              <div className="space-y-2">
+                <label className={`flex items-center gap-2 px-4 py-2 rounded-xl border text-sm font-medium cursor-pointer transition-all ${uploadingLogo ? 'opacity-50 pointer-events-none' : 'bg-white/5 border-white/10 text-gray-300 hover:border-violet-500/50 hover:text-white'}`}>
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    className="hidden"
+                    onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadLogo(f); e.target.value = ''; }}
+                  />
+                  {uploadingLogo ? 'Subiendo...' : logoUrl ? 'Cambiar logo' : 'Subir logo'}
+                </label>
+                <p className="text-xs text-gray-600">PNG, JPG o WebP · máx 5MB · se muestra en la intro del vídeo</p>
+              </div>
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -865,6 +1127,70 @@ function ConfigContent() {
           </div>
 
           <div>
+            <label className="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-1.5">Color de acento — miniaturas</label>
+            <div className="flex items-center gap-3">
+              <input
+                type="color"
+                value={canalConfig.thumbnail_accent_color}
+                onChange={(e) => setCanalConfig({ ...canalConfig, thumbnail_accent_color: e.target.value })}
+                className="w-10 h-10 rounded-lg cursor-pointer border border-white/10 bg-transparent"
+              />
+              <input
+                type="text"
+                value={canalConfig.thumbnail_accent_color}
+                onChange={(e) => setCanalConfig({ ...canalConfig, thumbnail_accent_color: e.target.value })}
+                placeholder="#CC0000"
+                className="w-32 px-3 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white text-sm font-mono focus:outline-none focus:border-violet-500 transition-colors"
+              />
+              <span className="text-gray-500 text-xs">Color del texto principal en la miniatura</span>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-1.5">Estilo visual de miniaturas</label>
+            <textarea
+              value={canalConfig.thumbnail_style_prompt}
+              onChange={(e) => setCanalConfig({ ...canalConfig, thumbnail_style_prompt: e.target.value })}
+              rows={4}
+              placeholder={`Describe en inglés el estilo visual para las imágenes de tus miniaturas. Ejemplos:\n• True crime: "Dramatic cinematic portrait, black and white with red accents, dark menacing expression, film noir style"\n• Gastronomía: "Vibrant food photography, bright warm lighting, appetizing close-up, colorful fresh ingredients, bokeh background"\n• Fitness: "Dynamic athletic pose, bright energetic colors, gym setting, motivational expression, high contrast lighting"`}
+              className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-violet-500 transition-colors placeholder:text-gray-600 resize-none"
+            />
+            <p className="text-gray-500 text-xs mt-1.5">La IA usará este estilo para generar la imagen de fondo de cada miniatura. Si lo dejas vacío usa el estilo true crime por defecto.</p>
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-1.5">Imagen de referencia visual</label>
+            <p className="text-gray-500 text-xs mb-3">Freepik usará esta imagen como ancla de estilo al generar las imágenes del vídeo. Mantiene coherencia visual entre escenas.</p>
+            <div className="flex items-center gap-4">
+              {imagenReferenciaUrl && (
+                <div className="relative w-32 h-20 rounded-xl overflow-hidden border border-white/10 flex-shrink-0">
+                  <img src={imagenReferenciaUrl} alt="Referencia" className="w-full h-full object-cover" />
+                </div>
+              )}
+              <div className="flex flex-col gap-2">
+                <label className={`flex items-center gap-2 px-4 py-2 rounded-xl border text-sm font-medium cursor-pointer transition-all ${uploadingImagenRef ? 'opacity-50 pointer-events-none' : 'bg-white/5 border-white/10 text-gray-300 hover:border-violet-500/50 hover:text-white'}`}>
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    className="hidden"
+                    onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadImagenReferencia(f); e.target.value = ''; }}
+                  />
+                  {uploadingImagenRef ? 'Subiendo...' : imagenReferenciaUrl ? 'Cambiar referencia' : 'Subir imagen de referencia'}
+                </label>
+                {imagenReferenciaUrl && (
+                  <button
+                    onClick={deleteImagenReferencia}
+                    className="text-xs text-red-400 hover:text-red-300 text-left transition-colors"
+                  >
+                    Eliminar referencia
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {canalConfig.pipeline_tipo !== 'musica_ambiental' && (
+          <div>
             <label className="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-1.5">
               System prompt para guiones
             </label>
@@ -876,6 +1202,23 @@ function ConfigContent() {
               className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-violet-500 transition-colors resize-none"
             />
           </div>
+          )}
+
+          {canalConfig.pipeline_tipo !== 'musica_ambiental' && (
+          <div>
+            <label className="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-1.5">
+              Estructura de secciones del guión
+            </label>
+            <textarea
+              value={canalConfig.secciones_personalizadas}
+              onChange={(e) => setCanalConfig({ ...canalConfig, secciones_personalizadas: e.target.value })}
+              rows={10}
+              placeholder={`Dejar vacío para usar la estructura por defecto. Para personalizarla, pega un array JSON:\n[\n  { "id": "hook", "titulo": "Hook (0–30s)", "instruccion": "Gancho impactante de 50-70 palabras..." },\n  { "id": "intro", "titulo": "Introducción", "instruccion": "Sitúa al espectador..." }\n]`}
+              className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white text-sm font-mono focus:outline-none focus:border-violet-500 transition-colors resize-none"
+            />
+            <p className="text-gray-500 text-xs mt-1.5">JSON array con campos <code className="text-gray-400">id</code>, <code className="text-gray-400">titulo</code> e <code className="text-gray-400">instruccion</code>. Mínimo 2 secciones. Si el JSON es inválido se usará la estructura por defecto.</p>
+          </div>
+          )}
 
           <div className="flex items-center justify-between">
             <button
@@ -888,6 +1231,93 @@ function ConfigContent() {
             <a href="/studio/canales" className="text-xs text-gray-600 hover:text-gray-400 transition-colors">
               Gestionar canales →
             </a>
+          </div>
+        </div>
+      )}
+
+      {/* Notificaciones Telegram */}
+      {activeTab === 'canal' && canalId && (
+        <div className="bg-white/[0.03] border border-white/8 rounded-2xl p-6">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-xl">
+              ✈️
+            </div>
+            <div>
+              <h2 className="text-base font-semibold text-white">Notificaciones Telegram</h2>
+              <p className="text-xs text-gray-500">Alertas cuando tus vídeos despegan</p>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div className="p-3 bg-white/[0.02] border border-white/8 rounded-xl text-xs text-gray-500 space-y-1">
+              <p className="font-medium text-gray-400">Cómo configurar:</p>
+              <p>1. Busca <span className="text-blue-400">@BotFather</span> en Telegram → /newbot → copia el token</p>
+              <p>2. Escribe /start a tu bot → busca el chat_id con @userinfobot</p>
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-1.5">Bot Token</label>
+              <input
+                type="password"
+                value={telegramToken}
+                onChange={(e) => setTelegramToken(e.target.value)}
+                placeholder="123456789:AAF..."
+                className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white text-sm font-mono focus:outline-none focus:border-violet-500 transition-colors"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-1.5">Chat ID</label>
+              <input
+                type="text"
+                value={telegramChatId}
+                onChange={(e) => setTelegramChatId(e.target.value)}
+                placeholder="-100123456789"
+                className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white text-sm font-mono focus:outline-none focus:border-violet-500 transition-colors"
+              />
+            </div>
+
+            <div>
+              <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">Alertas activas</p>
+              <div className="space-y-2">
+                {[
+                  { key: 'alerta_1000_vistas', label: 'Vídeo supera 1.000 vistas' },
+                  { key: 'alerta_despegando', label: 'Vídeo gana +500 vistas en 6h' },
+                  { key: 'alerta_short_viral', label: 'Short supera 5.000 vistas' },
+                  { key: 'alerta_suscriptores', label: '+10 suscriptores en un día' },
+                  { key: 'alerta_calendario_vacio', label: 'Calendario con menos de 2 vídeos pendientes' },
+                ].map(({ key, label }) => (
+                  <label key={key} className="flex items-center gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={notifToggles[key as keyof typeof notifToggles]}
+                      onChange={(e) => setNotifToggles((prev) => ({ ...prev, [key]: e.target.checked }))}
+                      className="w-4 h-4 rounded border-white/20 bg-white/5 text-violet-500"
+                    />
+                    <span className="text-sm text-gray-300">{label}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 pt-2">
+              <button
+                onClick={saveTelegramConfig}
+                disabled={savingTelegram}
+                className="flex items-center gap-2 px-5 py-2.5 bg-violet-600 hover:bg-violet-700 disabled:opacity-60 text-white text-sm font-semibold rounded-xl transition-colors"
+              >
+                {telegramSaved ? '✓ Guardado' : 'Guardar'}
+              </button>
+              {telegramToken && telegramChatId && (
+                <button
+                  onClick={testTelegramConfig}
+                  disabled={testingTelegram}
+                  className="px-4 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 disabled:opacity-60 text-gray-300 text-sm rounded-xl transition-colors"
+                >
+                  {testingTelegram ? 'Enviando...' : 'Enviar mensaje de prueba'}
+                </button>
+              )}
+            </div>
           </div>
         </div>
       )}
