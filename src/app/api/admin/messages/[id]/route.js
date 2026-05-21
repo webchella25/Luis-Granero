@@ -1,18 +1,11 @@
 // src/app/api/admin/messages/[id]/route.js
 import { NextResponse } from 'next/server'
-import { checkAuth } from '@/lib/checkAuth'
 import dbConnect from '@/lib/mongodb'
 import Contact from '@/models/Contact'
 
 // GET - Obtener un mensaje especifico
 export async function GET(request, { params }) {
   try {
-    const session = await checkAuth()
-    
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
     await dbConnect()
     
     const { id } = await params
@@ -31,11 +24,7 @@ export async function GET(request, { params }) {
 // PATCH - Actualizar mensaje (cambiar status, prioridad, notas, etc)
 export async function PATCH(request, { params }) {
   try {
-    const session = await checkAuth()
-    
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+
 
     await dbConnect()
     
@@ -87,11 +76,7 @@ export async function PATCH(request, { params }) {
 // DELETE - Eliminar mensaje
 export async function DELETE(request, { params }) {
   try {
-    const session = await checkAuth()
-    
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+
 
     await dbConnect()
     

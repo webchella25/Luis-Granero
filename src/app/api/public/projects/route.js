@@ -8,7 +8,7 @@ export async function GET() {
     await dbConnect()
     
     const projects = await Project.find({ isActive: true })
-      .select('title subtitle description content technologies category status metrics features images urls slug year isFeatured client codeSnippet results challenges learnings')
+      .select('title subtitle description content technologies category status metrics features images urls slug year isFeatured isOwnProject client codeSnippet results challenges learnings')
       .sort({ orderIndex: 1, createdAt: -1 })
       .lean()
 

@@ -49,7 +49,7 @@ export default function Methodology({ data }: Props) {
   };
 
   return (
-    <section className="py-20 bg-black">
+    <section className="py-20 bg-[#0F172A]">
       <div className="container mx-auto px-4">
         <div className="max-w-6xl mx-auto">
           
@@ -71,7 +71,7 @@ export default function Methodology({ data }: Props) {
                   <div className="hidden md:block absolute top-12 left-full w-full h-0.5 bg-gradient-to-r from-cyan-400 to-green-400 transform translate-x-4"></div>
                 )}
 
-                <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-xl p-6 text-center hover:border-cyan-500/50 transition-all duration-300 hover:transform hover:scale-105">
+                <div className="bg-[#1E293B] border border-slate-700/50 rounded-xl p-6 text-center hover:border-cyan-500/40 transition-all duration-200">
                   
                   <div className="text-4xl mb-4">{step.icon}</div>
                   

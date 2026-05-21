@@ -1,5 +1,19 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import User, { IUser } from '../User';
+import User from '../User';
+
+interface IUser {
+  studentProfile: {
+    level: number;
+    totalXP: number;
+    achievements: string[];
+    streak: { current: number; longest: number };
+    lastStudyDate?: Date;
+  };
+  save: () => Promise<IUser>;
+  addXP: (xp: number) => Promise<void>;
+  unlockAchievement: (name: string) => Promise<void>;
+  updateStreak: () => Promise<void>;
+}
 
 // Mock mongoose model methods since we are unit testing logic, not DB
 // However, since the methods are on the schema, we can test them by instantiating the model

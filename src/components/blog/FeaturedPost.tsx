@@ -22,7 +22,7 @@ interface Props {
 
 export default function FeaturedPost({ post }: Props) {
   return (
-    <section className="py-20 bg-gray-950">
+    <section className="py-20 bg-[#0B1120]">
       <div className="container mx-auto px-4">
         <div className="max-w-6xl mx-auto">
           

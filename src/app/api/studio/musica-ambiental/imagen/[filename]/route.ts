@@ -4,16 +4,19 @@ import path from 'path';
 
 interface RouteParams { params: Promise<{ filename: string }> }
 
-export async function GET(_request: NextRequest, { params }: RouteParams): Promise<NextResponse> {
+export async function GET(request: NextRequest, { params }: RouteParams): Promise<NextResponse> {
   try {
     const { filename } = await params;
     const safeFilename = path.basename(filename);
     const filePath = path.join(process.cwd(), 'public', 'studio', 'musica-ambiental', 'imagenes', safeFilename);
     const buffer = await fs.readFile(filePath);
+    const isDownload = new URL(request.url).searchParams.get('download') === '1';
     return new NextResponse(buffer, {
       headers: {
         'Content-Type': 'image/jpeg',
-        'Cache-Control': 'public, max-age=2592000',
+        ...(isDownload
+          ? { 'Content-Disposition': `attachment; filename="${safeFilename}"` }
+          : { 'Cache-Control': 'public, max-age=2592000' }),
       },
     });
   } catch {

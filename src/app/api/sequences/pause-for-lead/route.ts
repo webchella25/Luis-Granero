@@ -5,9 +5,13 @@ import SequenceEnrollment from '@/models/SequenceEnrollment';
 import EmailLog from '@/models/EmailLog';
 import Lead from '@/models/Lead';
 import Sequence from '@/models/Sequence';
+import { requireAdmin } from '@/lib/adminAuth';
 
 export async function POST(request: Request) {
   try {
+    const auth = await requireAdmin(request);
+    if (!auth.ok) return auth.response;
+
     const { leadId, reason } = await request.json();
 
     if (!leadId) {

@@ -131,7 +131,7 @@ export default function BudgetCalculator() {
 
   if (loading) {
     return (
-      <div className="bg-gray-900/50 backdrop-blur-sm rounded-2xl border border-cyan-500/20 p-8">
+      <div className="bg-[#1E293B]/50 backdrop-blur-sm rounded-2xl border border-cyan-500/20 p-8">
         <div className="flex items-center justify-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-400"></div>
         </div>
@@ -144,10 +144,10 @@ export default function BudgetCalculator() {
   }
 
   return (
-    <section className="py-20 bg-gray-950" id="calculadora">
+    <section className="py-20 bg-[#0B1120]" id="calculadora">
       <div className="container mx-auto px-4">
         <div className="max-w-5xl mx-auto">
-          <div className="bg-gray-900/50 backdrop-blur-sm rounded-2xl border border-cyan-500/20 p-8">
+          <div className="bg-[#1E293B]/50 backdrop-blur-sm rounded-2xl border border-cyan-500/20 p-8">
             <div className="flex items-center gap-3 mb-6">
               <Calculator className="w-8 h-8 text-cyan-400" />
               <div>
@@ -185,7 +185,7 @@ export default function BudgetCalculator() {
                           className={`p-4 rounded-xl border-2 transition-all text-left ${
                             selectedProject?.id === type.id
                               ? 'border-cyan-400 bg-cyan-500/10'
-                              : 'border-gray-700 hover:border-cyan-500/50'
+                              : 'border-slate-700 hover:border-cyan-500/50'
                           }`}
                         >
                           <div className="font-semibold text-white mb-1">{type.name}</div>
@@ -234,7 +234,7 @@ export default function BudgetCalculator() {
                                     className={`p-3 rounded-lg border transition-all text-left flex items-start gap-3 ${
                                       isSelected
                                         ? 'border-cyan-400 bg-cyan-500/10'
-                                        : 'border-gray-700 hover:border-cyan-500/50'
+                                        : 'border-slate-700 hover:border-cyan-500/50'
                                     }`}
                                   >
                                     <div className={`mt-1 w-5 h-5 rounded flex items-center justify-center flex-shrink-0 ${
@@ -279,7 +279,7 @@ export default function BudgetCalculator() {
                             className={`p-4 rounded-xl border-2 transition-all text-center ${
                               selectedTimeline?.id === timeline.id
                                 ? 'border-cyan-400 bg-cyan-500/10'
-                                : 'border-gray-700 hover:border-cyan-500/50'
+                                : 'border-slate-700 hover:border-cyan-500/50'
                             }`}
                           >
                             <Clock className="w-6 h-6 text-cyan-400 mx-auto mb-2" />
@@ -342,7 +342,7 @@ export default function BudgetCalculator() {
                           </div>
                         )}
                         
-                        <div className="border-t border-gray-700 pt-3 mt-3">
+                        <div className="border-t border-slate-700 pt-3 mt-3">
                           <div className="flex justify-between items-center">
                             <span className="text-xl font-bold text-white">Total Estimado</span>
                             <span className="text-3xl font-bold text-cyan-400">{budget.total}€</span>
@@ -378,7 +378,7 @@ export default function BudgetCalculator() {
                           required
                           value={clientInfo.name}
                           onChange={(e) => setClientInfo({...clientInfo, name: e.target.value})}
-                          className="px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:border-cyan-400 focus:outline-none"
+                          className="px-4 py-3 bg-gray-800 border border-slate-700 rounded-lg text-white placeholder-gray-500 focus:border-cyan-400 focus:outline-none"
                         />
                         <input
                           type="email"
@@ -386,21 +386,21 @@ export default function BudgetCalculator() {
                           required
                           value={clientInfo.email}
                           onChange={(e) => setClientInfo({...clientInfo, email: e.target.value})}
-                          className="px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:border-cyan-400 focus:outline-none"
+                          className="px-4 py-3 bg-gray-800 border border-slate-700 rounded-lg text-white placeholder-gray-500 focus:border-cyan-400 focus:outline-none"
                         />
                         <input
                           type="tel"
                           placeholder="Teléfono"
                           value={clientInfo.phone}
                           onChange={(e) => setClientInfo({...clientInfo, phone: e.target.value})}
-                          className="px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:border-cyan-400 focus:outline-none"
+                          className="px-4 py-3 bg-gray-800 border border-slate-700 rounded-lg text-white placeholder-gray-500 focus:border-cyan-400 focus:outline-none"
                         />
                         <input
                           type="text"
                           placeholder="Empresa"
                           value={clientInfo.company}
                           onChange={(e) => setClientInfo({...clientInfo, company: e.target.value})}
-                          className="px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:border-cyan-400 focus:outline-none"
+                          className="px-4 py-3 bg-gray-800 border border-slate-700 rounded-lg text-white placeholder-gray-500 focus:border-cyan-400 focus:outline-none"
                         />
                       </div>
                       
@@ -409,7 +409,7 @@ export default function BudgetCalculator() {
                         rows={4}
                         value={clientInfo.message}
                         onChange={(e) => setClientInfo({...clientInfo, message: e.target.value})}
-                        className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:border-cyan-400 focus:outline-none resize-none"
+                        className="w-full px-4 py-3 bg-gray-800 border border-slate-700 rounded-lg text-white placeholder-gray-500 focus:border-cyan-400 focus:outline-none resize-none"
                       />
                       
                       <button

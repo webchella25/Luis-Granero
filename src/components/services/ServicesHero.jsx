@@ -28,7 +28,7 @@ function ServicesHero() {
   }, []);
 
   return (
-    <section className="py-20 bg-gradient-to-b from-black via-gray-950 to-gray-900 relative overflow-hidden">
+    <section className="py-20 bg-[#0F172A] relative overflow-hidden">
       
       {/* EFECTOS DE FONDO SUTILES */}
       <div className="absolute inset-0">
@@ -105,7 +105,7 @@ function ServicesHero() {
             ].map((stat, index) => (
               <div
                 key={index}
-                className={`group bg-gray-900/30 backdrop-blur-sm border border-gray-800 rounded-xl p-4 hover:border-cyan-500/50 transition-all duration-300 transform hover:scale-105 animate-fade-in-up`}
+                className={`group bg-[#1E293B] border border-slate-700/50 rounded-xl p-4 hover:border-cyan-500/40 transition-all duration-200`}
                 style={{ animationDelay: `${index * 150}ms` }}
               >
                 <div className="text-2xl mb-2 group-hover:scale-110 transition-transform">
@@ -123,7 +123,7 @@ function ServicesHero() {
 
           {/* CTA SUTIL PERO EFECTIVO */}
           <div className="mt-12">
-            <button className="group relative px-8 py-4 bg-gradient-to-r from-cyan-600/20 to-green-600/20 border border-cyan-500/30 text-cyan-400 font-semibold rounded-xl hover:from-cyan-600/40 hover:to-green-600/40 hover:border-cyan-500/60 transition-all duration-300 transform hover:scale-105">
+            <button className="btn-secondary">
               <span className="flex items-center">
                 Explorar servicios
                 <span className="ml-2 group-hover:translate-x-1 transition-transform">→</span>

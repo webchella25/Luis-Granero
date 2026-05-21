@@ -4,14 +4,8 @@ import connectDB from '@/lib/mongodb' // Cambiado de @/lib/db
 import Project from '@/models/Project'
 // import BlogPost from '@/models/BlogPost' // Comentado hasta que exista
 // import Message from '@/models/Message' // Comentado hasta que exista
-import { checkAuth } from '@/lib/checkAuth'
-
 export async function GET() {
   try {
-    const session = await checkAuth()
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
 
     await connectDB()
 

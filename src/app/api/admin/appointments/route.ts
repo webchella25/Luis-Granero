@@ -1,16 +1,11 @@
 // src/app/api/admin/appointments/route.ts
 import { NextResponse } from 'next/server';
-import { checkAuth } from '@/lib/checkAuth'
 import connectDB from '@/lib/mongodb';
 import Appointment from '@/models/Appointment';
 import Lead from '@/models/Lead'; // 🔥 ESTO REGISTRA EL MODELO
 
 export async function GET(request: Request) {
   try {
-    const session = await checkAuth();
-    if (!session) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
-    }
 
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status') || 'all';
@@ -42,11 +37,6 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const session = await checkAuth();
-    if (!session) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
-    }
-
     await connectDB();
     
     const data = await request.json();
@@ -72,11 +62,6 @@ export async function POST(request: Request) {
 
 export async function PUT(request: Request) {
   try {
-    const session = await checkAuth();
-    if (!session) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
-    }
-
     await connectDB();
     
     const data = await request.json();
@@ -110,11 +95,6 @@ export async function PUT(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
-    const session = await checkAuth();
-    if (!session) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
-    }
-
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
 

@@ -3,10 +3,14 @@ import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import Template from '@/models/Template';
 import MessageTemplate from '@/models/MessageTemplate';
+import { requireAdmin } from '@/lib/adminAuth';
 
 // ✅ GET - Obtener templates
 export async function GET(request) {
   try {
+    const auth = await requireAdmin(request);
+    if (!auth.ok) return auth.response;
+
     await dbConnect();
     
     const { searchParams } = new URL(request.url);
@@ -59,6 +63,9 @@ export async function GET(request) {
 // ✅ POST - Crear template
 export async function POST(request) {
   try {
+    const auth = await requireAdmin(request);
+    if (!auth.ok) return auth.response;
+
     await dbConnect();
     
     const data = await request.json();

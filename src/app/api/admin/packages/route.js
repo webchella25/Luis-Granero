@@ -1,6 +1,5 @@
 // src/app/api/admin/packages/route.js
 import { NextResponse } from 'next/server';
-import { checkAuth } from '@/lib/checkAuth'
 import dbConnect from '@/lib/mongodb';
 import Package from '@/models/Package';
 
@@ -20,11 +19,7 @@ export async function GET() {
 
 export async function POST(request) {
   try {
-    const session = await checkAuth();
-    
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+
 
     await dbConnect();
     

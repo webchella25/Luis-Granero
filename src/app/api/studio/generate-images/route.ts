@@ -51,7 +51,19 @@ interface FreepikAsyncResponse {
 }
 type FreepikCreateResponse = FreepikSyncResponse | FreepikAsyncResponse;
 
-async function freepikGenerateImage(prompt: string, apiKey: string): Promise<Buffer> {
+async function freepikGenerateImage(prompt: string, apiKey: string, referenceUrl?: string): Promise<Buffer> {
+  const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? '';
+  const bodyPayload: Record<string, unknown> = {
+    prompt,
+    negative_prompt: NEGATIVE_PROMPT,
+    num_images: 1,
+    image: { size: 'landscape_16_9' },
+    styling: { style: 'photo' },
+  };
+  if (referenceUrl) {
+    const fullUrl = referenceUrl.startsWith('http') ? referenceUrl : `${BASE_URL}${referenceUrl}`;
+    bodyPayload.image_references = [{ url: fullUrl, strength: 0.35 }];
+  }
   const createRes = await fetch('https://api.freepik.com/v1/ai/text-to-image', {
     method: 'POST',
     headers: {
@@ -59,13 +71,7 @@ async function freepikGenerateImage(prompt: string, apiKey: string): Promise<Buf
       'Content-Type': 'application/json',
       Accept: 'application/json',
     },
-    body: JSON.stringify({
-      prompt,
-      negative_prompt: NEGATIVE_PROMPT,
-      num_images: 1,
-      image: { size: 'landscape_16_9' },
-      styling: { style: 'photo' },
-    }),
+    body: JSON.stringify(bodyPayload),
   });
 
   if (!createRes.ok) {
@@ -138,6 +144,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     await connectDB();
     const canal = await StudioCanal.findById(session.canal_id).lean();
     const canalConfig = ((canal as { config?: LLMConfig } | null)?.config ?? {}) as LLMConfig;
+    const canalNicho = [(canal as { nicho?: string } | null)?.nicho, (canal as { descripcion?: string } | null)?.descripcion].filter(Boolean).join(' — ') || undefined;
 
     const script = await StudioScript.findById(scriptId);
     if (!script) return NextResponse.json({ error: 'Guión no encontrado' }, { status: 404 });
@@ -162,7 +169,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const imageDuration = durationSec / numImages;
 
     // ── Modo ComfyUI ─────────────────────────────────────────────────────────
-    const rawCanal = canal as { config?: { imagen_motor?: string; comfyui_api_key?: string; comfyui_workflow_overrides?: Record<string, string> } } | null;
+    const rawCanal = canal as { config?: { imagen_motor?: string; comfyui_api_key?: string; comfyui_workflow_overrides?: Record<string, string>; imagen_referencia_url?: string } } | null;
+    const imagenReferenciaUrl = rawCanal?.config?.imagen_referencia_url || undefined;
     if (rawCanal?.config?.imagen_motor === 'comfyui') {
       const comfyKey = rawCanal.config.comfyui_api_key;
       if (!comfyKey) {
@@ -181,16 +189,17 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       (async () => {
         try {
           const prompts = await generateDistributedPrompts(
-            script.guion_json, numImages, script.personaje, script.epoca, canalConfig, STYLE_PREFIX_HF
+            script.guion_json, numImages, script.personaje, script.epoca, canalConfig, STYLE_PREFIX_HF, canalNicho
           );
           const imagesDir = path.join(publicDir, 'studio', 'images', sid);
           await fs.mkdir(imagesDir, { recursive: true });
           const imagesPaths: string[] = [];
+          const ts = Date.now();
           for (let i = 0; i < prompts.length; i++) {
             const buffer = await runComfyWorkflow('thumbnail', { prompt: prompts[i] }, comfyKey, overrides.thumbnail);
             const filename = `seccion-${i}.png`;
             await fs.writeFile(path.join(imagesDir, filename), buffer);
-            imagesPaths.push(`/api/studio/image/${sid}/${filename}`);
+            imagesPaths.push(`/api/studio/image/${sid}/${filename}?t=${ts}`);
             await connectDB();
             const s = await StudioScript.findById(sid);
             if (s) { s.images_progress = i + 1; await s.save(); }
@@ -221,7 +230,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       });
     }
 
-    const engine = await getImageEngine();
+    const canalMotor = rawCanal?.config?.imagen_motor;
+    const engine = (canalMotor && canalMotor !== 'comfyui')
+      ? (canalMotor as 'auto' | 'freepik' | 'huggingface')
+      : await getImageEngine();
 
     // ── Modo HuggingFace (async) ────────────────────────────────────────────
     if (engine === 'huggingface') {
@@ -238,7 +250,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
       const sid = scriptId;
       generateImagesHFBackground(
-        sid, script.guion_json, script.personaje, script.epoca, canalConfig, numImages, imageDuration
+        sid, script.guion_json, script.personaje, script.epoca, canalConfig, numImages, imageDuration, canalNicho
       ).catch(async (err: unknown) => {
         const msg = err instanceof Error ? err.message : 'Error desconocido';
         await connectDB();
@@ -261,69 +273,75 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     if (freepikKey) {
-      try {
-        const prompts = await generateDistributedPrompts(
-          script.guion_json, numImages, script.personaje, script.epoca, canalConfig, STYLE_PREFIX_FREEPIK
-        );
+      script.images_status = 'processing';
+      script.images_progress = 0;
+      script.images_count = numImages;
+      script.images_duration = imageDuration;
+      script.images_error = undefined;
+      await script.save();
 
-        const imagesDir = path.join(publicDir, 'studio', 'images', scriptId);
-        await fs.mkdir(imagesDir, { recursive: true });
+      const sid = scriptId;
+      (async () => {
+        try {
+          const prompts = await generateDistributedPrompts(
+            script.guion_json, numImages, script.personaje, script.epoca, canalConfig, STYLE_PREFIX_FREEPIK, canalNicho
+          );
 
-        const imagesPaths: string[] = [];
-        for (let i = 0; i < prompts.length; i++) {
-          const imgBuffer = await freepikGenerateImage(prompts[i], freepikKey);
-          const filename = `seccion-${i}.jpg`;
-          await fs.writeFile(path.join(imagesDir, filename), imgBuffer);
-          imagesPaths.push(`/api/studio/image/${scriptId}/${filename}`);
-        }
+          const imagesDir = path.join(publicDir, 'studio', 'images', sid);
+          await fs.mkdir(imagesDir, { recursive: true });
 
-        script.images_paths = imagesPaths;
-        script.images_count = imagesPaths.length;
-        script.images_duration = imageDuration;
-        script.images_status = 'ready';
-        script.images_progress = imagesPaths.length;
-        await script.save();
-
-        return NextResponse.json({
-          success: true,
-          images: imagesPaths,
-          engine: 'freepik',
-          images_count: imagesPaths.length,
-          images_duration: Math.round(imageDuration),
-        });
-      } catch (freepikError) {
-        const freepikMsg = freepikError instanceof Error ? freepikError.message : '';
-        // Auto fallback a HF si Freepik falla
-        if (engine === 'auto' && process.env.HUGGINGFACE_TOKEN) {
-          console.warn('Freepik falló, usando HuggingFace como fallback:', freepikMsg);
-
-          script.images_status = 'processing';
-          script.images_progress = 0;
-          script.images_count = numImages;
-          script.images_duration = imageDuration;
-          script.images_error = undefined;
-          await script.save();
-
-          const sid = scriptId;
-          generateImagesHFBackground(
-            sid, script.guion_json, script.personaje, script.epoca, canalConfig, numImages, imageDuration
-          ).catch(async (err: unknown) => {
-            const msg = err instanceof Error ? err.message : 'Error desconocido';
+          const imagesPaths: string[] = [];
+          const ts = Date.now();
+          for (let i = 0; i < prompts.length; i++) {
+            const imgBuffer = await freepikGenerateImage(prompts[i], freepikKey, imagenReferenciaUrl);
+            const filename = `seccion-${i}.jpg`;
+            await fs.writeFile(path.join(imagesDir, filename), imgBuffer);
+            imagesPaths.push(`/api/studio/image/${sid}/${filename}?t=${ts}`);
             await connectDB();
             const s = await StudioScript.findById(sid);
-            if (s) { s.images_status = 'error'; s.images_error = msg.slice(0, 500); await s.save(); }
-          });
+            if (s) {
+              s.images_paths = imagesPaths;
+              s.images_progress = i + 1;
+              await s.save();
+            }
+          }
 
-          return NextResponse.json({
-            status: 'processing',
-            engine: 'huggingface',
-            fallback: true,
-            images_count: numImages,
-            images_duration: Math.round(imageDuration),
-          });
+          await connectDB();
+          const s = await StudioScript.findById(sid);
+          if (s) {
+            s.images_paths = imagesPaths;
+            s.images_count = imagesPaths.length;
+            s.images_duration = imageDuration;
+            s.images_status = 'ready';
+            s.images_progress = imagesPaths.length;
+            await s.save();
+          }
+        } catch (freepikError) {
+          const freepikMsg = freepikError instanceof Error ? freepikError.message : 'Error Freepik';
+          if (engine === 'auto' && process.env.HUGGINGFACE_TOKEN) {
+            console.warn('Freepik falló, usando HuggingFace como fallback:', freepikMsg);
+            generateImagesHFBackground(
+              sid, script.guion_json, script.personaje, script.epoca, canalConfig, numImages, imageDuration, canalNicho
+            ).catch(async (err: unknown) => {
+              const msg = err instanceof Error ? err.message : 'Error desconocido';
+              await connectDB();
+              const s = await StudioScript.findById(sid);
+              if (s) { s.images_status = 'error'; s.images_error = msg.slice(0, 500); await s.save(); }
+            });
+            return;
+          }
+          await connectDB();
+          const s = await StudioScript.findById(sid);
+          if (s) { s.images_status = 'error'; s.images_error = freepikMsg.slice(0, 500); await s.save(); }
         }
-        throw freepikError;
-      }
+      })();
+
+      return NextResponse.json({
+        status: 'processing',
+        engine: 'freepik',
+        images_count: numImages,
+        images_duration: Math.round(imageDuration),
+      });
     }
 
     // Auto sin Freepik → HF directo
@@ -337,7 +355,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
       const sid = scriptId;
       generateImagesHFBackground(
-        sid, script.guion_json, script.personaje, script.epoca, canalConfig, numImages, imageDuration
+        sid, script.guion_json, script.personaje, script.epoca, canalConfig, numImages, imageDuration, canalNicho
       ).catch(async (err: unknown) => {
         const msg = err instanceof Error ? err.message : 'Error desconocido';
         await connectDB();

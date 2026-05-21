@@ -5,9 +5,13 @@ import Footer from '@/components/layout/Footer';
 import LearningPathDetail from '@/components/cursos/LearningPathDetail';
 import EmailCourseLanding from '@/components/cursos/EmailCourseLanding';
 import EnrollButton from '@/components/courses/EnrollButton';
+import SchemaOrg from '@/components/seo/SchemaOrg';
+import { getCourseSchema, getBreadcrumbSchema } from '@/lib/seo/schemas';
+import CoursePurchaseGate from '@/components/cursos/CoursePurchaseGate';
+import CourseStartButton from '@/components/cursos/CourseStartButton';
 
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+// ISR - Revalidar cada 24 horas
+export const revalidate = 86400;
 
 async function getCourseData(slug: string) {
   const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
@@ -15,7 +19,7 @@ async function getCourseData(slug: string) {
   // Intentar buscar en email courses primero
   try {
     const emailRes = await fetch(`${baseUrl}/api/public/email-courses/${slug}`, {
-      cache: 'no-store',
+      next: { revalidate: 86400 },
     });
     if (emailRes.ok) {
       const data = await emailRes.json();
@@ -28,7 +32,7 @@ async function getCourseData(slug: string) {
   // Si no es email course, buscar en learning paths
   try {
     const pathRes = await fetch(`${baseUrl}/api/public/learning-paths/${slug}`, {
-      cache: 'no-store',
+      next: { revalidate: 86400 },
     });
     if (pathRes.ok) {
       const data = await pathRes.json();
@@ -85,10 +89,27 @@ export default async function LearningPathPage({ params }: Props) {
 
   // Si es un email course, renderizar EmailCourseLanding
   if (courseData.type === 'email') {
+    const course = courseData.data;
+    const courseSchema = getCourseSchema({
+      title: course.title,
+      description: course.description,
+      slug: resolvedParams.slug,
+      thumbnail: course.thumbnail,
+      level: course.level,
+      duration: course.duration
+    });
+
+    const breadcrumbSchema = getBreadcrumbSchema([
+      { name: 'Inicio', url: '/' },
+      { name: 'Cursos', url: '/cursos' },
+      { name: course.title, url: `/cursos/${resolvedParams.slug}` }
+    ]);
+
     return (
       <>
+        <SchemaOrg schema={[courseSchema, breadcrumbSchema]} />
         <Header />
-        <EmailCourseLanding course={courseData.data} />
+        <EmailCourseLanding course={course} />
         <Footer />
       </>
     );
@@ -97,8 +118,28 @@ export default async function LearningPathPage({ params }: Props) {
   // Si es un learning path, renderizar la UI completa
   const path = courseData.data;
 
+  // Generar schemas para learning path
+  const courseSchema = getCourseSchema({
+    title: path.title,
+    description: path.description,
+    slug: resolvedParams.slug,
+    thumbnail: path.thumbnail,
+    level: path.level,
+    duration: path.estimatedTime || path.duration,
+    numberOfLessons: path.articles?.length || path.modules?.length
+  });
+
+  const breadcrumbSchema = getBreadcrumbSchema([
+    { name: 'Inicio', url: '/' },
+    { name: 'Cursos', url: '/cursos' },
+    { name: path.title, url: `/cursos/${resolvedParams.slug}` }
+  ]);
+
   return (
-    <main className="min-h-screen bg-black">
+    <main className="min-h-screen bg-[#0F172A]">
+      {/* Schema.org JSON-LD */}
+      <SchemaOrg schema={[courseSchema, breadcrumbSchema]} />
+
       <Header />
       
       {/* Hero Section del Curso */}
@@ -154,12 +195,11 @@ export default async function LearningPathPage({ params }: Props) {
               {path.description}
             </p>
 
-            {/* 🔥 BOTÓN DE INSCRIPCIÓN */}
             <div className="mb-8">
-              <EnrollButton 
-                courseId={path._id}
+              <CourseStartButton
                 courseSlug={path.slug}
                 isPremium={path.isPremium}
+                firstArticleSlug={path.articles?.[0]?.postId?.slug}
               />
             </div>
 
@@ -233,9 +273,15 @@ export default async function LearningPathPage({ params }: Props) {
         </div>
       </section>
 
-      {/* Detalle del Curso con Progreso */}
-      <LearningPathDetail path={path} />
-      
+      {/* Contenido del curso — con gate de pago si es premium */}
+      {path.isPremium ? (
+        <CoursePurchaseGate course={path} anchorId="comprar">
+          <LearningPathDetail path={path} />
+        </CoursePurchaseGate>
+      ) : (
+        <LearningPathDetail path={path} />
+      )}
+
       <Footer />
     </main>
   );

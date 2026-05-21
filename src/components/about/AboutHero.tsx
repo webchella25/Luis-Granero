@@ -1,336 +1,144 @@
-// src/components/about/AboutHero.tsx
 'use client';
 
-import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
+import { MapPin, Clock, Code2, ArrowRight } from 'lucide-react';
 
 interface AboutHeroProps {
   data?: any;
 }
 
-// Tipos para los colores
-type ColorType = 'cyan' | 'green' | 'purple' | 'yellow';
-
-interface CoreValue {
-  value: string;
-  description: string;
-  icon: string;
-  color: ColorType;
-}
-
 export default function AboutHero({ data }: AboutHeroProps) {
-  const [isVisible, setIsVisible] = useState(false);
-  const [currentRole, setCurrentRole] = useState(0);
-
-  // Roles/identidades profesionales
-  const professionalRoles = [
-    { 
-      role: "Desarrollador", 
-      years: "10+ años",
-      color: "from-cyan-400 to-blue-500", 
-      icon: "💻",
-      description: "Crafting code since 2014"
-    },
-    { 
-      role: "Arquitecto", 
-      years: "50+ proyectos",
-      color: "from-purple-400 to-indigo-500", 
-      icon: "🏗️",
-      description: "Designing scalable solutions"
-    },
-    { 
-      role: "Mentor", 
-      years: "100+ devs",
-      color: "from-green-400 to-emerald-500", 
-      icon: "🎓",
-      description: "Sharing knowledge & experience"
-    },
-    { 
-      role: "Optimizador", 
-      years: "Performance expert",
-      color: "from-yellow-400 to-orange-500", 
-      icon: "⚡",
-      description: "Making apps blazing fast"
-    },
-    { 
-      role: "Innovador", 
-      years: "Always learning",
-      color: "from-pink-400 to-red-500", 
-      icon: "🚀",
-      description: "Exploring new technologies"
-    }
-  ];
-
-  // Valores personales/profesionales (con tipado correcto)
-  const coreValues: CoreValue[] = [
-    {
-      value: "Calidad",
-      description: "Código limpio y mantenible",
-      icon: "💎",
-      color: "cyan"
-    },
-    {
-      value: "Transparencia", 
-      description: "Comunicación honesta y clara",
-      icon: "🔍",
-      color: "green"
-    },
-    {
-      value: "Crecimiento",
-      description: "Aprendizaje continuo",
-      icon: "📈", 
-      color: "purple"
-    },
-    {
-      value: "Impacto",
-      description: "Soluciones que transforman",
-      icon: "🎯",
-      color: "yellow"
-    }
-  ];
-
-  useEffect(() => {
-    setIsVisible(true);
-
-    // Rotación de roles cada 3 segundos
-    const interval = setInterval(() => {
-      setCurrentRole((prev) => (prev + 1) % professionalRoles.length);
-    }, 3000);
-
-    return () => clearInterval(interval);
-  }, []);
-
-  const currentProfessionalRole = professionalRoles[currentRole];
-
-  // Datos por defecto o desde props
   const heroContent = {
-    title: data?.title || "Luis Granero",
-    subtitle: data?.subtitle || "La persona detrás del código",
-    description: data?.description || "Más de 10 años transformando ideas en aplicaciones web exitosas. Mi pasión es crear soluciones que realmente importen, con código limpio y metodologías que garantizan resultados.",
-    location: data?.location || "España 🇪🇸",
-    experience: data?.experience || "10+ años"
+    title: data?.title || 'Luis Granero',
+    subtitle: data?.subtitle || 'Desarrollador web freelance — Chella, Valencia',
+    description: data?.description || 'Autodidacta desde siempre. Empecé reparando ordenadores de joven, pasé por WordPress durante años y en 2024 di el salto definitivo a React y Next.js. Trabajo con cariño: si algo lleva mi nombre, no sale hasta que está bien.',
+    location: data?.location || 'Chella, Valencia',
+    experience: data?.experience || '10+ años',
   };
 
-  return (
-    <section className="py-20 bg-gradient-to-br from-black via-gray-950 to-gray-900 relative overflow-hidden min-h-[90vh] flex items-center">
-      
-      {/* EFECTOS DE FONDO PERSONALES */}
-      <div className="absolute inset-0">
-        {/* Constelación de puntos - representando el journey */}
-        <div className="absolute inset-0 opacity-20">
-          {[...Array(50)].map((_, i) => (
-            <div 
-              key={i}
-              className="absolute w-1 h-1 bg-cyan-400 rounded-full animate-pulse"
-              style={{
-                top: `${Math.random() * 100}%`,
-                left: `${Math.random() * 100}%`,
-                animationDelay: `${i * 100}ms`,
-                animationDuration: `${2 + Math.random() * 3}s`
-              }}
-            />
-          ))}
-        </div>
-        
-        {/* Efectos de luz cálidos y personales */}
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-cyan-500/8 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/8 rounded-full blur-3xl animate-pulse delay-1000" />
-        <div className="absolute top-1/2 left-1/2 w-80 h-80 bg-green-500/8 rounded-full blur-3xl animate-pulse delay-2000" />
-        
-        {/* Timeline visual sutil */}
-        <div className="absolute left-8 top-0 bottom-0 w-0.5 bg-gradient-to-b from-transparent via-cyan-400/30 to-transparent opacity-30" />
-      </div>
+  const roles = [
+    { label: 'Desarrollador', years: '10+ años', desc: 'WordPress → React/Next.js' },
+    { label: 'Freelance', years: 'Pequeñas empresas', desc: 'Soluciones a medida' },
+    { label: 'SaaS Builder', years: '2 en desarrollo', desc: 'Productos propios' },
+  ];
 
-      <div className="container mx-auto px-4 relative z-10">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-          
-          {/* COLUMNA IZQUIERDA - CONTENIDO */}
-          <div className={`transition-all duration-1000 ${
-            isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-10'
-          }`}>
-            
-            {/* GREETING PERSONAL */}
-            <div className="flex items-center space-x-3 mb-6">
-              <span className="text-2xl animate-wave">👋</span>
-              <span className="text-cyan-400 font-mono text-lg">Hola, soy</span>
+  const values = [
+    { label: 'Perfeccionismo', desc: 'No entrego hasta que está bien' },
+    { label: 'Transparencia', desc: 'Comunicación clara y directa' },
+    { label: 'Autodidacta', desc: 'Aprendizaje continuo' },
+    { label: 'Cariño', desc: 'Me implico en cada proyecto' },
+  ];
+
+  return (
+    <section className="relative overflow-hidden bg-[#0F172A] pt-32 pb-20">
+      {/* Grid bg */}
+      <div className="absolute inset-0 bg-grid bg-grid-fade opacity-50" />
+      <div className="absolute top-0 right-1/4 w-[500px] h-[400px] bg-cyan-500/6 rounded-full blur-3xl pointer-events-none" />
+
+      <div className="relative container mx-auto px-6">
+
+        {/* Fila superior: texto + foto */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center mb-12">
+
+          {/* LEFT — contenido principal */}
+          <div>
+            <div className="badge badge-cyan mb-6">
+              <MapPin className="w-3.5 h-3.5" />
+              {heroContent.location}
             </div>
 
-            {/* NOMBRE Y TÍTULO */}
-            <h1 className="mb-6">
-              <div className="text-5xl md:text-7xl font-black mb-4">
-                <span className="bg-gradient-to-r from-cyan-400 via-purple-400 to-green-400 bg-clip-text text-transparent animate-gradient-x">
-                  {heroContent.title}
-                </span>
-              </div>
-              
-              <div className="text-xl md:text-2xl text-gray-300 mb-4">
-                {heroContent.subtitle}
-              </div>
-              
-              {/* ROL ROTATIVO */}
-              <div className="text-2xl md:text-3xl font-bold">
-                <span className="text-gray-400">Soy </span>
-                <span 
-                  className={`bg-gradient-to-r ${currentProfessionalRole.color} bg-clip-text text-transparent animate-pulse`}
-                >
-                  {currentProfessionalRole.icon} {currentProfessionalRole.role}
-                </span>
-              </div>
-              <div className="text-lg text-gray-500 mt-2 font-mono">
-                {currentProfessionalRole.description} • {currentProfessionalRole.years}
-              </div>
+            <h1 className="text-5xl md:text-6xl font-bold leading-tight tracking-tight text-slate-50 mb-4">
+              {heroContent.title}
             </h1>
 
-            {/* DESCRIPCIÓN PERSONAL */}
-            <p className="text-lg md:text-xl text-gray-300 leading-relaxed mb-8">
+            <p className="text-xl text-slate-400 mb-2 font-medium">
+              {heroContent.subtitle}
+            </p>
+
+            <p className="text-slate-400 leading-relaxed mb-8 max-w-lg">
               {heroContent.description}
             </p>
 
-            {/* QUICK FACTS */}
-            <div className="grid grid-cols-2 gap-6 mb-8">
-              <div className="flex items-center space-x-3">
-                <span className="text-2xl">📍</span>
+            {/* Quick facts */}
+            <div className="grid grid-cols-2 gap-4 mb-8">
+              <div className="flex items-center gap-3 bg-[#1E293B] border border-slate-700/50 rounded-xl p-4">
+                <Clock className="w-5 h-5 text-cyan-400 flex-shrink-0" />
                 <div>
-                  <div className="text-cyan-400 font-semibold">Ubicación</div>
-                  <div className="text-gray-400">{heroContent.location}</div>
+                  <div className="text-xs text-slate-500 mb-0.5">Experiencia</div>
+                  <div className="text-sm font-semibold text-slate-200">{heroContent.experience}</div>
                 </div>
               </div>
-              <div className="flex items-center space-x-3">
-                <span className="text-2xl">⏰</span>
+              <div className="flex items-center gap-3 bg-[#1E293B] border border-slate-700/50 rounded-xl p-4">
+                <Code2 className="w-5 h-5 text-cyan-400 flex-shrink-0" />
                 <div>
-                  <div className="text-green-400 font-semibold">Experiencia</div>
-                  <div className="text-gray-400">{heroContent.experience}</div>
-                </div>
-              </div>
-              <div className="flex items-center space-x-3">
-                <span className="text-2xl">🎯</span>
-                <div>
-                  <div className="text-purple-400 font-semibold">Especialidad</div>
-                  <div className="text-gray-400">Full Stack Development</div>
-                </div>
-              </div>
-              <div className="flex items-center space-x-3">
-                <span className="text-2xl">💡</span>
-                <div>
-                  <div className="text-yellow-400 font-semibold">Pasión</div>
-                  <div className="text-gray-400">Solving Problems</div>
+                  <div className="text-xs text-slate-500 mb-0.5">Especialidad</div>
+                  <div className="text-sm font-semibold text-slate-200">Full Stack Dev</div>
                 </div>
               </div>
             </div>
 
-            {/* BOTONES DE ACCIÓN */}
-            <div className="flex flex-col sm:flex-row gap-4">
-              <Link
-                href="#my-story"
-                className="group px-8 py-4 bg-gradient-to-r from-cyan-600/20 to-purple-600/20 border border-cyan-500/30 text-cyan-400 font-semibold rounded-xl hover:from-cyan-600/40 hover:to-purple-600/40 hover:border-cyan-500/60 transition-all duration-300 transform hover:scale-105"
-              >
-                <span className="flex items-center">
-                  <span className="mr-3 text-xl group-hover:rotate-12 transition-transform">📖</span>
-                  Mi historia
-                  <span className="ml-3 group-hover:translate-x-1 transition-transform">→</span>
-                </span>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Link href="#my-story" className="btn-primary inline-flex items-center justify-center gap-2">
+                Mi historia
+                <ArrowRight className="w-4 h-4" />
               </Link>
-              
-              <Link
-                href="/contacto"
-                className="group px-8 py-4 border-2 border-green-400/50 text-green-400 hover:bg-green-400/10 hover:border-green-400 font-semibold rounded-xl transition-all duration-300 transform hover:scale-105"
-              >
-                <span className="flex items-center">
-                  <span className="mr-3 text-xl group-hover:scale-125 transition-transform">💬</span>
-                  Hablemos
-                </span>
+              <Link href="/contacto" className="btn-secondary inline-flex items-center justify-center gap-2">
+                Hablemos
               </Link>
             </div>
           </div>
 
-          {/* COLUMNA DERECHA - VALORES Y ROLES */}
-          <div className={`transition-all duration-1000 delay-300 ${
-            isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-10'
-          }`}>
-            
-            {/* MIS VALORES */}
-            <div className="mb-12">
-              <h3 className="text-2xl font-bold text-white mb-6 flex items-center">
-                <span className="mr-3 text-3xl">⭐</span>
-                Mis valores
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {coreValues.map((item, index) => {
-                  const colorClasses: Record<ColorType, string> = {
-                    cyan: "from-cyan-400 to-cyan-600 border-cyan-500/30",
-                    green: "from-green-400 to-green-600 border-green-500/30", 
-                    purple: "from-purple-400 to-purple-600 border-purple-500/30",
-                    yellow: "from-yellow-400 to-yellow-600 border-yellow-500/30"
-                  };
-
-                  return (
-                    <div
-                      key={index}
-                      className={`group bg-gray-900/40 backdrop-blur-sm border rounded-xl p-4 transition-all duration-300 hover:scale-105 animate-fade-in-up ${colorClasses[item.color]}`}
-                      style={{ animationDelay: `${index * 150}ms` }}
-                    >
-                      <div className="flex items-start space-x-3">
-                        <span className="text-2xl group-hover:scale-125 transition-transform">
-                          {item.icon}
-                        </span>
-                        <div>
-                          <h4 className={`font-bold text-lg bg-gradient-to-r ${colorClasses[item.color].split(' ')[0]} ${colorClasses[item.color].split(' ')[1]} bg-clip-text text-transparent`}>
-                            {item.value}
-                          </h4>
-                          <p className="text-gray-400 text-sm">
-                            {item.description}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+          {/* RIGHT — solo la foto */}
+          <div className="relative mx-auto w-56 h-64 lg:w-full lg:h-80">
+            <div className="absolute inset-0 bg-cyan-500/20 rounded-2xl blur-2xl scale-105 pointer-events-none" />
+            <div className="relative w-full h-full rounded-2xl overflow-hidden border border-cyan-500/20 shadow-2xl shadow-cyan-500/10">
+              <Image
+                src="/images/luis-granero.png"
+                alt="Luis Granero — Desarrollador web freelance"
+                fill
+                className="object-cover object-center"
+                priority
+                sizes="(max-width: 1024px) 224px, 480px"
+              />
             </div>
+          </div>
+        </div>
 
-            {/* ROLES/IDENTIDADES */}
-            <div>
-              <h3 className="text-2xl font-bold text-white mb-6 flex items-center">
-                <span className="mr-3 text-3xl">🎭</span>
-                Mis roles
-              </h3>
-              <div className="space-y-3">
-                {professionalRoles.map((role, index) => (
-                  <div
-                    key={index}
-                    className={`group flex items-center space-x-4 p-4 rounded-xl border transition-all duration-300 relative ${
-                      index === currentRole
-                        ? 'border-cyan-500/60 bg-gray-900/60 scale-105'
-                        : 'border-gray-700/50 hover:border-gray-600 hover:scale-102'
-                    }`}
-                  >
-                    <span className="text-2xl group-hover:scale-125 transition-transform">
-                      {role.icon}
-                    </span>
-                    <div className="flex-1">
-                      <h4 className={`font-semibold ${
-                        index === currentRole
-                          ? `bg-gradient-to-r ${role.color} bg-clip-text text-transparent`
-                          : 'text-white group-hover:text-cyan-400'
-                      }`}>
-                        {role.role}
-                      </h4>
-                      <p className="text-gray-400 text-sm">
-                        {role.description}
-                      </p>
-                    </div>
-                    <div className="text-cyan-400 text-sm font-mono">
-                      {role.years}
-                    </div>
-                    
-                    {index === currentRole && (
-                      <div className="absolute right-2 top-1/2 transform -translate-y-1/2 w-2 h-2 bg-cyan-400 rounded-full animate-pulse" />
-                    )}
+        {/* Fila inferior: roles + valores en paralelo, ancho completo */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+          {/* Roles */}
+          <div className="bg-[#1E293B] border border-slate-700/50 rounded-2xl p-6">
+            <h3 className="text-sm font-medium text-slate-400 uppercase tracking-wider mb-4">Mis roles</h3>
+            <div className="space-y-3">
+              {roles.map((role) => (
+                <div key={role.label} className="flex items-center justify-between py-3 border-b border-slate-700/50 last:border-0">
+                  <div>
+                    <div className="text-sm font-semibold text-slate-100">{role.label}</div>
+                    <div className="text-xs text-slate-500 mt-0.5">{role.desc}</div>
                   </div>
-                ))}
-              </div>
+                  <span className="text-xs font-mono text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 px-2.5 py-1 rounded-full">
+                    {role.years}
+                  </span>
+                </div>
+              ))}
             </div>
           </div>
+
+          {/* Valores */}
+          <div className="bg-[#1E293B] border border-slate-700/50 rounded-2xl p-6">
+            <h3 className="text-sm font-medium text-slate-400 uppercase tracking-wider mb-4">Mis valores</h3>
+            <div className="grid grid-cols-2 gap-3">
+              {values.map((v) => (
+                <div key={v.label} className="bg-slate-800/60 border border-slate-700/50 rounded-xl p-3">
+                  <div className="text-sm font-semibold text-slate-200 mb-0.5">{v.label}</div>
+                  <div className="text-xs text-slate-500">{v.desc}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
         </div>
       </div>
     </section>

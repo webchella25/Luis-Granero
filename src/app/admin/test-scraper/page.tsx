@@ -1,568 +1,333 @@
-// src/app/admin/test-scraper/page.tsx
-// VERSIÓN COMPLETA MEJORADA CON DEBUGGING EXTENSIVO
-
 'use client';
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import {
+  Search, MapPin, Tag, Hash, Instagram, Globe,
+  Phone, Mail, Star, Download, CheckSquare, Square,
+  Loader2, AlertCircle, ChevronRight, Users
+} from 'lucide-react';
+
+type Lead = any;
 
 export default function TestScraperPage() {
   const router = useRouter();
-  
-  const [activeTab, setActiveTab] = useState('google-maps');
-  
-  // Google Maps states
-  const [location, setLocation] = useState('Madrid');
-  const [category, setCategory] = useState('restaurante');
+
+  const [activeTab, setActiveTab] = useState<'google-maps' | 'google-search' | 'instagram'>('google-maps');
+
+  // Google Maps
+  const [location, setLocation] = useState('Valencia');
+  const [category, setCategory] = useState('taller mecánico');
   const [maxResults, setMaxResults] = useState(20);
-  
-  // Google Search states
+
+  // Google Search
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState(20);
-  
-  // Instagram states
-  const [instagramHashtag, setInstagramHashtag] = useState('');
-  const [instagramResults, setInstagramResults] = useState(50);
-  
+  const [searchCount, setSearchCount] = useState(20);
+
+  // Instagram
+  const [hashtag, setHashtag] = useState('');
+  const [igCount, setIgCount] = useState(50);
+
   const [loading, setLoading] = useState(false);
-  const [results, setResults] = useState<any[]>([]);
+  const [results, setResults] = useState<Lead[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [selectedLeads, setSelectedLeads] = useState<Set<number>>(new Set());
+  const [selected, setSelected] = useState<Set<number>>(new Set());
+  const [importing, setImporting] = useState(false);
 
-  // ==================== GOOGLE MAPS ====================
-  const handleGoogleMapsScrape = async () => {
+  const search = async () => {
     setLoading(true);
     setError(null);
     setResults([]);
-    setSelectedLeads(new Set());
-
-    console.log('═══════════════════════════════════════');
-    console.log('🗺️ BUSCANDO EN GOOGLE MAPS');
-    console.log('═══════════════════════════════════════');
-    console.log('Ubicación:', location);
-    console.log('Categoría:', category);
-    console.log('Max resultados:', maxResults);
+    setSelected(new Set());
 
     try {
-      const res = await fetch('/api/leads/search', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          query: category,
-          location: location,
-          maxResults: maxResults,
-          saveToDb: false
-        })
-      });
+      let res: Response;
 
-      console.log('Response status:', res.status);
-      const data = await res.json();
-      console.log('Response data:', data);
-
-      if (data.success) {
-        console.log(`✅ ${data.leads.length} leads encontrados`);
-        setResults(data.leads);
+      if (activeTab === 'google-maps') {
+        res = await fetch('/api/leads/search', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query: category, location, maxResults, saveToDb: false }),
+        });
+      } else if (activeTab === 'google-search') {
+        if (!searchQuery.trim()) { setError('Escribe una búsqueda'); setLoading(false); return; }
+        res = await fetch('/api/scraper/google-search', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query: searchQuery, numResults: searchCount }),
+        });
       } else {
-        console.error('❌ Error:', data.error);
+        if (!hashtag.trim()) { setError('Escribe un hashtag'); setLoading(false); return; }
+        res = await fetch('/api/scraper/instagram', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ hashtag: hashtag.replace('#', ''), maxResults: igCount }),
+        });
+      }
+
+      const data = await res!.json();
+      if (data.success) {
+        setResults(data.leads || []);
+        if ((data.leads || []).length === 0) setError('No se encontraron resultados');
+      } else {
         setError(data.error || 'Error desconocido');
       }
-      console.log('═══════════════════════════════════════');
     } catch (err: any) {
-      console.error('❌ CATCH ERROR:', err);
-      setError(err?.message || 'Error desconocido');
-      console.log('═══════════════════════════════════════');
+      setError(err?.message || 'Error de red');
     } finally {
       setLoading(false);
     }
   };
 
-  // ==================== GOOGLE SEARCH ====================
-  const handleGoogleSearchScrape = async () => {
-    if (!searchQuery.trim()) {
-      setError('Por favor ingresa una búsqueda');
-      return;
-    }
+  const toggleOne = (i: number) => {
+    const s = new Set(selected);
+    s.has(i) ? s.delete(i) : s.add(i);
+    setSelected(s);
+  };
 
-    setLoading(true);
-    setError(null);
-    setResults([]);
-    setSelectedLeads(new Set());
+  const toggleAll = () => {
+    setSelected(selected.size === results.length ? new Set() : new Set(results.map((_, i) => i)));
+  };
 
-    console.log('═══════════════════════════════════════');
-    console.log('🔎 BUSCANDO EN GOOGLE SEARCH');
-    console.log('═══════════════════════════════════════');
-    console.log('Query:', searchQuery);
-    console.log('Max resultados:', searchResults);
+  const importLeads = async () => {
+    const toImport = results.filter((_, i) => selected.has(i));
+    if (toImport.length === 0) return;
 
+    setImporting(true);
     try {
-      const res = await fetch('/api/scraper/google-search', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          query: searchQuery,
-          numResults: searchResults
-        })
-      });
-
-      console.log('Response status:', res.status);
-      const data = await res.json();
-      console.log('Response data:', data);
-
-      if (data.success) {
-        console.log(`✅ ${data.leads.length} leads encontrados`);
-        setResults(data.leads);
-      } else {
-        console.error('❌ Error:', data.error);
-        setError(data.error || 'Error desconocido');
-      }
-      console.log('═══════════════════════════════════════');
-    } catch (err: any) {
-      console.error('❌ CATCH ERROR:', err);
-      setError(err?.message || 'Error desconocido');
-      console.log('═══════════════════════════════════════');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // ==================== INSTAGRAM ====================
-  const handleInstagramScrape = async () => {
-    if (!instagramHashtag.trim()) {
-      setError('Por favor ingresa un hashtag');
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-    setResults([]);
-    setSelectedLeads(new Set());
-
-    console.log('═══════════════════════════════════════');
-    console.log('📸 BUSCANDO LEADS EN INSTAGRAM');
-    console.log('═══════════════════════════════════════');
-    console.log('Hashtag:', instagramHashtag);
-    console.log('Max resultados:', instagramResults);
-
-    try {
-      const res = await fetch('/api/scraper/instagram', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          hashtag: instagramHashtag.replace('#', ''),
-          maxResults: instagramResults
-        })
-      });
-
-      console.log('Response status:', res.status);
-      const data = await res.json();
-      console.log('Response data:', data);
-
-      if (data.success) {
-        console.log(`✅ ${data.leads.length} leads encontrados`);
-        console.log('Primeros 3 leads:', data.leads.slice(0, 3));
-        setResults(data.leads);
-      } else {
-        console.error('❌ Error:', data.error);
-        setError(data.error || 'Error desconocido');
-      }
-      console.log('═══════════════════════════════════════');
-    } catch (err: any) {
-      console.error('❌ CATCH ERROR:', err);
-      setError(err?.message || 'Error desconocido');
-      console.log('═══════════════════════════════════════');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // ==================== SELECCIÓN ====================
-  const toggleLead = (index: number) => {
-    const newSelected = new Set(selectedLeads);
-    if (newSelected.has(index)) {
-      newSelected.delete(index);
-      console.log(`❌ Deseleccionado lead #${index}`);
-    } else {
-      newSelected.add(index);
-      console.log(`✅ Seleccionado lead #${index}:`, results[index]?.name);
-    }
-    setSelectedLeads(newSelected);
-    console.log('📊 Total seleccionados:', newSelected.size);
-  };
-
-  const selectAll = () => {
-    const allIndexes = new Set(results.map((_, i) => i));
-    setSelectedLeads(allIndexes);
-    console.log('✅ TODOS SELECCIONADOS:', allIndexes.size, 'leads');
-  };
-
-  const deselectAll = () => {
-    setSelectedLeads(new Set());
-    console.log('❌ TODOS DESELECCIONADOS');
-  };
-
-  // ==================== IMPORTACIÓN ====================
-  const handleImportLeads = async () => {
-    const leadsToImport = results.filter((_, index) => selectedLeads.has(index));
-    
-    console.log('═══════════════════════════════════════');
-    console.log('💾 IMPORTACIÓN DE LEADS');
-    console.log('═══════════════════════════════════════');
-    console.log('📊 Leads seleccionados (índices):', Array.from(selectedLeads));
-    console.log('📦 Cantidad a importar:', leadsToImport.length);
-    console.log('📋 Leads a importar:');
-    leadsToImport.forEach((lead, i) => {
-      console.log(`  ${i + 1}. ${lead.name} - @${lead.username || 'N/A'} - Source: ${lead.source}`);
-    });
-    
-    if (leadsToImport.length === 0) {
-      alert('⚠️ Selecciona al menos un lead para importar');
-      console.log('⚠️ No hay leads seleccionados');
-      console.log('═══════════════════════════════════════');
-      return;
-    }
-
-    try {
-      console.log('🚀 Enviando request al API...');
-      console.log('📤 Payload completo:', JSON.stringify({ leads: leadsToImport }, null, 2));
-      
       const res = await fetch('/api/leads/import', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ leads: leadsToImport })
+        body: JSON.stringify({ leads: toImport }),
       });
-
-      console.log('📡 Response status:', res.status);
-      console.log('📡 Response statusText:', res.statusText);
-      console.log('📡 Response headers:', Object.fromEntries(res.headers.entries()));
-      
-      // Verificar si la respuesta es JSON
-      const contentType = res.headers.get('content-type');
-      console.log('📄 Content-Type:', contentType);
-      
-      if (!contentType || !contentType.includes('application/json')) {
-        const text = await res.text();
-        console.error('❌ LA RESPUESTA NO ES JSON!');
-        console.error('Contenido recibido:', text.substring(0, 500));
-        console.log('═══════════════════════════════════════');
-        alert(`❌ Error: El servidor no respondió con JSON\n\nStatus: ${res.status}\nContenido: ${text.substring(0, 200)}\n\nRevisa la consola (F12) para más detalles.`);
-        return;
-      }
-      
       const data = await res.json();
-      console.log('📥 Response data completo:', data);
-
       if (data.success) {
-        console.log('✅ IMPORTACIÓN EXITOSA!');
-        console.log(`   ✅ Importados: ${data.imported}`);
-        console.log(`   ⚠️ Omitidos: ${data.skipped}`);
-        
-        if (data.leads && data.leads.length > 0) {
-          console.log('📦 Leads importados:');
-          data.leads.forEach((lead: any, i: number) => {
-            console.log(`  ${i + 1}. ${lead.name} (ID: ${lead._id})`);
-          });
-        }
-        
-        if (data.skippedDetails && data.skippedDetails.length > 0) {
-          console.log('⚠️ Leads omitidos:');
-          data.skippedDetails.forEach((skip: any, i: number) => {
-            console.log(`  ${i + 1}. ${skip.name} - Razón: ${skip.reason}`);
-          });
-        }
-        
-        console.log('═══════════════════════════════════════');
-        
-        const message = data.skipped > 0 
-          ? `✅ ${data.imported} leads importados correctamente\n\n⚠️ ${data.skipped} leads omitidos (ya existían en la base de datos)`
-          : `✅ ${data.imported} leads importados correctamente`;
-        
-        alert(message);
         router.push('/admin/leads');
       } else {
-        console.error('❌ ERROR EN LA RESPUESTA');
-        console.error('Mensaje de error:', data.error);
-        console.log('═══════════════════════════════════════');
-        alert(`❌ Error al importar:\n\n${data.error}\n\nRevisa la consola (F12) para más detalles.`);
+        setError(data.error || 'Error al importar');
       }
-      
     } catch (err: any) {
-      console.error('❌ CATCH ERROR - EXCEPCIÓN CAPTURADA');
-      console.error('Error name:', err.name);
-      console.error('Error message:', err.message);
-      console.error('Error stack:', err.stack);
-      console.error('Error completo:', err);
-      console.log('═══════════════════════════════════════');
-      
-      alert(`❌ Error de red o del servidor:\n\n${err?.message || 'Error desconocido'}\n\nEsto puede ser:\n- Problema de conexión\n- Error en el servidor\n- Timeout de la petición\n\nRevisa la consola (F12) para más detalles.`);
+      setError(err?.message || 'Error de red');
+    } finally {
+      setImporting(false);
     }
   };
 
+  const tabs = [
+    { id: 'google-maps' as const,   label: 'Google Maps',   accent: 'cyan' },
+    { id: 'google-search' as const, label: 'Google Search', accent: 'blue' },
+    { id: 'instagram' as const,     label: 'Instagram',     accent: 'pink' },
+  ];
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-8">
-      
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold text-white mb-2">
-          🔍 Buscar Nuevos Leads
-        </h1>
-        <p className="text-gray-400">
-          Encuentra negocios potenciales de múltiples fuentes
-        </p>
-        <p className="text-gray-500 text-sm mt-2">
-          💡 Presiona F12 para ver los logs de debugging
-        </p>
+    <div className="space-y-6">
+
+      {/* Header */}
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center">
+          <Search className="w-5 h-5 text-cyan-400" />
+        </div>
+        <div>
+          <h1 className="text-2xl font-bold text-slate-100">Buscar Nuevos Leads</h1>
+          <p className="text-sm text-slate-500">Encuentra negocios potenciales de múltiples fuentes</p>
+        </div>
       </div>
 
       {/* Tabs */}
-      <div className="mb-8 flex gap-4">
-        <button
-          onClick={() => setActiveTab('google-maps')}
-          className={`px-6 py-3 rounded-lg font-semibold transition-all ${
-            activeTab === 'google-maps'
-              ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-lg shadow-cyan-500/50'
-              : 'bg-slate-800 text-gray-400 hover:text-white'
-          }`}
-        >
-          🗺️ Google Maps
-        </button>
-        
-        <button
-          onClick={() => setActiveTab('google-search')}
-          className={`px-6 py-3 rounded-lg font-semibold transition-all ${
-            activeTab === 'google-search'
-              ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-lg shadow-cyan-500/50'
-              : 'bg-slate-800 text-gray-400 hover:text-white'
-          }`}
-        >
-          🔎 Google Search
-        </button>
+      <div className="flex gap-2">
+        {tabs.map((t) => {
+          const active = activeTab === t.id;
+          const colors = {
+            cyan: active ? 'bg-cyan-500/15 text-cyan-400 border-cyan-500/40' : 'text-slate-500 border-slate-800 hover:text-slate-300 hover:border-slate-700',
+            blue: active ? 'bg-blue-500/15 text-blue-400 border-blue-500/40' : 'text-slate-500 border-slate-800 hover:text-slate-300 hover:border-slate-700',
+            pink: active ? 'bg-pink-500/15 text-pink-400 border-pink-500/40' : 'text-slate-500 border-slate-800 hover:text-slate-300 hover:border-slate-700',
+          };
+          return (
+            <button
+              key={t.id}
+              onClick={() => { setActiveTab(t.id); setResults([]); setError(null); setSelected(new Set()); }}
+              className={`px-4 py-2 rounded-lg text-sm font-medium border transition-all ${colors[t.accent as keyof typeof colors]}`}
+            >
+              {t.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Search form */}
+      <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
+        {activeTab === 'google-maps' && (
+          <div className="space-y-4">
+            <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider">Google Maps</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-xs text-slate-500 mb-1.5">Ubicación</label>
+                <div className="relative">
+                  <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600" />
+                  <input
+                    value={location}
+                    onChange={(e) => setLocation(e.target.value)}
+                    placeholder="Valencia"
+                    className="w-full pl-9 pr-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-slate-200 placeholder-slate-600 focus:border-cyan-500/50 focus:outline-none"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs text-slate-500 mb-1.5">Categoría de negocio</label>
+                <div className="relative">
+                  <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600" />
+                  <input
+                    value={category}
+                    onChange={(e) => setCategory(e.target.value)}
+                    placeholder="taller mecánico"
+                    className="w-full pl-9 pr-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-slate-200 placeholder-slate-600 focus:border-cyan-500/50 focus:outline-none"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs text-slate-500 mb-1.5">Cantidad máxima</label>
+                <select
+                  value={maxResults}
+                  onChange={(e) => setMaxResults(Number(e.target.value))}
+                  className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-slate-200 focus:border-cyan-500/50 focus:outline-none"
+                >
+                  {[10, 20, 30, 50].map(n => <option key={n} value={n}>{n} resultados</option>)}
+                </select>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'google-search' && (
+          <div className="space-y-4">
+            <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider">Google Search</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="md:col-span-2">
+                <label className="block text-xs text-slate-500 mb-1.5">Consulta de búsqueda</label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600" />
+                  <input
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && search()}
+                    placeholder="dentista Madrid centro"
+                    className="w-full pl-9 pr-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-slate-200 placeholder-slate-600 focus:border-blue-500/50 focus:outline-none"
+                  />
+                </div>
+                <p className="text-xs text-slate-600 mt-1.5">Ej: &quot;restaurante italiano Valencia&quot;, &quot;peluquería sin web Sevilla&quot;</p>
+              </div>
+              <div>
+                <label className="block text-xs text-slate-500 mb-1.5">Cantidad</label>
+                <select
+                  value={searchCount}
+                  onChange={(e) => setSearchCount(Number(e.target.value))}
+                  className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-slate-200 focus:border-blue-500/50 focus:outline-none"
+                >
+                  {[10, 20, 30, 50].map(n => <option key={n} value={n}>{n} resultados</option>)}
+                </select>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'instagram' && (
+          <div className="space-y-4">
+            <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider">Instagram</h2>
+            <div className="bg-pink-500/5 border border-pink-500/20 rounded-lg px-4 py-3 text-xs text-pink-300">
+              Busca negocios que solo tienen Instagram (sin web) — alta probabilidad de conversión
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="md:col-span-2">
+                <label className="block text-xs text-slate-500 mb-1.5">Hashtag</label>
+                <div className="relative">
+                  <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600" />
+                  <input
+                    value={hashtag}
+                    onChange={(e) => setHashtag(e.target.value)}
+                    placeholder="restauranteValencia"
+                    className="w-full pl-9 pr-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-slate-200 placeholder-slate-600 focus:border-pink-500/50 focus:outline-none"
+                  />
+                </div>
+                <p className="text-xs text-slate-600 mt-1.5">Ej: peluqueriaMadrid, gymBarcelona, cafeteriaSevilla</p>
+              </div>
+              <div>
+                <label className="block text-xs text-slate-500 mb-1.5">Perfiles a buscar</label>
+                <select
+                  value={igCount}
+                  onChange={(e) => setIgCount(Number(e.target.value))}
+                  className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-slate-200 focus:border-pink-500/50 focus:outline-none"
+                >
+                  {[20, 50, 100].map(n => <option key={n} value={n}>{n} perfiles</option>)}
+                </select>
+              </div>
+            </div>
+          </div>
+        )}
 
         <button
-          onClick={() => setActiveTab('instagram')}
-          className={`px-6 py-3 rounded-lg font-semibold transition-all ${
+          onClick={search}
+          disabled={loading}
+          className={`mt-5 w-full flex items-center justify-center gap-2 py-3 rounded-lg text-sm font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
             activeTab === 'instagram'
-              ? 'bg-gradient-to-r from-pink-500 to-purple-500 text-white shadow-lg shadow-pink-500/50'
-              : 'bg-slate-800 text-gray-400 hover:text-white'
+              ? 'bg-pink-500 hover:bg-pink-400 text-white'
+              : 'bg-cyan-500 hover:bg-cyan-400 text-slate-900'
           }`}
         >
-          📸 Instagram
+          {loading ? (
+            <><Loader2 className="w-4 h-4 animate-spin" /> Buscando...</>
+          ) : (
+            <><Search className="w-4 h-4" /> Buscar Leads</>
+          )}
         </button>
       </div>
 
-      {/* Google Maps Tab */}
-      {activeTab === 'google-maps' && (
-        <div className="bg-slate-800/50 backdrop-blur border border-cyan-500/20 rounded-lg p-8 mb-8">
-          <h2 className="text-2xl font-bold text-white mb-6">
-            🗺️ Buscar en Google Maps
-          </h2>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-            <div>
-              <label className="block text-sm font-semibold text-gray-300 mb-2">
-                📍 Ubicación
-              </label>
-              <input
-                type="text"
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                placeholder="Madrid"
-                className="w-full px-4 py-3 bg-slate-900 border border-gray-700 rounded-lg text-white focus:border-cyan-500 focus:outline-none"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-gray-300 mb-2">
-                🏷️ Categoría
-              </label>
-              <input
-                type="text"
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                placeholder="restaurante"
-                className="w-full px-4 py-3 bg-slate-900 border border-gray-700 rounded-lg text-white focus:border-cyan-500 focus:outline-none"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-gray-300 mb-2">
-                🔢 Cantidad
-              </label>
-              <input
-                type="number"
-                value={maxResults}
-                onChange={(e) => setMaxResults(parseInt(e.target.value))}
-                min={5}
-                max={50}
-                className="w-full px-4 py-3 bg-slate-900 border border-gray-700 rounded-lg text-white focus:border-cyan-500 focus:outline-none"
-              />
-            </div>
-          </div>
-
-          <button
-            onClick={handleGoogleMapsScrape}
-            disabled={loading}
-            className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white font-bold py-4 px-6 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-cyan-500/50"
-          >
-            {loading ? '🔄 Buscando...' : '🚀 Buscar Leads'}
-          </button>
-        </div>
-      )}
-
-      {/* Google Search Tab */}
-      {activeTab === 'google-search' && (
-        <div className="bg-slate-800/50 backdrop-blur border border-cyan-500/20 rounded-lg p-8 mb-8">
-          <h2 className="text-2xl font-bold text-white mb-6">
-            🔎 Buscar en Google Search
-          </h2>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <div className="md:col-span-2">
-              <label className="block text-sm font-semibold text-gray-300 mb-2">
-                🔍 Búsqueda
-              </label>
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="restaurante en Xàtiva"
-                className="w-full px-4 py-3 bg-slate-900 border border-gray-700 rounded-lg text-white focus:border-cyan-500 focus:outline-none"
-              />
-              <p className="text-gray-500 text-sm mt-2">
-                💡 Ejemplos: &quot;dentista Madrid centro&quot;, &quot;tienda ropa Valencia&quot;, &quot;arquitecto Barcelona&quot;
-              </p>
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-gray-300 mb-2">
-                🔢 Número de resultados
-              </label>
-              <select
-                value={searchResults}
-                onChange={(e) => setSearchResults(parseInt(e.target.value))}
-                className="w-full px-4 py-3 bg-slate-900 border border-gray-700 rounded-lg text-white focus:border-cyan-500 focus:outline-none"
-              >
-                <option value={10}>10 resultados</option>
-                <option value={20}>20 resultados</option>
-                <option value={30}>30 resultados</option>
-                <option value={50}>50 resultados</option>
-              </select>
-            </div>
-          </div>
-
-          <button
-            onClick={handleGoogleSearchScrape}
-            disabled={loading}
-            className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white font-bold py-4 px-6 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-cyan-500/50"
-          >
-            {loading ? '🔄 Buscando...' : '🔎 Buscar en Google'}
-          </button>
-        </div>
-      )}
-
-      {/* Instagram Tab */}
-      {activeTab === 'instagram' && (
-        <div className="bg-slate-800/50 backdrop-blur border border-pink-500/20 rounded-lg p-8 mb-8">
-          <h2 className="text-2xl font-bold text-white mb-6">
-            📸 Buscar en Instagram
-          </h2>
-
-          <div className="bg-pink-500/10 border border-pink-500/30 rounded-lg p-4 mb-6">
-            <p className="text-pink-300 text-sm">
-              💡 <strong>Tip:</strong> Busca negocios que solo tienen Instagram (sin web propia) = Alta probabilidad de conversión
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <div className="md:col-span-2">
-              <label className="block text-sm font-semibold text-gray-300 mb-2">
-                #️⃣ Hashtag
-              </label>
-              <input
-                type="text"
-                value={instagramHashtag}
-                onChange={(e) => setInstagramHashtag(e.target.value)}
-                placeholder="restauranteMadrid"
-                className="w-full px-4 py-3 bg-slate-900 border border-gray-700 rounded-lg text-white focus:border-pink-500 focus:outline-none"
-              />
-              <p className="text-gray-500 text-sm mt-2">
-                💡 Ejemplos: restauranteValencia, gymBarcelona, peluqueriaMadrid, cafeteriaSevilla
-              </p>
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-gray-300 mb-2">
-                🔢 Cantidad de perfiles
-              </label>
-              <select
-                value={instagramResults}
-                onChange={(e) => setInstagramResults(parseInt(e.target.value))}
-                className="w-full px-4 py-3 bg-slate-900 border border-gray-700 rounded-lg text-white focus:border-pink-500 focus:outline-none"
-              >
-                <option value={20}>20 perfiles</option>
-                <option value={50}>50 perfiles</option>
-                <option value={100}>100 perfiles</option>
-              </select>
-            </div>
-          </div>
-
-          <button
-            onClick={handleInstagramScrape}
-            disabled={loading}
-            className="w-full bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white font-bold py-4 px-6 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-pink-500/50"
-          >
-            {loading ? '🔄 Buscando...' : '📸 Buscar en Instagram'}
-          </button>
-        </div>
-      )}
-
       {/* Error */}
       {error && (
-        <div className="bg-red-500/20 border border-red-500 rounded-lg p-4 mb-8">
-          <p className="text-red-400">❌ {error}</p>
+        <div className="flex items-center gap-3 bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3 text-red-400 text-sm">
+          <AlertCircle className="w-4 h-4 shrink-0" />
+          {error}
         </div>
       )}
 
       {/* Results */}
       {results.length > 0 && (
-        <div className="bg-slate-800/50 backdrop-blur border border-cyan-500/20 rounded-lg p-8">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-white">
-              📊 {results.length} Leads Encontrados
-              <span className="text-gray-400 text-base ml-4 font-normal">
-                ({selectedLeads.size} seleccionados)
-              </span>
-            </h2>
-            <div className="flex gap-2">
+        <div className="space-y-4">
+          {/* Results header */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <span className="text-slate-300 font-semibold">{results.length} leads encontrados</span>
+              <span className="text-slate-600 text-sm">·</span>
+              <span className="text-slate-500 text-sm">{selected.size} seleccionados</span>
+            </div>
+            <div className="flex items-center gap-2">
               <button
-                onClick={selectAll}
-                className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-lg transition-all text-sm"
+                onClick={toggleAll}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-slate-400 hover:text-slate-200 border border-slate-700 hover:border-slate-600 rounded-lg transition-all"
               >
-                ✅ Todos
+                {selected.size === results.length ? <Square className="w-3.5 h-3.5" /> : <CheckSquare className="w-3.5 h-3.5" />}
+                {selected.size === results.length ? 'Deseleccionar todo' : 'Seleccionar todo'}
               </button>
               <button
-                onClick={deselectAll}
-                className="bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-4 rounded-lg transition-all text-sm"
+                onClick={importLeads}
+                disabled={selected.size === 0 || importing}
+                className="flex items-center gap-1.5 px-4 py-1.5 text-xs font-semibold bg-cyan-500 hover:bg-cyan-400 disabled:opacity-40 disabled:cursor-not-allowed text-slate-900 rounded-lg transition-all"
               >
-                ❌ Ninguno
-              </button>
-              <button
-                onClick={handleImportLeads}
-                disabled={selectedLeads.size === 0}
-                className="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                💾 Importar ({selectedLeads.size})
+                {importing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
+                Importar ({selected.size})
               </button>
             </div>
           </div>
 
-          <div className="space-y-4">
-            {results.map((lead: any, index: number) => (
-              <LeadCard 
-                key={index} 
-                lead={lead} 
+          {/* Cards */}
+          <div className="space-y-2">
+            {results.map((lead: Lead, i: number) => (
+              <LeadCard
+                key={i}
+                lead={lead}
                 source={activeTab}
-                selected={selectedLeads.has(index)}
-                onToggle={() => toggleLead(index)}
+                selected={selected.has(i)}
+                onToggle={() => toggleOne(i)}
               />
             ))}
           </div>
@@ -572,155 +337,85 @@ export default function TestScraperPage() {
   );
 }
 
-// ==================== LEAD CARD ====================
-function LeadCard({ lead, source, selected, onToggle }: { 
-  lead: any; 
+function LeadCard({ lead, source, selected, onToggle }: {
+  lead: Lead;
   source: string;
   selected: boolean;
   onToggle: () => void;
 }) {
+  const score = lead.opportunityScore ?? 0;
+  const scoreColor =
+    score >= 70 ? 'text-green-400 bg-green-500/10 border-green-500/20' :
+    score >= 50 ? 'text-yellow-400 bg-yellow-500/10 border-yellow-500/20' :
+                  'text-slate-400 bg-slate-800 border-slate-700';
+
   return (
-    <div 
-      className={`bg-slate-900 border rounded-lg p-6 transition-all ${
-        selected 
-          ? 'border-cyan-500 shadow-lg shadow-cyan-500/20 bg-slate-800' 
-          : 'border-gray-700 hover:border-cyan-500/50'
+    <div
+      onClick={onToggle}
+      className={`flex items-start gap-4 p-4 rounded-xl border cursor-pointer transition-all ${
+        selected
+          ? 'bg-cyan-500/5 border-cyan-500/40'
+          : 'bg-slate-900 border-slate-800 hover:border-slate-700'
       }`}
     >
-      <div className="flex justify-between items-start mb-4">
-        {/* Checkbox y contenido */}
-        <div className="flex items-start gap-4 flex-1">
-          {/* Checkbox clickable */}
-          <div className="flex-shrink-0 mt-1">
-            <input
-              type="checkbox"
-              checked={selected}
-              onChange={(e) => {
-                e.stopPropagation();
-                onToggle();
-              }}
-              className="w-5 h-5 accent-cyan-500 cursor-pointer"
-            />
-          </div>
-          
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-2">
-              <h3 className="text-xl font-bold text-white">{lead.name}</h3>
-              
-              {/* Badges */}
-              {source === 'google-search' && lead.seoPosition && (
-                <span className="px-2 py-1 bg-purple-500/20 text-purple-400 rounded text-xs font-semibold">
-                  #{lead.seoPosition} en Google
-                </span>
-              )}
-              
-              {source === 'instagram' && lead.username && (
-                <span className="px-2 py-1 bg-pink-500/20 text-pink-400 rounded text-xs font-semibold">
-                  @{lead.username}
-                </span>
-              )}
-              
-              <span className={`px-2 py-1 rounded text-xs font-semibold ${
-                source === 'google-maps' ? 'bg-cyan-500/20 text-cyan-400' :
-                source === 'google-search' ? 'bg-blue-500/20 text-blue-400' :
-                'bg-pink-500/20 text-pink-400'
-              }`}>
-                {source === 'google-maps' ? '🗺️ Maps' : 
-                 source === 'google-search' ? '🔎 Search' : 
-                 '📸 Instagram'}
-              </span>
-            </div>
+      {/* Checkbox */}
+      <div className={`mt-0.5 w-4 h-4 rounded border-2 flex-shrink-0 flex items-center justify-center transition-all ${
+        selected ? 'bg-cyan-500 border-cyan-500' : 'border-slate-600'
+      }`}>
+        {selected && <svg className="w-2.5 h-2.5 text-slate-900" fill="currentColor" viewBox="0 0 12 12"><path d="M10 3L5 8.5 2 5.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/></svg>}
+      </div>
 
-            {/* Instagram specific info */}
-            {source === 'instagram' && (
-              <div className="flex items-center gap-4 text-sm mb-2">
-                {lead.followers > 0 && (
-                  <span className="text-gray-400">👥 {lead.followers.toLocaleString()} seguidores</span>
-                )}
-                {lead.posts > 0 && (
-                  <span className="text-gray-400">📸 {lead.posts} posts</span>
-                )}
-                {lead.isVerified && (
-                  <span className="text-blue-400">✓ Verificado</span>
-                )}
-              </div>
-            )}
+      {/* Content */}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 flex-wrap mb-1">
+          <span className="text-slate-100 font-semibold text-sm">{lead.name}</span>
 
-            {/* Rating */}
-            {lead.rating && (
-              <div className="flex items-center gap-2 text-sm mb-2">
-                <span className="text-yellow-400">⭐ {lead.rating.toFixed(1)}</span>
-                {lead.reviewCount && (
-                  <span className="text-gray-400">({lead.reviewCount} reviews)</span>
-                )}
-              </div>
-            )}
+          {source === 'instagram' && lead.username && (
+            <span className="text-xs text-pink-400 bg-pink-500/10 px-1.5 py-0.5 rounded font-mono">@{lead.username}</span>
+          )}
+          {source === 'google-search' && lead.seoPosition && (
+            <span className="text-xs text-purple-400 bg-purple-500/10 px-1.5 py-0.5 rounded">#{lead.seoPosition} Google</span>
+          )}
 
-            {/* Location */}
-            {lead.location && (
-              <p className="text-gray-400 text-sm mb-2">📍 {lead.location}</p>
-            )}
-
-            {lead.address && (
-              <p className="text-gray-400 text-sm mb-2">📍 {lead.address}</p>
-            )}
-
-            {/* Bio or Description */}
-            {(lead.bio || lead.description) && (
-              <p className="text-gray-300 text-sm mb-3 line-clamp-2">
-                {(lead.bio || lead.description).substring(0, 150)}...
-              </p>
-            )}
-
-            {/* Contact info */}
-            <div className="flex flex-wrap gap-2">
-              {lead.website && (
-                <Link
-                  href={lead.website}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-cyan-400 hover:text-cyan-300 text-sm hover:underline"
-                >
-                  🌐 {lead.domain || 'Website'}
-                </Link>
-              )}
-              
-              {lead.phone && (
-                <span className="text-green-400 text-sm">📱 {lead.phone}</span>
-              )}
-
-              {lead.possibleEmails && lead.possibleEmails.length > 0 && (
-                <span className="text-blue-400 text-sm">
-                  📧 {lead.possibleEmails.length} email(s)
-                </span>
-              )}
-
-              {/* Instagram profile link */}
-              {source === 'instagram' && lead.username && (
-                <Link
-                  href={`https://instagram.com/${lead.username}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-pink-400 hover:text-pink-300 text-sm hover:underline"
-                >
-                  📸 Ver perfil
-                </Link>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Score */}
-        <div className="text-right ml-4 flex-shrink-0">
-          <div className={`text-3xl font-bold ${
-            lead.opportunityScore >= 70 ? 'text-green-400' :
-            lead.opportunityScore >= 50 ? 'text-yellow-400' :
-            'text-gray-400'
+          <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${
+            source === 'google-maps'   ? 'text-cyan-400 bg-cyan-500/10' :
+            source === 'google-search' ? 'text-blue-400 bg-blue-500/10' :
+                                         'text-pink-400 bg-pink-500/10'
           }`}>
-            {lead.opportunityScore}
-          </div>
-          <div className="text-gray-400 text-xs">Score</div>
+            {source === 'google-maps' ? 'Maps' : source === 'google-search' ? 'Search' : 'Instagram'}
+          </span>
         </div>
+
+        <div className="flex items-center gap-3 flex-wrap text-xs text-slate-500">
+          {lead.category && <span>{lead.category}</span>}
+          {lead.address && <span className="flex items-center gap-0.5"><MapPin className="w-3 h-3" />{lead.address}</span>}
+          {lead.rating > 0 && <span className="flex items-center gap-0.5 text-yellow-500/70"><Star className="w-3 h-3" />{lead.rating} ({lead.reviewCount})</span>}
+          {lead.phone && <span className="flex items-center gap-0.5 text-green-500/70"><Phone className="w-3 h-3" />{lead.phone}</span>}
+          {lead.possibleEmails?.length > 0 && <span className="flex items-center gap-0.5 text-blue-500/70"><Mail className="w-3 h-3" />{lead.possibleEmails.length} email(s)</span>}
+          {lead.followers > 0 && <span className="flex items-center gap-0.5"><Users className="w-3 h-3" />{lead.followers.toLocaleString()}</span>}
+        </div>
+
+        {lead.website && (
+          <a
+            href={lead.website}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            className="mt-1 flex items-center gap-1 text-xs text-cyan-500/70 hover:text-cyan-400 w-fit"
+          >
+            <Globe className="w-3 h-3" />
+            {lead.domain || lead.website.substring(0, 40)}
+          </a>
+        )}
+
+        {!lead.website && (
+          <span className="mt-1 inline-block text-xs text-red-400/70 font-medium">Sin web</span>
+        )}
+      </div>
+
+      {/* Score */}
+      <div className={`flex-shrink-0 text-center px-2.5 py-1.5 rounded-lg border text-sm font-bold ${scoreColor}`}>
+        {score}
       </div>
     </div>
   );

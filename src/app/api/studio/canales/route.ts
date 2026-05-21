@@ -3,6 +3,8 @@ import connectDB from '@/lib/mongodb';
 import StudioCanal from '@/models/StudioCanal';
 import { getStudioSession } from '@/lib/studio/session';
 
+const PIPELINE_TYPES = new Set(['narrativo', 'musica_ambiental', 'dj_session']);
+
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const session = getStudioSession(request);
   if (!session) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
@@ -36,11 +38,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     tono?: string;
     system_prompt_guion?: string;
     idioma?: string;
-    pipeline_tipo?: 'narrativo' | 'musica_ambiental';
+    pipeline_tipo?: 'narrativo' | 'musica_ambiental' | 'dj_session';
   };
 
   if (!body.nombre?.trim()) {
     return NextResponse.json({ error: 'Nombre requerido' }, { status: 400 });
+  }
+  if (body.pipeline_tipo !== undefined && !PIPELINE_TYPES.has(String(body.pipeline_tipo))) {
+    return NextResponse.json({ error: 'pipeline_tipo inválido' }, { status: 400 });
   }
 
   await connectDB();
@@ -55,6 +60,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       voz_motor: 'elevenlabs',
       voz_id: '',
       imagen_motor: 'freepik',
+      huggingface_video_enabled: false,
+      huggingface_video_model: '',
+      huggingface_video_provider: 'auto',
+      huggingface_video_endpoint_url: '',
+      huggingface_video_seconds: 6,
+      huggingface_video_width: 768,
+      huggingface_video_height: 432,
+      huggingface_video_fps: 24,
       system_prompt_guion: body.system_prompt_guion?.trim() ?? '',
       tono: body.tono?.trim() ?? '',
       idioma: body.idioma?.trim() ?? 'es-ES',

@@ -2,80 +2,149 @@
 @tailwind components;
 @tailwind utilities;
 
+/* =========================================
+   FUENTES
+   ========================================= */
 @layer base {
   html {
     scroll-behavior: smooth;
+    background-color: #0F172A;
   }
-  
+
   body {
-    background-color: #000000;
-    color: #ffffff;
+    background-color: #0F172A;
+    color: #F8FAFC;
+    font-family: var(--font-body, 'DM Sans', sans-serif);
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading, 'Space Grotesk', sans-serif);
   }
 }
 
+/* =========================================
+   TOKENS DE COLOR
+   ========================================= */
+:root {
+  /* Backgrounds */
+  --bg-base:        #0F172A;
+  --bg-surface:     #1E293B;
+  --bg-elevated:    #273549;
+
+  /* Borders */
+  --border-subtle:  #1E293B;
+  --border-default: #334155;
+  --border-strong:  #475569;
+
+  /* Text */
+  --text-primary:   #F8FAFC;
+  --text-secondary: #94A3B8;
+  --text-muted:     #64748B;
+
+  /* Accent — cyan elegante (no neon) */
+  --cyan:           #06B6D4;
+  --cyan-dim:       rgba(6, 182, 212, 0.15);
+  --cyan-border:    rgba(6, 182, 212, 0.3);
+
+  /* Accent — green secundario */
+  --green:          #10B981;
+  --green-dim:      rgba(16, 185, 129, 0.15);
+}
+
+/* =========================================
+   COMPONENTES BASE
+   ========================================= */
 @layer components {
   .gradient-text {
-    background: linear-gradient(to right, #00FFFF, #00FF88);
+    background: linear-gradient(135deg, #06B6D4, #10B981);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
-  
+
   .container {
     width: 100%;
     max-width: 1200px;
     margin-left: auto;
     margin-right: auto;
-    padding-left: 1rem;
-    padding-right: 1rem;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
   }
 
+  /* Botón principal — sólido, sin gradiente en hover */
   .btn-primary {
-    background: linear-gradient(to right, #00FFFF, #00FF88);
-    color: #000000;
-    padding: 0.75rem 1.5rem;
-    border-radius: 9999px;
+    background-color: #06B6D4;
+    color: #0F172A;
+    padding: 0.75rem 1.75rem;
+    border-radius: 0.5rem;
     font-weight: 600;
-    transition: all 0.3s ease;
-    transform: scale(1);
+    font-family: var(--font-heading, sans-serif);
+    transition: background-color 0.2s ease, box-shadow 0.2s ease;
+    cursor: pointer;
   }
 
   .btn-primary:hover {
-    transform: scale(1.05);
-    box-shadow: 0 0 25px rgba(0, 255, 255, 0.3);
+    background-color: #0891B2;
+    box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.2);
   }
 
+  /* Botón secundario — outline */
   .btn-secondary {
-    border: 2px solid #00FFFF;
-    color: #00FFFF;
-    padding: 0.75rem 1.5rem;
-    border-radius: 9999px;
+    border: 1px solid var(--border-default);
+    color: var(--text-secondary);
+    padding: 0.75rem 1.75rem;
+    border-radius: 0.5rem;
     font-weight: 600;
-    transition: all 0.3s ease;
+    font-family: var(--font-heading, sans-serif);
+    transition: border-color 0.2s ease, color 0.2s ease, background-color 0.2s ease;
     background: transparent;
+    cursor: pointer;
   }
 
   .btn-secondary:hover {
-    background: #00FFFF;
-    color: #000000;
-    transform: scale(1.05);
+    border-color: #06B6D4;
+    color: #06B6D4;
+    background-color: rgba(6, 182, 212, 0.05);
   }
 
+  /* Card base */
   .card {
-    background: rgba(17, 24, 39, 0.5);
-    backdrop-filter: blur(10px);
-    border: 1px solid #374151;
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-default);
     border-radius: 0.75rem;
     padding: 1.5rem;
-    transition: all 0.3s ease;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
   }
 
   .card:hover {
-    border-color: rgba(0, 255, 255, 0.5);
-    transform: translateY(-4px);
+    border-color: var(--cyan-border);
+    box-shadow: 0 0 0 1px var(--cyan-border);
+  }
+
+  /* Badge */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    border: 1px solid var(--border-default);
+    color: var(--text-secondary);
+    background-color: var(--bg-surface);
+  }
+
+  .badge-cyan {
+    background-color: var(--cyan-dim);
+    border-color: var(--cyan-border);
+    color: #06B6D4;
   }
 }
 
+/* =========================================
+   UTILIDADES
+   ========================================= */
 @layer utilities {
   .text-balance {
     text-wrap: balance;
@@ -94,283 +163,72 @@
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
+
+  /* Grid SaaS — fondo sutil tipo Linear */
+  .bg-grid {
+    background-image:
+      linear-gradient(to right, #1e293b 1px, transparent 1px),
+      linear-gradient(to bottom, #1e293b 1px, transparent 1px);
+    background-size: 4rem 4rem;
+  }
+
+  .bg-grid-fade {
+    -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 60%, transparent 100%);
+    mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 60%, transparent 100%);
+  }
 }
 
-/* Colores específicos del proyecto Luis Granero */
-:root {
-  --cyan-luis: #00FFFF;
-  --green-luis: #00FF88;
-  --dark-bg: #000000;
-  --dark-card: #111827;
-  --dark-border: #374151;
-}
-
-/* Efectos de partículas y fondo */
-.stars {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  background-image: 
-    radial-gradient(2px 2px at 20px 30px, #eee, transparent),
-    radial-gradient(2px 2px at 40px 70px, rgba(255,255,255,.5), transparent),
-    radial-gradient(1px 1px at 90px 40px, #fff, transparent),
-    radial-gradient(1px 1px at 130px 80px, rgba(255,255,255,.5), transparent),
-    radial-gradient(2px 2px at 160px 30px, #fff, transparent);
-  background-repeat: repeat;
-  background-size: 200px 100px;
-  opacity: 0.3;
-  z-index: -1;
-}
-
-.twinkling {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  background-image: 
-    radial-gradient(1px 1px at 50px 50px, rgba(0,255,255,0.5), transparent),
-    radial-gradient(1px 1px at 150px 150px, rgba(0,255,255,0.3), transparent),
-    radial-gradient(1px 1px at 250px 100px, rgba(0,255,136,0.2), transparent);
-  background-repeat: repeat;
-  background-size: 300px 200px;
-  animation: twinkling 5s linear infinite;
-  opacity: 0.6;
-  z-index: -1;
-}
-
-@keyframes twinkling {
-  0% { transform: translateY(0px); }
-  100% { transform: translateY(-200px); }
-}
-
-/* Animaciones personalizadas */
+/* =========================================
+   ANIMACIONES
+   ========================================= */
 @keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
-@keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.5;
-  }
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
 .animate-fadeInUp {
-  animation: fadeInUp 0.6s ease-out;
+  animation: fadeInUp 0.5s ease-out forwards;
 }
 
-.animate-pulse-slow {
-  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+/* Respeta preferencias del usuario */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
-/* Scrollbar personalizado con colores Luis Granero */
-::-webkit-scrollbar {
-  width: 8px;
+/* =========================================
+   SCROLLBAR
+   ========================================= */
+::-webkit-scrollbar        { width: 6px; }
+::-webkit-scrollbar-track  { background: #1E293B; }
+::-webkit-scrollbar-thumb  { background: #334155; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #06B6D4; }
+
+/* =========================================
+   FOCUS
+   ========================================= */
+:focus-visible {
+  outline: 2px solid #06B6D4;
+  outline-offset: 2px;
 }
 
-::-webkit-scrollbar-track {
-  background: #1f2937;
+/* =========================================
+   SKELETON LOADING
+   ========================================= */
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
 
-::-webkit-scrollbar-thumb {
-  background: linear-gradient(to bottom, #00FFFF, #00FF88);
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(to bottom, #00FF88, #00FFFF);
-}
-
-/* Focus states con colores originales */
-.focus-visible:focus {
-  outline: none;
-  box-shadow: 0 0 0 2px #00FFFF, 0 0 0 4px rgba(0, 255, 255, 0.2);
-}
-
-/* Loading con colores correctos */
 .skeleton {
-  background: linear-gradient(90deg, #374151 25%, #00FFFF 50%, #374151 75%);
+  background: linear-gradient(90deg, #1E293B 25%, #273549 50%, #1E293B 75%);
   background-size: 200% 100%;
-  animation: loading 1.5s infinite;
-}
-
-@keyframes loading {
-  0% {
-    background-position: 200% 0;
-  }
-  100% {
-    background-position: -200% 0;
-  }
-}
-
-/* Agregar a src/app/globals.css */
-
-@keyframes gradient-x {
-  0%, 100% {
-    background-size: 200% 200%;
-    background-position: left center;
-  }
-  50% {
-    background-size: 200% 200%;
-    background-position: right center;
-  }
-}
-
-@keyframes fade-in-up {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes progress-bar {
-  from {
-    width: 0%;
-  }
-  to {
-    width: 100%;
-  }
-}
-
-@keyframes blink {
-  0%, 50% { opacity: 1; }
-  51%, 100% { opacity: 0; }
-}
-
-.animate-gradient-x {
-  animation: gradient-x 3s ease infinite;
-}
-
-.animate-fade-in-up {
-  animation: fade-in-up 0.8s ease-out forwards;
-}
-
-.animate-progress-bar {
-  animation: progress-bar 2s ease-out forwards;
-}
-
-.animate-blink {
-  animation: blink 1s infinite;
-}
-
-.typewriter {
-  overflow: hidden;
-  white-space: nowrap;
-  animation: typing 3s steps(30, end);
-}
-
-@keyframes typing {
-  from { width: 0; }
-  to { width: 100%; }
-}
-
-.border-3 {
-  border-width: 3px;
-}
-
-/* Agregar a globals.css */
-
-@keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-10px); }
-}
-
-.animate-float {
-  animation: float 6s ease-in-out infinite;
-}
-
-@keyframes slide-in-right {
-  from {
-    opacity: 0;
-    transform: translateX(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-.animate-slide-in-right {
-  animation: slide-in-right 0.6s ease-out forwards;
-}
-
-/* Agregar a globals.css */
-
-@keyframes wave {
-  0%, 100% { transform: rotate(0deg); }
-  25% { transform: rotate(20deg); }
-  75% { transform: rotate(-10deg); }
-}
-
-.animate-wave {
-  animation: wave 2s ease-in-out infinite;
-}
-
-@keyframes scale-102 {
-  to { transform: scale(1.02); }
-}
-
-.hover\:scale-102:hover {
-  animation: scale-102 0.2s ease-out forwards;
-}
-
-/* src/app/globals.css - Añadir al final */
-
-/* Loading screen animations */
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes slideUp {
-  from { 
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to { 
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.loading-screen {
-  animation: fadeIn 0.5s ease-in-out;
-}
-
-.loading-content {
-  animation: slideUp 0.8s ease-out;
-}
-
-/* Optimizar renderizado */
-.page-container {
-  opacity: 0;
-  animation: fadeIn 0.3s ease-in-out forwards;
-}
-
-/* Evitar flash of unstyled content */
-html {
-  background-color: #000;
-}
-
-body {
-  background-color: #000;
-  color: #fff;
+  animation: shimmer 1.5s infinite;
 }

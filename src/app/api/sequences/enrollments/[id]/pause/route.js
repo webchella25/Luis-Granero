@@ -3,9 +3,13 @@ import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import SequenceEnrollment from '@/models/SequenceEnrollment';
 import Sequence from '@/models/Sequence';
+import { requireAdmin } from '@/lib/adminAuth';
 
 export async function POST(request, { params }) {
   try {
+    const auth = await requireAdmin(request);
+    if (!auth.ok) return auth.response;
+
     const { id } = await params; // ← FIX: await params
     await dbConnect();
     

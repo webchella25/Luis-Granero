@@ -1,11 +1,13 @@
 // src/lib/scraper/masterLeadEnrichment.js
 import { enhancedWebsiteAnalysis } from './enhancedWebsiteAnalyzer.js';
 import { findAndVerifyEmails } from './enhancedEmailFinder.js';
-import { getGoogleReviews, generateReviewsPitch, calculateReviewsOpportunityScore } from './googleReviewsAnalyzer.js';
+import { getGoogleReviews, generateReviewsPitch, calculateReviewsOpportunityScore, getGooglePlacePhotos } from './googleReviewsAnalyzer.js';
 import { analyzeCompetition, generateCompetitionReport, calculateCompetitiveAdvantageScore } from './competitorAnalyzer.js';
 import { analyzeFacebookPresence, generateFacebookPitch } from './facebookScraper.js';
 import { analyzeLinkedInPresence, generateLinkedInPitch } from './linkedinScraper.js';
+import { analyzeInstagramPresence, generateInstagramPitch } from './instagramScraper.js';
 import { analyzeHiringActivity, generateJobPostingsPitch } from './jobPostingsScraper.js';
+import { detectInactiveWebsite } from './websiteInactiveDetector.js';
 
 /**
  * MASTER LEAD ENRICHMENT
@@ -22,7 +24,8 @@ export async function masterEnrichLead(leadData, options = {}) {
     includeReviews = true,
     includeCompetition = false, // Más lento
     includeSocialMedia = true,
-    includeHiringActivity = false // Más lento
+    includeHiringActivity = false, // Más lento
+    includeInactivityCheck = true
   } = options;
 
   console.log('\n═════════════════════════════════════════════');
@@ -40,9 +43,11 @@ export async function masterEnrichLead(leadData, options = {}) {
     competition: null,
     socialMedia: {
       facebook: null,
-      linkedin: null
+      linkedin: null,
+      instagram: null
     },
     hiring: null,
+    photos: [],
     finalScore: 0,
     opportunities: [],
     recommendations: [],
@@ -51,6 +56,27 @@ export async function masterEnrichLead(leadData, options = {}) {
   };
 
   try {
+    // 0. Detector de web abandonada (si tiene web)
+    if (includeInactivityCheck && leadData.website) {
+      console.log('🕵️ 0. Detectando inactividad del website...');
+      try {
+        const inactivity = await detectInactiveWebsite(leadData.website);
+        if (inactivity) {
+          enrichment.inactivity = inactivity;
+          if (inactivity.isInactive) {
+            console.log(`   ⚠️ Web abandonada detectada (score: ${inactivity.inactivityScore}/100)`);
+            enrichment.opportunities.push({
+              type: 'abandoned_website',
+              severity: 'high',
+              message: `Web abandonada: ${inactivity.indicators?.map(i => i.message).join(', ')}`
+            });
+          }
+        }
+      } catch (err) {
+        console.log(`   ⚠️ Inactivity check failed: ${err.message}`);
+      }
+    }
+
     // 1. Análisis de website (si tiene)
     if (includeWebAnalysis && leadData.website) {
       console.log('🔍 1. Analizando website...');
@@ -98,11 +124,15 @@ export async function masterEnrichLead(leadData, options = {}) {
       await pause(1000);
     }
 
-    // 3. Análisis de reviews de Google
+    // 3. Análisis de reviews de Google + fotos del negocio
     if (includeReviews && leadData.placeId) {
-      console.log('\n🔍 3. Analizando reviews de Google...');
+      console.log('\n🔍 3. Analizando reviews de Google + fotos...');
       try {
-        const reviewsData = await getGoogleReviews(leadData.placeId, 20);
+        // Lanzar reviews y fotos en paralelo (mismo placeId, mismo paso)
+        const [reviewsData, photos] = await Promise.all([
+          getGoogleReviews(leadData.placeId, 20),
+          getGooglePlacePhotos(leadData.placeId, 10)
+        ]);
 
         if (reviewsData) {
           enrichment.reviews = {
@@ -114,7 +144,6 @@ export async function masterEnrichLead(leadData, options = {}) {
           console.log(`   ✅ ${reviewsData.totalReviews} reviews analizados`);
           console.log(`   ✅ Rating: ${reviewsData.analysis.overall.avgRating}/5`);
 
-          // Agregar oportunidades de reviews
           if (enrichment.reviews.pitch) {
             enrichment.opportunities.push({
               source: 'reviews',
@@ -123,6 +152,12 @@ export async function masterEnrichLead(leadData, options = {}) {
             });
           }
         }
+
+        if (photos.length > 0) {
+          enrichment.photos = photos;
+          console.log(`   ✅ ${photos.length} fotos del negocio guardadas`);
+        }
+
       } catch (err) {
         console.log(`   ❌ Error: ${err.message}`);
       }
@@ -170,65 +205,77 @@ export async function masterEnrichLead(leadData, options = {}) {
 
     // 5. Análisis de redes sociales
     if (includeSocialMedia) {
-      // Facebook
-      console.log('\n🔍 5a. Analizando presencia en Facebook...');
-      try {
-        const fbAnalysis = await analyzeFacebookPresence(leadData.name);
+      const blocked = leadData.socialMediaBlocked || [];
+      const phone = leadData.phone || null;
 
-        if (fbAnalysis.hasPresence) {
+      // Facebook
+      if (blocked.includes('facebook')) {
+        console.log('\n⏭️  5a. Facebook — marcado como no encontrado, omitiendo búsqueda');
+        enrichment.socialMedia.facebook = { hasPresence: false, notFound: true, blocked: true, opportunities: [] };
+      } else {
+        console.log('\n🔍 5a. Analizando presencia en Facebook...');
+        try {
+          const fbAnalysis = await analyzeFacebookPresence(leadData.name, leadData.socialMedia?.facebook || null, leadData.address || null, phone);
+
           enrichment.socialMedia.facebook = {
             ...fbAnalysis,
-            pitch: generateFacebookPitch(fbAnalysis.page.facebookData || fbAnalysis.page)
+            pitch: generateFacebookPitch(fbAnalysis)
           };
 
-          console.log(`   ✅ Facebook encontrado: ${fbAnalysis.page?.likes || 0} likes`);
+          if (fbAnalysis.hasPresence) {
+            console.log(`   ✅ Facebook encontrado: ${fbAnalysis.url}`);
+          } else {
+            console.log(`   ⚠️ Sin presencia en Facebook (${fbAnalysis.notFound ? 'no encontrado' : 'skipped'})`);
+          }
 
-          // Agregar oportunidades de Facebook
           fbAnalysis.opportunities?.forEach(opp => {
-            enrichment.opportunities.push({
-              source: 'facebook',
-              type: 'MEDIUM',
-              message: opp
-            });
+            enrichment.opportunities.push({ source: 'facebook', type: 'MEDIUM', message: opp });
           });
-        } else {
-          console.log('   ⚠️ Sin presencia en Facebook');
+        } catch (err) {
+          console.log(`   ❌ Error: ${err.message}`);
         }
-      } catch (err) {
-        console.log(`   ❌ Error: ${err.message}`);
+
+        await pause(2000);
       }
 
-      await pause(2000);
+      // LinkedIn — módulo desactivado
+      console.log('\n⏭️  5b. LinkedIn — sin análisis disponible (módulo desactivado)');
+      enrichment.socialMedia.linkedin = { unavailable: true, message: 'Sin análisis de LinkedIn disponible' };
 
-      // LinkedIn
-      console.log('\n🔍 5b. Analizando presencia en LinkedIn...');
-      try {
-        const liAnalysis = await analyzeLinkedInPresence(leadData.name);
+      // Instagram
+      if (blocked.includes('instagram')) {
+        console.log('\n⏭️  5c. Instagram — marcado como no encontrado, omitiendo búsqueda');
+        enrichment.socialMedia.instagram = { hasPresence: false, notFound: true, blocked: true, opportunities: [] };
+      } else {
+        console.log('\n🔍 5c. Analizando presencia en Instagram...');
+        try {
+          const instagramUrl = leadData.socialMedia?.instagram || null;
+          const igAnalysis = await analyzeInstagramPresence(leadData.name, instagramUrl, leadData.address || null, phone);
 
-        if (liAnalysis.hasPresence) {
-          enrichment.socialMedia.linkedin = {
-            ...liAnalysis,
-            pitch: generateLinkedInPitch(liAnalysis.company?.linkedInData || liAnalysis.company)
+          enrichment.socialMedia.instagram = {
+            ...igAnalysis,
+            pitch: generateInstagramPitch(igAnalysis)
           };
 
-          console.log(`   ✅ LinkedIn encontrado: ${liAnalysis.company?.followers || 'N/A'} followers`);
-
-          // Agregar oportunidades de LinkedIn
-          liAnalysis.opportunities?.forEach(opp => {
-            enrichment.opportunities.push({
-              source: 'linkedin',
-              type: 'MEDIUM',
-              message: opp
-            });
+          igAnalysis.opportunities?.forEach(opp => {
+            enrichment.opportunities.push({ source: 'instagram', type: 'MEDIUM', message: opp });
           });
-        } else {
-          console.log('   ⚠️ Sin presencia en LinkedIn');
-        }
-      } catch (err) {
-        console.log(`   ❌ Error: ${err.message}`);
-      }
 
-      await pause(2000);
+          // Si hay emails/teléfonos en la bio, añadirlos al enrichment general
+          if (igAnalysis.contactFromBio?.emails?.length) {
+            if (!enrichment.emails) enrichment.emails = { verified: [], personal: [] };
+            enrichment.emails.verified = [...new Set([...enrichment.emails.verified, ...igAnalysis.contactFromBio.emails])];
+          }
+          if (igAnalysis.contactFromBio?.phones?.length && !leadData.phone) {
+            enrichment.phoneFromInstagram = igAnalysis.contactFromBio.phones[0];
+          }
+
+        } catch (err) {
+          console.log(`   ❌ Error Instagram: ${err.message}`);
+        }
+
+        await pause(2000);
+      }
     }
 
     // 6. Análisis de actividad de contratación
@@ -373,6 +420,7 @@ function generateActionForOpportunity(opportunity) {
     competition: 'Destacar ventajas competitivas en propuesta',
     facebook: 'Optimizar presencia en redes sociales',
     linkedin: 'Crear/optimizar presencia profesional B2B',
+    instagram: 'Estrategia de contenido y crecimiento en Instagram',
     hiring: 'Proponer solución escalable para empresa en crecimiento'
   };
 
@@ -398,6 +446,10 @@ function generateMasterPitch(enrichment) {
 
   if (enrichment.socialMedia.facebook?.pitch) {
     pitchPoints.push(enrichment.socialMedia.facebook.pitch.mainMessage);
+  }
+
+  if (enrichment.socialMedia.instagram?.pitch) {
+    pitchPoints.push(enrichment.socialMedia.instagram.pitch.mainMessage);
   }
 
   if (enrichment.hiring?.pitch) {

@@ -1,17 +1,10 @@
 // src/app/api/admin/legal/route.js
 import { NextResponse } from 'next/server';
-import { checkAuth } from '@/lib/checkAuth'
 import connectDB from '@/lib/mongodb';
 import LegalPage from '@/models/LegalPage';
 
 export async function GET() {
   try {
-    const session = await checkAuth();
-    
-    if (!session) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
-    }
-
     await connectDB();
     
     const pages = await LegalPage.find().sort({ pageType: 1 }).lean();
@@ -31,12 +24,6 @@ export async function GET() {
 
 export async function POST(request) {
   try {
-    const session = await checkAuth();
-    
-    if (!session) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
-    }
-
     await connectDB();
     
     const data = await request.json();

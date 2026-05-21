@@ -138,7 +138,7 @@ function PricingSection() {
 
   if (loading) {
     return (
-      <section className="py-20 bg-black">
+      <section className="py-20 bg-[#0F172A]">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
             <div className="animate-pulse">
@@ -149,7 +149,7 @@ function PricingSection() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {[...Array(3)].map((_, i) => (
               <div key={i} className="animate-pulse">
-                <div className="h-[500px] bg-gray-800 rounded-lg"></div>
+                <div className="h-[500px] bg-slate-800 rounded-lg"></div>
               </div>
             ))}
           </div>
@@ -160,7 +160,7 @@ function PricingSection() {
 
   if (error) {
     return (
-      <section className="py-20 bg-black">
+      <section className="py-20 bg-[#0F172A]">
         <div className="container mx-auto px-4 text-center">
           <div className="text-red-400 mb-4">
             Error cargando paquetes: {error}
@@ -180,7 +180,7 @@ function PricingSection() {
   }
 
   return (
-    <section className="py-20 bg-black">
+    <section className="py-20 bg-[#0F172A]">
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
           <h2 className="text-4xl md:text-5xl font-bold gradient-text mb-6">
@@ -201,10 +201,10 @@ function PricingSection() {
           {packages.map((pkg, index) => (
             <div
               key={pkg._id || index}
-              className={`relative bg-gray-900/50 backdrop-blur-sm border rounded-2xl p-8 transition-all duration-300 hover:transform hover:scale-105 ${
+              className={`relative bg-[#1E293B] border rounded-2xl p-8 transition-all duration-300 hover:transform hover:scale-105 ${
                 pkg.popular 
-                  ? 'border-green-500/50 shadow-lg shadow-green-500/20' 
-                  : 'border-gray-800 hover:border-cyan-500/50'
+                  ? 'border-cyan-500/50' 
+                  : 'border-slate-700/50 hover:border-cyan-500/40'
               }`}
             >
               {pkg.popular && (
@@ -245,7 +245,7 @@ function PricingSection() {
                   {pkg.technologies.map((tech, techIndex) => (
                     <span
                       key={techIndex}
-                      className="px-2 py-1 text-xs font-mono bg-gray-800 text-cyan-400 rounded border border-cyan-500/30"
+                      className="px-2 py-1 text-xs font-mono bg-slate-800 text-cyan-400 rounded border border-cyan-500/30"
                     >
                       {tech}
                     </span>
@@ -284,7 +284,7 @@ function PricingSection() {
               {addons.map((addon, index) => (
                 <div
                   key={addon._id || index}
-                  className="bg-gray-900/30 backdrop-blur-sm border border-gray-800 rounded-xl p-6 hover:border-cyan-500/30 transition-all duration-300"
+                  className="bg-[#1E293B] border border-slate-700/50 rounded-xl p-6 hover:border-cyan-500/30 transition-all duration-300"
                 >
                   <div className="flex items-center justify-between mb-2">
                     <h4 className="font-semibold text-white">{addon.name}</h4>
@@ -299,7 +299,7 @@ function PricingSection() {
 
         {/* CTA */}
         <div className="text-center mt-16">
-          <div className="bg-gradient-to-r from-gray-900/50 to-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-2xl p-8 max-w-2xl mx-auto">
+          <div className="bg-[#1E293B] border border-slate-700/50 rounded-2xl p-8 max-w-2xl mx-auto">
             <h3 className="text-2xl font-bold gradient-text mb-4">
               ¿No encuentras lo que buscas?
             </h3>

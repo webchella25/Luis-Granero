@@ -3,14 +3,11 @@
 import { NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import SiteConfig from '@/models/SiteConfig';
-import { checkAuth } from '@/lib/checkAuth'
-
+import { requireAdmin } from '@/lib/adminAuth';
 export async function GET(request) {
   try {
-    const session = await checkAuth();
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const auth = await requireAdmin(request);
+    if (!auth.ok) return auth.response;
 
     await connectDB();
     
@@ -89,10 +86,8 @@ export async function GET(request) {
 
 export async function POST(request) {
   try {
-    const session = await checkAuth();
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const auth = await requireAdmin(request);
+    if (!auth.ok) return auth.response;
 
     await connectDB();
     

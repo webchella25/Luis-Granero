@@ -1,6 +1,5 @@
 // src/app/api/admin/appointments/[id]/route.ts
 import { NextResponse } from 'next/server';
-import { checkAuth } from '@/lib/checkAuth'
 import connectDB from '@/lib/mongodb';
 import Appointment from '@/models/Appointment';
 import SequenceEnrollment from '@/models/SequenceEnrollment';
@@ -13,11 +12,6 @@ export async function PATCH(
   context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await checkAuth();
-    if (!session) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
-    }
-
     const { id } = await context.params; // ✅ await params
     const body = await request.json();
     const { status } = body;
@@ -86,11 +80,6 @@ export async function DELETE(
   context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await checkAuth();
-    if (!session) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
-    }
-
     const { id } = await context.params; // ✅ await params
 
     await connectDB();

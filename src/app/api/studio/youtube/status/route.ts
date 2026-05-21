@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getTokensForCanal, getChannelInfo } from '@/lib/studio/youtube-auth';
+import { getTokensForCanal, getValidAccessTokenForCanal, getChannelInfo } from '@/lib/studio/youtube-auth';
 import { getStudioSession } from '@/lib/studio/session';
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
@@ -10,7 +10,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const tokens = await getTokensForCanal(session.canal_id);
     if (!tokens) return NextResponse.json({ connected: false });
 
-    const channelInfo = await getChannelInfo(tokens.access_token);
+    const accessToken = await getValidAccessTokenForCanal(session.canal_id);
+    const channelInfo = await getChannelInfo(accessToken);
     return NextResponse.json({ connected: true, channel: channelInfo });
   } catch (err) {
     return NextResponse.json({ connected: false, error: err instanceof Error ? err.message : 'Error' });

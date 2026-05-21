@@ -1,16 +1,14 @@
 // src/app/api/admin/scraper/route.ts - ARCHIVO COMPLETO
 import { NextResponse } from 'next/server';
-import { checkAuth } from '@/lib/checkAuth'
 import connectDB from '@/lib/mongodb';
 import Lead from '@/models/Lead';
 import { searchGoogleMaps, analyzeWebsite } from '@/lib/scraper';
+import { requireAdmin } from '@/lib/adminAuth';
 
 export async function POST(request: Request) {
   try {
-    const session = await checkAuth();
-    if (!session) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
-    }
+    const auth = await requireAdmin(request);
+    if (!auth.ok) return auth.response;
 
     const { query, location } = await request.json();
 

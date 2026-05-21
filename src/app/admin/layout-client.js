@@ -1,60 +1,73 @@
-// src/app/admin/layout-client.js
 'use client'
 import { usePathname } from 'next/navigation'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import AdminSidebar from '@/components/admin/AdminSidebar'
 import AdminHeader from '@/components/admin/AdminHeader'
 import { Toaster } from 'react-hot-toast'
 
 export default function AdminLayoutClient({ children }) {
   const pathname = usePathname()
-  const [sidebarOpen, setSidebarOpen] = useState(false)
-  
-  // Si es página de login, solo renderizar children
-  const isLoginPage = pathname === '/admin/login'
-  
-  if (isLoginPage) {
+  const [mobileOpen, setMobileOpen] = useState(false)
+  const [collapsed, setCollapsed] = useState(false)
+
+  // Persist collapse state
+  useEffect(() => {
+    const saved = localStorage.getItem('sidebar-collapsed')
+    if (saved === 'true') setCollapsed(true)
+  }, [])
+
+  const toggleCollapse = () => {
+    setCollapsed(prev => {
+      localStorage.setItem('sidebar-collapsed', String(!prev))
+      return !prev
+    })
+  }
+
+  if (pathname === '/admin/login') {
     return <>{children}</>
   }
-  
-  // Layout normal para páginas admin
+
+  const sidebarWidth = collapsed ? 'lg:ml-16' : 'lg:ml-64'
+
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex">
+    <div className="min-h-screen bg-[#0F172A] flex">
       {/* Sidebar */}
-      <AdminSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-      
-      {/* Main Content */}
-      <div className="flex-1 lg:ml-64 min-h-screen flex flex-col">
-        {/* Header */}
-        <AdminHeader 
-          onMenuClick={() => setSidebarOpen(!sidebarOpen)}
-          user={{ email: 'admin@luisgranero.com', role: 'admin' }}
+      <AdminSidebar
+        isOpen={mobileOpen}
+        onClose={() => setMobileOpen(false)}
+        collapsed={collapsed}
+        onToggleCollapse={toggleCollapse}
+      />
+
+      {/* Main */}
+      <div className={`flex-1 ${sidebarWidth} min-h-screen flex flex-col transition-all duration-300`}>
+        <AdminHeader
+          onMenuClick={() => setMobileOpen(!mobileOpen)}
+          user={{ name: 'Luis' }}
         />
-        
-        {/* Page Content */}
         <main className="flex-1 p-6">
           <div className="max-w-7xl mx-auto">
             {children}
           </div>
         </main>
       </div>
-      
-      {/* Mobile Overlay */}
-      {sidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
+
+      {/* Mobile overlay */}
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 bg-black/60 z-40 lg:hidden backdrop-blur-sm"
+          onClick={() => setMobileOpen(false)}
         />
       )}
-      
-      {/* Notifications */}
-      <Toaster 
+
+      <Toaster
         position="top-right"
         toastOptions={{
           duration: 4000,
           style: {
-            background: '#1F2937',
-            color: '#fff',
+            background: '#0B1120',
+            color: '#e2e8f0',
+            border: '1px solid #1e293b',
           },
         }}
       />

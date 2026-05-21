@@ -1,6 +1,6 @@
 // src/lib/scraper/competitorAnalyzer.js
-import { scrapeGoogleMaps } from '../scrapers/googleMapsScraper.js';
-import { analyzeWebsite } from '../scrapers/websiteAnalyzer.js';
+import { scrapeGoogleMaps } from '../scrapers/googleMapsScraper';
+import { analyzeWebsite } from '../scrapers/websiteAnalyzer';
 import { enhancedWebsiteAnalysis } from './enhancedWebsiteAnalyzer.js';
 import { getGoogleReviews } from './googleReviewsAnalyzer.js';
 

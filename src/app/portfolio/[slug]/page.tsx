@@ -5,17 +5,18 @@ import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { ArrowLeftIcon, ArrowTopRightOnSquareIcon } from '@heroicons/react/24/outline';
 import ReactMarkdown from 'react-markdown';
+import SchemaOrg from '@/components/seo/SchemaOrg';
+import { getCreativeWorkSchema, getBreadcrumbSchema } from '@/lib/seo/schemas';
 
-// Forzar renderizado dinámico
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+// ISR - Revalidar cada 24 horas
+export const revalidate = 86400;
 
 // Función para obtener un proyecto por slug
 async function getProjectBySlug(slug: string) {
   try {
     const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
     const res = await fetch(`${baseUrl}/api/public/projects/${slug}`, {
-      cache: 'no-store',
+      next: { revalidate: 86400 },
     });
     
     if (!res.ok) {
@@ -35,7 +36,7 @@ async function getRelatedProjects(category: string, currentSlug: string) {
   try {
     const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
     const res = await fetch(`${baseUrl}/api/public/projects?category=${category}&limit=3`, {
-      cache: 'no-store',
+      next: { revalidate: 86400 },
     });
     
     if (!res.ok) {
@@ -84,17 +85,38 @@ export async function generateMetadata({ params }: ProjectPageProps) {
 export default async function ProjectPage({ params }: ProjectPageProps) {
   const resolvedParams = await params;
   const project = await getProjectBySlug(resolvedParams.slug);
-  
+
   if (!project) {
     notFound();
   }
 
   const relatedProjects = await getRelatedProjects(project.category, project.slug);
 
+  // Generar schemas
+  const creativeWorkSchema = getCreativeWorkSchema({
+    title: project.title,
+    description: project.description,
+    slug: project.slug,
+    thumbnail: project.images?.[0] || project.mainImage,
+    technologies: project.technologies,
+    liveUrl: project.urls?.live,
+    githubUrl: project.urls?.github,
+    year: project.year
+  });
+
+  const breadcrumbSchema = getBreadcrumbSchema([
+    { name: 'Inicio', url: '/' },
+    { name: 'Portfolio', url: '/portfolio' },
+    { name: project.title, url: `/portfolio/${project.slug}` }
+  ]);
+
   return (
     <>
+      {/* Schema.org JSON-LD */}
+      <SchemaOrg schema={[creativeWorkSchema, breadcrumbSchema]} />
+
       <Header />
-      <main className="min-h-screen bg-gray-950 pt-20">
+      <main className="min-h-screen bg-[#0B1120] pt-20">
         
         {/* Breadcrumb y botón volver */}
         <div className="bg-gray-900/50 border-b border-gray-800">

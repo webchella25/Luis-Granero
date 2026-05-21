@@ -69,15 +69,15 @@ export default function SequencesPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center">
+      <div className="flex items-center justify-center py-32">
         <div className="text-cyan-400 text-xl">Cargando...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-8">
-      <div className="max-w-7xl mx-auto">
+    <div className="space-y-6">
+      
         
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
@@ -99,23 +99,23 @@ export default function SequencesPage() {
 
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-slate-800/50 backdrop-blur border border-cyan-500/20 rounded-lg p-6">
+          <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
             <div className="text-gray-400 text-sm mb-1">Total Secuencias</div>
             <div className="text-3xl font-bold text-white">{sequences.length}</div>
           </div>
-          <div className="bg-slate-800/50 backdrop-blur border border-cyan-500/20 rounded-lg p-6">
+          <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
             <div className="text-gray-400 text-sm mb-1">Activas</div>
             <div className="text-3xl font-bold text-green-400">
               {sequences.filter(s => s.isActive).length}
             </div>
           </div>
-          <div className="bg-slate-800/50 backdrop-blur border border-cyan-500/20 rounded-lg p-6">
+          <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
             <div className="text-gray-400 text-sm mb-1">Leads Inscritos</div>
             <div className="text-3xl font-bold text-cyan-400">
               {sequences.reduce((sum, s) => sum + (s.stats?.totalActive || 0), 0)}
             </div>
           </div>
-          <div className="bg-slate-800/50 backdrop-blur border border-cyan-500/20 rounded-lg p-6">
+          <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
             <div className="text-gray-400 text-sm mb-1">Templates Disponibles</div>
             <div className="text-3xl font-bold text-blue-400">{templates.length}</div>
           </div>
@@ -124,7 +124,7 @@ export default function SequencesPage() {
         {/* Lista de Secuencias */}
         <div className="space-y-6">
           {sequences.length === 0 ? (
-            <div className="bg-slate-800/50 backdrop-blur border border-cyan-500/20 rounded-lg p-12 text-center">
+            <div className="bg-slate-900 border border-slate-800 rounded-xl p-12 text-center">
               <div className="text-6xl mb-4">📭</div>
               <h3 className="text-2xl font-bold text-white mb-2">
                 No hay secuencias creadas
@@ -145,7 +145,7 @@ export default function SequencesPage() {
                 key={sequence._id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-slate-800/50 backdrop-blur border border-cyan-500/20 rounded-lg p-6 hover:border-cyan-500/40 transition"
+                className="bg-slate-900 border border-slate-800 rounded-xl p-6 hover:border-cyan-500/40 transition"
               >
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex-1">
@@ -244,12 +244,10 @@ export default function SequencesPage() {
           )}
         </div>
 
-      </div>
-
       {/* Modal */}
       <AnimatePresence>
         {showCreateModal && (
-          <CreateSequenceModal 
+          <CreateSequenceModal
             onClose={() => setShowCreateModal(false)}
             onCreated={fetchSequences}
             templates={templates}

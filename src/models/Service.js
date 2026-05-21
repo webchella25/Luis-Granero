@@ -45,7 +45,7 @@ const serviceSchema = new mongoose.Schema({
   timestamps: true
 });
 
-serviceSchema.index({ slug: 1 });
+// slug tiene unique:true, su índice se crea automáticamente
 serviceSchema.index({ orderIndex: 1 });
 
 export default mongoose.models.Service || mongoose.model('Service', serviceSchema);

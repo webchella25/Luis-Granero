@@ -7,14 +7,13 @@ export async function GET() {
   try {
     await dbConnect();
     
-    // Obtener proyectos destacados y publicados
-    const projects = await Project.find({ 
-      isPublished: true,
-      isFeatured: true 
+    // Obtener proyectos activos, priorizando los marcados como destacados
+    const projects = await Project.find({
+      isActive: true
     })
-    .select('title description technologies metrics images slug status category year')
-    .sort({ createdAt: -1 })
-    .limit(3)
+    .sort({ isFeatured: -1, createdAt: -1 })
+    .select('title description technologies metrics images slug status category year isOwnProject')
+    .limit(6)
     .lean();
     
     return NextResponse.json(projects, {

@@ -137,7 +137,7 @@ export default function BlogHero({ totalPosts = 0 }: BlogHeroProps) {
         <div className="absolute top-1/2 left-1/2 w-80 h-80 bg-cyan-500/8 rounded-full blur-3xl animate-pulse delay-2000" />
         
         {/* Terminal window effect */}
-        <div className="absolute top-8 right-8 w-64 h-48 bg-gray-900/80 border border-gray-700 rounded-lg p-4 font-mono text-xs text-green-400 opacity-30">
+        <div className="absolute top-8 right-8 w-64 h-48 bg-[#1E293B]/80 border border-slate-700 rounded-lg p-4 font-mono text-xs text-green-400 opacity-30">
           <div className="flex space-x-2 mb-2">
             <div className="w-3 h-3 bg-red-500 rounded-full"></div>
             <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
@@ -158,7 +158,7 @@ export default function BlogHero({ totalPosts = 0 }: BlogHeroProps) {
         }`}>
           
           {/* TYPEWRITER CODE */}
-          <div className="mb-8 font-mono text-lg md:text-xl text-cyan-400 bg-gray-900/50 backdrop-blur-sm border border-gray-700 rounded-lg p-4 max-w-2xl mx-auto">
+          <div className="mb-8 font-mono text-lg md:text-xl text-cyan-400 bg-[#1E293B]/50 backdrop-blur-sm border border-slate-700 rounded-lg p-4 max-w-2xl mx-auto">
             <span className="text-gray-500">// </span>
             <span>{typingText}</span>
             <span className="animate-blink text-green-400">|</span>
@@ -194,7 +194,7 @@ export default function BlogHero({ totalPosts = 0 }: BlogHeroProps) {
             <span className="text-cyan-400 font-semibold">experiencias reales</span>
             <br />
             del mundo del{' '}
-            <span className="text-green-400 font-semibold bg-gray-900/50 px-2 py-1 rounded font-mono">desarrollo web moderno</span>.
+            <span className="text-green-400 font-semibold bg-[#1E293B]/50 px-2 py-1 rounded font-mono">desarrollo web moderno</span>.
           </p>
 
           {/* STATS DEL BLOG CON CÓDIGO */}
@@ -210,7 +210,7 @@ export default function BlogHero({ totalPosts = 0 }: BlogHeroProps) {
               return (
                 <div
                   key={index}
-                  className={`group bg-gray-900/40 backdrop-blur-sm border rounded-2xl p-6 transition-all duration-300 transform hover:scale-110 hover:-translate-y-2 animate-fade-in-up font-mono ${colorClasses[stat.color]}`}
+                  className={`group bg-[#1E293B]/40 backdrop-blur-sm border rounded-2xl p-6 transition-all duration-300 transform hover:scale-110 hover:-translate-y-2 animate-fade-in-up font-mono ${colorClasses[stat.color]}`}
                   style={{ animationDelay: `${index * 200}ms` }}
                 >
                   <div className="text-2xl mb-3 group-hover:scale-125 transition-transform duration-300">
@@ -268,8 +268,8 @@ export default function BlogHero({ totalPosts = 0 }: BlogHeroProps) {
                   key={index}
                   className={`group flex flex-col items-center space-y-2 px-4 py-3 rounded-xl border transition-all duration-300 hover:scale-110 font-mono ${
                     index === currentTopic 
-                      ? `border-blue-500/60 bg-gray-900/60` 
-                      : 'border-gray-700/50 hover:border-gray-600'
+                      ? `border-blue-500/60 bg-[#1E293B]/60` 
+                      : 'border-slate-700/50 hover:border-slate-600'
                   }`}
                 >
                   <span className="text-2xl group-hover:scale-125 transition-transform">

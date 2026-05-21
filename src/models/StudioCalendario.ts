@@ -1,6 +1,6 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
 
-export type CategoriaVideo = 'asesino_serie' | 'dictador' | 'secta' | 'criminal_historico' | 'psicopata' | 'misterio';
+export type CategoriaVideo = string;
 export type NivelBusquedas = 'alto' | 'medio';
 
 export interface ICalendarioEntry {
@@ -15,6 +15,13 @@ export interface ICalendarioEntry {
   completado?: boolean;
   script_id?: string;
   orden: number;
+  aniversario?: { fecha: string; descripcion: string } | null;
+  competencia_analysis?: {
+    score_oportunidad: number;
+    angulo_unico: string;
+    titulos_sugeridos: string[];
+    analizado_en: Date;
+  } | null;
 }
 
 export interface IStudioCalendario extends Document {
@@ -32,7 +39,6 @@ const CalendarioEntrySchema = new Schema<ICalendarioEntry>(
     categoria: {
       type: String,
       required: true,
-      enum: ['asesino_serie', 'dictador', 'secta', 'criminal_historico', 'psicopata', 'misterio'],
     },
     busquedas: { type: String, required: true, enum: ['alto', 'medio'] },
     epoca: { type: String, required: true },
@@ -40,6 +46,8 @@ const CalendarioEntrySchema = new Schema<ICalendarioEntry>(
     completado: { type: Boolean, default: false },
     script_id: { type: String },
     orden: { type: Number, required: true },
+    aniversario: { type: Schema.Types.Mixed, default: null },
+    competencia_analysis: { type: Schema.Types.Mixed, default: null },
   },
   { _id: true }
 );

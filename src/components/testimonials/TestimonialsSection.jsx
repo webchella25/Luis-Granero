@@ -1,162 +1,89 @@
-// src/components/testimonials/TestimonialsSection.jsx
-'use client';
+import dbConnect from '@/lib/mongodb';
+import Testimonial from '@/models/Testimonial';
+import { Star } from 'lucide-react';
 
-function TestimonialsSection({ testimonials = [] }) {
-  // Datos de fallback si no vienen testimonios
-  const defaultTestimonials = [
-    {
-      _id: '1',
-      client: {
-        name: 'María González',
-        company: 'StartupTech',
-        role: 'CEO'
-      },
-      content: 'Luis transformó nuestra idea en una plataforma increíble. El resultado superó nuestras expectativas y los tiempos de entrega fueron impecables.',
-      rating: 5,
-      project: {
-        name: 'Plataforma SaaS'
-      },
-      metrics: [
-        { key: 'performance', value: '+40%', label: 'Performance' },
-        { key: 'conversions', value: '+60%', label: 'Conversiones' }
-      ]
-    },
-    {
-      _id: '2',
-      client: {
-        name: 'Carlos Ruiz',
-        company: 'E-commerce Plus',
-        role: 'CTO'
-      },
-      content: 'La tienda online que desarrolló Luis incrementó nuestras ventas un 85% en los primeros 3 meses. Su enfoque técnico es excepcional.',
-      rating: 5,
-      project: {
-        name: 'E-commerce Personalizado'
-      },
-      metrics: [
-        { key: 'sales', value: '+85%', label: 'Ventas' },
-        { key: 'performance', value: '95/100', label: 'Performance' }
-      ]
-    },
-    {
-      _id: '3',
-      client: {
-        name: 'Ana Martínez',
-        company: 'Digital Agency',
-        role: 'Directora'
-      },
-      content: 'Trabajar con Luis fue una experiencia fantástica. Su comunicación es clara, cumple plazos y el código es de calidad profesional.',
-      rating: 5,
-      project: {
-        name: 'Dashboard Corporativo'
-      },
-      metrics: [
-        { key: 'efficiency', value: '+50%', label: 'Eficiencia' },
-        { key: 'users', value: '1000+', label: 'Usuarios' }
-      ]
-    }
-  ];
-
-  const displayTestimonials = testimonials.length > 0 ? testimonials : defaultTestimonials;
-
-  if (displayTestimonials.length === 0) {
-    return null;
+async function getTestimonials() {
+  try {
+    await dbConnect();
+    const docs = await Testimonial.find({ verificationStatus: 'verified', isActive: true })
+      .sort({ isFeatured: -1, orderIndex: 1, createdAt: -1 })
+      .lean();
+    return docs.map(t => ({ ...t, _id: t._id.toString() }));
+  } catch {
+    return [];
   }
+}
+
+async function TestimonialsSection() {
+  const testimonials = await getTestimonials();
+
+  if (testimonials.length === 0) return null;
 
   return (
-    <section className="py-20 bg-gray-900">
-      <div className="container mx-auto px-4">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-bold gradient-text mb-6">
+    <section className="py-20 bg-[#0B1120] border-y border-slate-800">
+      <div className="container mx-auto px-6">
+        <div className="text-center mb-12">
+          <div className="badge badge-cyan mx-auto mb-3">
+            <Star className="w-3.5 h-3.5" />
+            Testimonios
+          </div>
+          <h2 className="text-3xl md:text-4xl font-bold text-slate-50 mb-3">
             Lo que dicen mis clientes
           </h2>
-          <p className="text-xl text-gray-400 max-w-3xl mx-auto">
-            Testimonios reales de clientes satisfechos con resultados medibles y proyectos exitosos
+          <p className="text-slate-400 max-w-xl mx-auto">
+            Opiniones reales de clientes con los que he trabajado.
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {displayTestimonials.map((testimonial) => (
-            <div 
-              key={testimonial._id}
-              className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-xl p-8 hover:border-cyan-500/50 transition-all duration-300 transform hover:-translate-y-1"
-            >
-              {/* Rating */}
-              <div className="flex items-center mb-6">
-                {[...Array(testimonial.rating || 5)].map((_, i) => (
-                  <svg 
-                    key={i}
-                    className="w-5 h-5 text-yellow-400"
-                    fill="currentColor" 
-                    viewBox="0 0 20 20"
-                  >
-                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                  </svg>
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+          {testimonials.map(t => (
+            <div key={t._id} className="bg-[#1E293B] border border-slate-700/50 rounded-xl p-6 hover:border-slate-600 transition-colors">
+              {/* Estrellas */}
+              <div className="flex gap-0.5 mb-4">
+                {[...Array(t.rating || 5)].map((_, i) => (
+                  <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
                 ))}
               </div>
 
-              {/* Content */}
-              <p className="text-gray-300 mb-6 leading-relaxed italic">
-                "{testimonial.content}"
+              {/* Texto */}
+              <p className="text-slate-300 text-sm leading-relaxed mb-5 italic">
+                "{t.content}"
               </p>
 
-              {/* Metrics */}
-              {testimonial.metrics && testimonial.metrics.length > 0 && (
-                <div className="flex flex-wrap gap-4 mb-6">
-                  {testimonial.metrics.map((metric, index) => (
-                    <div key={index} className="text-center">
-                      <div className="text-cyan-400 font-bold text-lg">
-                        {metric.value}
-                      </div>
-                      <div className="text-gray-500 text-xs uppercase tracking-wider">
-                        {metric.label}
-                      </div>
+              {/* Métricas */}
+              {t.metrics?.length > 0 && (
+                <div className="flex flex-wrap gap-4 mb-5">
+                  {t.metrics.map((m, i) => (
+                    <div key={i} className="text-center">
+                      <div className="text-cyan-400 font-bold text-base">{m.value}</div>
+                      <div className="text-slate-500 text-xs uppercase tracking-wider">{m.label}</div>
                     </div>
                   ))}
                 </div>
               )}
 
-              {/* Client info */}
-              <div className="border-t border-gray-700 pt-6">
-                <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-full flex items-center justify-center">
-                    <span className="text-white font-bold text-lg">
-                      {testimonial.client.name.charAt(0)}
-                    </span>
+              {/* Cliente */}
+              <div className="flex items-center gap-3 pt-4 border-t border-slate-700/50">
+                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shrink-0">
+                  <span className="text-white font-bold text-sm">{t.client?.name?.charAt(0)}</span>
+                </div>
+                <div>
+                  <div className="text-slate-200 font-medium text-sm">
+                    {t.client?.linkedin
+                      ? <a href={t.client.linkedin} target="_blank" rel="noopener noreferrer" className="hover:text-cyan-400 transition-colors">{t.client.name}</a>
+                      : t.client?.name
+                    }
                   </div>
-                  <div>
-                    <div className="text-white font-semibold">
-                      {testimonial.client.name}
-                    </div>
-                    <div className="text-gray-400 text-sm">
-                      {testimonial.client.role}
-                      {testimonial.client.company && (
-                        <span> en {testimonial.client.company}</span>
-                      )}
-                    </div>
-                    {testimonial.project?.name && (
-                      <div className="text-cyan-400 text-xs mt-1">
-                        Proyecto: {testimonial.project.name}
-                      </div>
-                    )}
+                  <div className="text-slate-500 text-xs">
+                    {[t.client?.role, t.client?.company].filter(Boolean).join(' · ')}
                   </div>
+                  {t.project?.name && (
+                    <div className="text-cyan-400 text-xs mt-0.5">Proyecto: {t.project.name}</div>
+                  )}
                 </div>
               </div>
             </div>
           ))}
-        </div>
-
-        {/* CTA */}
-        <div className="text-center mt-16">
-          <p className="text-gray-400 mb-6">
-            ¿Quieres ser el próximo caso de éxito?
-          </p>
-          <a 
-            href="/contacto"
-            className="inline-block bg-gradient-to-r from-cyan-500 to-blue-600 text-white px-8 py-4 rounded-full font-semibold text-lg hover:from-cyan-600 hover:to-blue-700 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-cyan-500/25"
-          >
-            Empezar mi proyecto
-          </a>
         </div>
       </div>
     </section>

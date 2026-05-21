@@ -17,7 +17,7 @@ export default function CursosHero({ totalCursos }: Props) {
   }, []);
 
   return (
-    <section className="relative min-h-[80vh] flex items-center justify-center bg-black overflow-hidden pt-20">
+    <section className="relative min-h-[80vh] flex items-center justify-center bg-[#0F172A] overflow-hidden pt-20">
       
       {/* Background Effects */}
       <div className="absolute inset-0">

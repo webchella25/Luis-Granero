@@ -1,6 +1,5 @@
 // src/app/api/admin/email-courses/route.js
 import { NextResponse } from 'next/server'
-import { checkAuth } from '@/lib/checkAuth'
 import dbConnect from '@/lib/mongodb'
 import EmailCourse from '@/models/EmailCourse'
 import logger from '@/lib/logger'
@@ -8,10 +7,6 @@ import logger from '@/lib/logger'
 // GET - Listar todos los cursos de email
 export async function GET(request) {
   try {
-    const session = await checkAuth()
-    if (!session) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
-    }
 
     await dbConnect()
 
@@ -28,10 +23,7 @@ export async function GET(request) {
 // POST - Crear nuevo curso
 export async function POST(request) {
   try {
-    const session = await checkAuth()
-    if (!session) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
-    }
+
 
     const data = await request.json()
 

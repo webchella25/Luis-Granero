@@ -1,15 +1,13 @@
 // src/app/api/leads/stats/route.js - NUEV
 import { NextResponse } from 'next/server';
-import { checkAuth } from '@/lib/checkAuth'
 import dbConnect from '@/lib/mongodb';
 import Lead from '@/models/Lead';
+import { requireAdmin } from '@/lib/adminAuth';
 
 export async function GET(request) {
   try {
-    const session = await checkAuth();
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const auth = await requireAdmin(request);
+    if (!auth.ok) return auth.response;
 
     await dbConnect();
 

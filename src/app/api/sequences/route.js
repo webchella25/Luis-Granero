@@ -3,10 +3,14 @@ import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import Sequence from '@/models/Sequence';
 import SequenceEnrollment from '@/models/SequenceEnrollment';
+import { requireAdmin } from '@/lib/adminAuth';
 
 // GET - Listar todas las secuencias
 export async function GET(request) {
   try {
+    const auth = await requireAdmin(request);
+    if (!auth.ok) return auth.response;
+
     await dbConnect();
     
     const sequences = await Sequence.find({ isActive: true })
@@ -42,6 +46,9 @@ export async function GET(request) {
 // POST - Crear nueva secuencia
 export async function POST(request) {
   try {
+    const auth = await requireAdmin(request);
+    if (!auth.ok) return auth.response;
+
     await dbConnect();
     
     const data = await request.json();

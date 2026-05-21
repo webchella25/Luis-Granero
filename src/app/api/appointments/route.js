@@ -3,10 +3,14 @@ import { NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import Appointment from '@/models/Appointment';
 import Lead from '@/models/Lead';
+import { requireAdmin } from '@/lib/adminAuth';
 
 // ✅ GET - Obtener todas las citas (CON BUG FIX)
 export async function GET(request) {
   try {
+    const auth = await requireAdmin(request);
+    if (!auth.ok) return auth.response;
+
     await connectDB();
     
     const { searchParams } = new URL(request.url);
@@ -89,6 +93,9 @@ export async function GET(request) {
 // POST - Crear nueva cita
 export async function POST(request) {
   try {
+    const auth = await requireAdmin(request);
+    if (!auth.ok) return auth.response;
+
     await connectDB();
     
     const data = await request.json();
@@ -157,6 +164,9 @@ export async function POST(request) {
 // PATCH - Actualizar cita
 export async function PATCH(request) {
   try {
+    const auth = await requireAdmin(request);
+    if (!auth.ok) return auth.response;
+
     await connectDB();
     
     const data = await request.json();
@@ -238,6 +248,9 @@ export async function PATCH(request) {
 // DELETE - Eliminar cita
 export async function DELETE(request) {
   try {
+    const auth = await requireAdmin(request);
+    if (!auth.ok) return auth.response;
+
     await connectDB();
     
     const { searchParams } = new URL(request.url);

@@ -1,10 +1,14 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import Lead from '@/models/Lead';
+import { requireAdmin } from '@/lib/adminAuth';
 
 // GET - Obtener un lead por ID
 export async function GET(request, { params }) {
   try {
+    const auth = await requireAdmin(request);
+    if (!auth.ok) return auth.response;
+
     await dbConnect();
     
     const lead = await Lead.findById(params.id);
@@ -33,6 +37,9 @@ export async function GET(request, { params }) {
 // PATCH - Actualizar un lead
 export async function PATCH(request, { params }) {
   try {
+    const auth = await requireAdmin(request);
+    if (!auth.ok) return auth.response;
+
     await dbConnect();
     
     const updates = await request.json();
@@ -101,6 +108,9 @@ export async function PATCH(request, { params }) {
 // DELETE - Eliminar un lead
 export async function DELETE(request, { params }) {
   try {
+    const auth = await requireAdmin(request);
+    if (!auth.ok) return auth.response;
+
     await dbConnect();
     
     const lead = await Lead.findByIdAndDelete(params.id);

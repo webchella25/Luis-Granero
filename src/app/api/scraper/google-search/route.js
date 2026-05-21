@@ -4,10 +4,16 @@ import Lead from '@/models/Lead';
 import { scrapeGoogleSearch, calculateSearchScore } from '@/lib/scraper/googleSearchScraper';
 import { analyzeWebsite } from '@/lib/scrapers/websiteAnalyzer';
 import { findAllEmails } from '@/lib/scraper/emailFinder';
+import { clampPaginationLimit, requireAdmin } from '@/lib/adminAuth';
 
 export async function POST(request) {
   try {
-    const { query, numResults = 20 } = await request.json();
+    const auth = await requireAdmin(request);
+    if (!auth.ok) return auth.response;
+
+    const body = await request.json();
+    const { query } = body;
+    const numResults = clampPaginationLimit(body.numResults, 20, 50);
     
     if (!query) {
       return NextResponse.json(

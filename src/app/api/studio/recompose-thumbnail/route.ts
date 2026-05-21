@@ -4,6 +4,7 @@ import path from 'path';
 import fs from 'fs';
 import connectDB from '@/lib/mongodb';
 import StudioScript from '@/models/StudioScript';
+import StudioCanal from '@/models/StudioCanal';
 
 const FONT_PATH = path.join(process.cwd(), 'public/studio/fonts/BebasNeue-Regular.ttf');
 const THUMBNAILS_DIR = path.join(process.cwd(), 'public/studio/thumbnails');
@@ -73,16 +74,18 @@ function buildTextElement(
 async function composeThumbnail(
   baseImagePath: string,
   texts: { texto_principal: string; subtitulo: string; contexto: string },
-  outputPath: string
+  outputPath: string,
+  accentColor: string = '#CC0000',
+  canalNombre: string = 'STUDIO'
 ): Promise<void> {
   const sharp = (await import('sharp')).default;
 
   const W = 1280;
   const H = 720;
-  const X = 50;
-  const MAX_W_MAIN = 1180;
-  const MAX_W_SUB  = 1100;
-  const CTX_SIZE   = 45;
+  const X = 70;
+  const MAX_W_MAIN = 430;
+  const MAX_W_SUB  = 430;
+  const CTX_SIZE   = 32;
 
   const mainFontSize  = calcMainFontSize(texts.texto_principal.length);
   const mainLines     = wrapWords(texts.texto_principal, MAX_W_MAIN, mainFontSize);
@@ -103,12 +106,13 @@ async function composeThumbnail(
     `<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">
       <defs>
         <linearGradient id="fadeRight" x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%"   style="stop-color:black;stop-opacity:0.85"/>
-          <stop offset="75%"  style="stop-color:black;stop-opacity:0.4"/>
+          <stop offset="0%"   style="stop-color:black;stop-opacity:0.88"/>
+          <stop offset="60%"  style="stop-color:black;stop-opacity:0.55"/>
           <stop offset="100%" style="stop-color:black;stop-opacity:0"/>
         </linearGradient>
       </defs>
       <rect x="0" y="0" width="${W}" height="${H}" fill="url(#fadeRight)"/>
+      <rect x="0" y="0" width="6" height="${H}" fill="${accentColor}"/>
     </svg>`
   );
 
@@ -127,18 +131,18 @@ async function composeThumbnail(
         </filter>
       </defs>
 
-      ${buildTextElement(mainLines, X, mainBaseY, mainFontSize, '#CC0000', 'shadowMain', 4)}
-      ${buildTextElement(subLines,  X, subBaseY,  subFontSize,  '#FFFFFF', 'shadowSub',  2)}
+      ${buildTextElement(mainLines, X, mainBaseY, mainFontSize, accentColor, 'shadowMain', 4)}
+      ${buildTextElement(subLines,  X, subBaseY,  subFontSize,  '#FFFFFF',   'shadowSub',  2)}
 
       <text x="${X}" y="${ctxY}"
         font-family="BebasNeue, Arial Black, sans-serif"
-        font-size="${CTX_SIZE}" fill="#AAAAAA" filter="url(#shadowCtx)"
+        font-size="${CTX_SIZE}" fill="#CCCCCC" filter="url(#shadowCtx)"
       >— ${escapeXml(texts.contexto)} —</text>
 
-      <text x="${X}" y="685"
+      <text x="${X}" y="682"
         font-family="BebasNeue, Arial Black, sans-serif"
-        font-size="28" fill="#666666" letter-spacing="2"
-      >ALMAS CORRUPTAS</text>
+        font-size="28" fill="#AAAAAA" letter-spacing="2"
+      >${escapeXml(canalNombre.toUpperCase())}</text>
     </svg>`
   );
 
@@ -175,7 +179,19 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       return NextResponse.json({ error: 'Guión no encontrado' }, { status: 404 });
     }
 
-    const basePath = path.join(THUMBNAILS_DIR, `${scriptId}-base.jpg`);
+    const canal = await StudioCanal.findById(session.canal_id).lean();
+    const accentColor = (canal as { config?: { thumbnail_accent_color?: string } } | null)?.config?.thumbnail_accent_color ?? '#CC0000';
+    const canalNombre = (canal as { nombre?: string } | null)?.nombre ?? 'STUDIO';
+
+    // Siempre partir de la imagen FLUX original guardada en DB, nunca de la miniatura ya compuesta
+    const rawBase = (script as { thumbnail_base_path?: string }).thumbnail_base_path;
+    if (!rawBase) {
+      return NextResponse.json(
+        { error: 'No existe imagen base. Genera primero la miniatura completa.' },
+        { status: 400 }
+      );
+    }
+    const basePath = path.join(process.cwd(), 'public', rawBase);
     if (!fs.existsSync(basePath)) {
       return NextResponse.json(
         { error: 'No existe imagen base. Genera primero la miniatura completa.' },
@@ -184,7 +200,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     const finalPath = path.join(THUMBNAILS_DIR, `${scriptId}.jpg`);
-    await composeThumbnail(basePath, texts, finalPath);
+    await composeThumbnail(basePath, texts, finalPath, accentColor, canalNombre);
 
     await StudioScript.findByIdAndUpdate(scriptId, {
       thumbnail_status: 'ready',

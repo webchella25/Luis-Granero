@@ -50,14 +50,14 @@ export default function CartelesPage() {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-2xl font-bold text-white tracking-tight">Carteles</h1>
-            <p className="text-sm text-gray-500 mt-1">Carteles de eventos generados con IA</p>
+            <p className="text-sm text-gray-500 mt-1">Galería visual y assets reutilizables para cualquier canal o evento</p>
           </div>
           <div className="flex gap-3">
             <Link
               href="/studio/carteles/djs"
               className="px-4 py-2 text-sm text-gray-400 hover:text-white border border-white/10 hover:border-white/20 rounded-lg transition-colors"
             >
-              Gestionar DJs
+              Assets
             </Link>
             <Link
               href="/studio/carteles/nuevo-ia"

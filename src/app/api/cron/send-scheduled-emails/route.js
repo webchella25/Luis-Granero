@@ -7,20 +7,9 @@ import Lead from '@/models/Lead';
 import Template from '@/models/Template';
 import Sequence from '@/models/Sequence';
 import Appointment from '@/models/Appointment';
-import nodemailer from 'nodemailer';
+import { sendEmail } from '@/lib/email/mailer';
 import crypto from 'crypto';
-import { prepareEmailForTracking } from '@/lib/email/tracking'; // ✅ AÑADIDO
-
-// Configurar transporter
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || 'smtp-relay.brevo.com',
-  port: parseInt(process.env.SMTP_PORT || '587'),
-  secure: false,
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASSWORD
-  }
-});
+import { prepareEmailForTracking } from '@/lib/email/tracking';
 
 // Función para reemplazar shortcodes
 function replaceShortcodes(text, lead, magicLink = '') {
@@ -189,7 +178,7 @@ async function handleRequest(request) {
         console.log(`🔍 Tracking añadido - EmailLog ID: ${emailLog._id}`);
         
         // Enviar email CON TRACKING
-        await transporter.sendMail({
+        await sendEmail({
           from: `${process.env.EMAIL_FROM_NAME || 'Luis Granero'} <${process.env.SMTP_USER}>`,
           to: lead.possibleEmails[0],
           subject: subject,

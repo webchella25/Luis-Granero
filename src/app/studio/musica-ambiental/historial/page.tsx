@@ -4,6 +4,8 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import StudioLayout from '@/components/studio/StudioLayout';
 
+interface ThumbnailTexts { texto_principal: string; subtitulo: string; contexto: string; }
+
 interface VideoAmbiental {
   _id: string;
   mood: string;
@@ -20,6 +22,10 @@ interface VideoAmbiental {
   error_msg: string | null;
   scheduled_at: string | null;
   creado_en: string;
+  thumbnail_path: string | null;
+  thumbnail_status: 'idle' | 'processing' | 'ready' | 'error' | null;
+  thumbnail_error: string | null;
+  thumbnail_texts: ThumbnailTexts | null;
 }
 
 type UploadState = 'idle' | 'loading' | 'done' | 'error';
@@ -54,6 +60,13 @@ export default function HistorialMusicaAmbientalPage() {
   const [ytPublishAt, setYtPublishAt] = useState('');
   const [ytState, setYtState] = useState<UploadState>('idle');
   const [ytError, setYtError] = useState('');
+  const [regenState, setRegenState] = useState<'idle' | 'loading' | 'error'>('idle');
+  const [regenError, setRegenError] = useState('');
+  const [showYtFormAgain, setShowYtFormAgain] = useState(false);
+  const [thumbnailState, setThumbnailState] = useState<'idle' | 'loading' | 'error'>('idle');
+  const [thumbnailError, setThumbnailError] = useState('');
+  const [thumbnailTexts, setThumbnailTexts] = useState<ThumbnailTexts>({ texto_principal: '', subtitulo: '', contexto: '' });
+  const [recomposeState, setRecomposeState] = useState<'idle' | 'loading' | 'error'>('idle');
 
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -81,7 +94,14 @@ export default function HistorialMusicaAmbientalPage() {
       const v = data.video;
       setVideos((prev) => prev.map((x) => x._id === id ? v : x));
       setSelected((prev) => prev?._id === id ? v : prev);
-      if (v.estado === 'listo' || v.estado === 'error') {
+      const videoDone = v.estado === 'listo' || v.estado === 'error';
+      const thumbDone = v.thumbnail_status === 'ready' || v.thumbnail_status === 'error';
+      if (v.thumbnail_status === 'processing') setThumbnailState('loading');
+      if (thumbDone) {
+        if (v.thumbnail_status === 'error') { setThumbnailError(v.thumbnail_error ?? 'Error generando miniatura'); setThumbnailState('error'); }
+        else { setThumbnailState('idle'); if (v.thumbnail_texts) setThumbnailTexts(v.thumbnail_texts); }
+      }
+      if (videoDone && (thumbDone || !v.thumbnail_status || v.thumbnail_status === 'idle')) {
         clearInterval(pollRef.current!);
         pollRef.current = null;
       }
@@ -97,7 +117,16 @@ export default function HistorialMusicaAmbientalPage() {
     setYtPublishAt('');
     setYtState('idle');
     setYtError('');
-    if (v.estado === 'generando_video') startPolling(v._id);
+    setRegenState('idle');
+    setRegenError('');
+    setShowYtFormAgain(false);
+    setThumbnailState('idle');
+    setThumbnailError('');
+    setRecomposeState('idle');
+    setThumbnailTexts(v.thumbnail_texts ?? { texto_principal: v.titulo || v.mood, subtitulo: v.mood, contexto: `LOFI · ${v.duracion_horas === 1 ? '1 HORA' : `${v.duracion_horas} HORAS`}` });
+    if (v.thumbnail_status === 'processing') setThumbnailState('loading');
+    const needsPoll = v.estado === 'generando_video' || v.thumbnail_status === 'processing';
+    if (needsPoll) startPolling(v._id);
   }
 
   async function handleUploadYouTube(e: React.FormEvent) {
@@ -144,6 +173,66 @@ export default function HistorialMusicaAmbientalPage() {
     }
   }
 
+  async function handleRegenerar() {
+    if (!selected) return;
+    setRegenState('loading');
+    setRegenError('');
+    try {
+      const res = await fetch(`/api/studio/musica-ambiental/${selected._id}/regenerar`, {
+        method: 'POST',
+      });
+      const data = await res.json() as { status?: string; error?: string };
+      if (!res.ok) throw new Error(data.error ?? 'Error regenerando');
+      const updated: VideoAmbiental = { ...selected, estado: 'generando_video', error_msg: null, video_path: null };
+      setSelected(updated);
+      setVideos((prev) => prev.map((x) => x._id === selected._id ? updated : x));
+      startPolling(selected._id);
+      setRegenState('idle');
+    } catch (err) {
+      setRegenState('error');
+      setRegenError(err instanceof Error ? err.message : 'Error regenerando');
+    }
+  }
+
+  async function handleGenerarMiniatura() {
+    if (!selected) return;
+    setThumbnailState('loading');
+    setThumbnailError('');
+    try {
+      const res = await fetch(`/api/studio/musica-ambiental/${selected._id}/generar-miniatura`, { method: 'POST' });
+      const data = await res.json() as { status?: string; error?: string };
+      if (!res.ok) throw new Error(data.error ?? 'Error generando miniatura');
+      setSelected((p) => p ? { ...p, thumbnail_status: 'processing' } : p);
+      startPolling(selected._id);
+    } catch (err) {
+      setThumbnailState('error');
+      setThumbnailError(err instanceof Error ? err.message : 'Error');
+    }
+  }
+
+  async function handleRecomponerMiniatura() {
+    if (!selected || !thumbnailTexts.texto_principal) return;
+    setRecomposeState('loading');
+    setThumbnailError('');
+    try {
+      const res = await fetch(`/api/studio/musica-ambiental/${selected._id}/recomponer-miniatura`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ texts: thumbnailTexts }),
+      });
+      const data = await res.json() as { thumbnailPath?: string; texts?: ThumbnailTexts; error?: string };
+      if (!res.ok) throw new Error(data.error ?? 'Error recomponiendo');
+      setSelected((p) => p ? { ...p, thumbnail_path: data.thumbnailPath ?? p.thumbnail_path, thumbnail_status: 'ready', thumbnail_texts: data.texts ?? thumbnailTexts } : p);
+      setVideos((p) => p.map((v) => v._id === selected._id ? { ...v, thumbnail_path: data.thumbnailPath ?? v.thumbnail_path, thumbnail_status: 'ready' } : v));
+      setRecomposeState('idle');
+    } catch (err) {
+      setRecomposeState('error');
+      setThumbnailError(err instanceof Error ? err.message : 'Error recomponiendo');
+    }
+  }
+
+  const isThumbnailLoading = thumbnailState === 'loading';
+
   return (
     <StudioLayout>
       <div className="flex h-screen overflow-hidden">
@@ -151,7 +240,10 @@ export default function HistorialMusicaAmbientalPage() {
         <div className="w-80 shrink-0 border-r border-white/[0.06] overflow-y-auto">
           <div className="px-4 py-5 border-b border-white/[0.06]">
             <div className="flex items-center justify-between">
-              <h1 className="text-sm font-bold text-white">Historial ambiental</h1>
+              <div>
+                <h1 className="text-sm font-bold text-white">Producción ambiental</h1>
+                <p className="text-[10px] text-gray-600 mt-0.5">Vídeos largos, miniaturas y YouTube</p>
+              </div>
               <Link
                 href="/studio/musica-ambiental/nuevo"
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-violet-600 hover:bg-violet-700 text-white text-xs font-semibold rounded-lg transition-colors"
@@ -228,7 +320,7 @@ export default function HistorialMusicaAmbientalPage() {
                 </div>
               </div>
 
-              {/* Imagen */}
+              {/* Miniatura */}
               {selected.imagen_path && (
                 <div className="rounded-xl overflow-hidden border border-white/8">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -239,6 +331,106 @@ export default function HistorialMusicaAmbientalPage() {
                   />
                 </div>
               )}
+
+              {/* Miniatura YouTube */}
+              <div className="bg-white/[0.02] border border-white/8 rounded-xl p-5">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className={`w-5 h-5 rounded-full flex items-center justify-center ${selected.thumbnail_status === 'ready' ? 'bg-emerald-500/20' : 'bg-white/10'}`}>
+                    {selected.thumbnail_status === 'ready' ? (
+                      <svg className="w-3 h-3 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4.5 12.75l6 6 9-13.5" />
+                      </svg>
+                    ) : (
+                      <svg className="w-3 h-3 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    )}
+                  </div>
+                  <span className="text-sm font-medium text-white">Miniatura YouTube</span>
+                </div>
+
+                {selected.thumbnail_status === 'processing' || isThumbnailLoading ? (
+                  <div className="flex items-center gap-3 p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg">
+                    <svg className="w-4 h-4 text-amber-400 animate-spin shrink-0" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                    <p className="text-amber-300 text-sm">Generando miniatura con FLUX.1 + Sharp...</p>
+                  </div>
+                ) : selected.thumbnail_status === 'ready' && selected.thumbnail_path ? (
+                  <div className="space-y-4">
+                    <div className="rounded-xl overflow-hidden border border-white/10" style={{ aspectRatio: '16/9', maxWidth: 320 }}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={`${selected.thumbnail_path}?t=${Date.now()}`} alt="Miniatura" className="w-full h-full object-cover" key={selected.thumbnail_path} />
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-xs text-gray-500 uppercase tracking-wider">Editar textos</p>
+                      <div>
+                        <label className="block text-xs text-gray-600 mb-1">Texto principal</label>
+                        <input type="text" value={thumbnailTexts.texto_principal}
+                          onChange={(e) => setThumbnailTexts((p) => ({ ...p, texto_principal: e.target.value }))}
+                          className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-violet-500/50 transition-colors font-mono uppercase"
+                          placeholder="LOFI BEATS" />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-600 mb-1">Subtítulo</label>
+                        <input type="text" value={thumbnailTexts.subtitulo}
+                          onChange={(e) => setThumbnailTexts((p) => ({ ...p, subtitulo: e.target.value }))}
+                          className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-violet-500/50 transition-colors font-mono uppercase"
+                          placeholder="PARA ESTUDIAR" />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-600 mb-1">Contexto</label>
+                        <input type="text" value={thumbnailTexts.contexto}
+                          onChange={(e) => setThumbnailTexts((p) => ({ ...p, contexto: e.target.value }))}
+                          className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-violet-500/50 transition-colors font-mono uppercase"
+                          placeholder="LOFI · 1 HORA" />
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <button onClick={handleRecomponerMiniatura} disabled={recomposeState === 'loading' || !thumbnailTexts.texto_principal}
+                        className="flex items-center gap-2 px-4 py-2.5 bg-violet-600 hover:bg-violet-700 disabled:opacity-60 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-colors">
+                        {recomposeState === 'loading' && (
+                          <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                          </svg>
+                        )}
+                        {recomposeState === 'loading' ? 'Recomponiendo...' : 'Recomponer'}
+                      </button>
+                      <button onClick={handleGenerarMiniatura} disabled={isThumbnailLoading}
+                        className="flex items-center gap-2 px-4 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 disabled:opacity-60 disabled:cursor-not-allowed text-gray-300 text-sm font-medium rounded-lg transition-colors">
+                        Regenerar miniatura
+                      </button>
+                      <a href={`${selected.thumbnail_path}?download=1`} download
+                        className="flex items-center gap-2 px-4 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 text-gray-300 text-sm font-medium rounded-lg transition-colors">
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                        JPG
+                      </a>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-1.5">
+                    <button onClick={handleGenerarMiniatura} disabled={isThumbnailLoading}
+                      className="flex items-center gap-2 px-4 py-2.5 bg-violet-600 hover:bg-violet-700 disabled:opacity-60 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-colors">
+                      {isThumbnailLoading && (
+                        <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                        </svg>
+                      )}
+                      {isThumbnailLoading ? 'Iniciando...' : 'Generar miniatura'}
+                    </button>
+                    <p className="text-gray-600 text-xs">FLUX.1 + Sharp · Bebas Neue · 1280×720</p>
+                  </div>
+                )}
+
+                {(thumbnailError || (selected.thumbnail_status === 'error' && selected.thumbnail_error)) && (
+                  <p className="mt-3 text-red-400 text-xs">{thumbnailError || selected.thumbnail_error}</p>
+                )}
+              </div>
 
               {/* Estado generación */}
               {selected.estado === 'generando_video' && (
@@ -254,10 +446,32 @@ export default function HistorialMusicaAmbientalPage() {
                 </div>
               )}
 
-              {selected.estado === 'error' && selected.error_msg && (
-                <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl">
-                  <p className="text-red-300 text-sm font-medium mb-1">Error en la generación</p>
-                  <p className="text-red-400 text-xs font-mono">{selected.error_msg}</p>
+              {selected.estado === 'error' && (
+                <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl space-y-3">
+                  {selected.error_msg && (
+                    <>
+                      <p className="text-red-300 text-sm font-medium">Error en la generación</p>
+                      <p className="text-red-400 text-xs font-mono break-all">{selected.error_msg}</p>
+                    </>
+                  )}
+                  <button
+                    onClick={handleRegenerar}
+                    disabled={regenState === 'loading'}
+                    className="flex items-center gap-2 px-4 py-2 bg-amber-600 hover:bg-amber-700 disabled:opacity-50 text-white text-xs font-semibold rounded-lg transition-colors"
+                  >
+                    {regenState === 'loading' ? (
+                      <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                      </svg>
+                    ) : (
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                      </svg>
+                    )}
+                    {regenState === 'loading' ? 'Regenerando...' : 'Regenerar vídeo'}
+                  </button>
+                  {regenState === 'error' && <p className="text-red-400 text-xs">{regenError}</p>}
                 </div>
               )}
 
@@ -292,8 +506,32 @@ export default function HistorialMusicaAmbientalPage() {
                 </div>
               </div>
 
+              {/* Acciones — regenerar (solo cuando listo sin error) */}
+              {selected.estado === 'listo' && (
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleRegenerar}
+                    disabled={regenState === 'loading'}
+                    className="flex items-center gap-1.5 px-3 py-2 bg-white/5 hover:bg-white/10 border border-white/10 disabled:opacity-50 text-gray-400 text-xs font-medium rounded-lg transition-colors"
+                  >
+                    {regenState === 'loading' ? (
+                      <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                      </svg>
+                    ) : (
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                      </svg>
+                    )}
+                    {regenState === 'loading' ? 'Regenerando...' : 'Regenerar vídeo'}
+                  </button>
+                  {regenState === 'error' && <p className="text-red-400 text-xs">{regenError}</p>}
+                </div>
+              )}
+
               {/* Upload YouTube */}
-              {selected.estado === 'listo' && !selected.youtube_id && (
+              {selected.estado === 'listo' && (!selected.youtube_id || showYtFormAgain) && (
                 <div className="bg-white/[0.03] border border-white/8 rounded-xl p-5">
                   <h3 className="text-sm font-semibold text-white mb-4">Subir a YouTube</h3>
                   <form onSubmit={handleUploadYouTube} className="space-y-3">
@@ -375,20 +613,31 @@ export default function HistorialMusicaAmbientalPage() {
                 </div>
               )}
 
-              {selected.youtube_id && (
-                <div className="flex items-center gap-3 p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
-                  <svg className="w-5 h-5 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <div>
-                    <p className="text-emerald-300 text-sm font-medium">Publicado en YouTube</p>
-                    {selected.youtube_url && (
-                      <a href={selected.youtube_url} target="_blank" rel="noopener noreferrer"
-                        className="text-emerald-500 text-xs hover:underline">
-                        {selected.youtube_url}
-                      </a>
-                    )}
+              {selected.youtube_id && !showYtFormAgain && (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-3 p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
+                    <svg className="w-5 h-5 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-emerald-300 text-sm font-medium">Publicado en YouTube</p>
+                      {selected.youtube_url && (
+                        <a href={selected.youtube_url} target="_blank" rel="noopener noreferrer"
+                          className="text-emerald-500 text-xs hover:underline truncate block">
+                          {selected.youtube_url}
+                        </a>
+                      )}
+                    </div>
                   </div>
+                  <button
+                    onClick={() => { setShowYtFormAgain(true); setYtState('idle'); setYtError(''); }}
+                    className="flex items-center gap-1.5 px-3 py-2 bg-red-600/15 hover:bg-red-600/25 border border-red-500/20 text-red-400 text-xs font-medium rounded-lg transition-colors"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M23.495 6.205a3.007 3.007 0 0 0-2.088-2.088c-1.87-.501-9.396-.501-9.396-.501s-7.507-.01-9.396.501A3.007 3.007 0 0 0 .527 6.205a31.247 31.247 0 0 0-.522 5.805 31.247 31.247 0 0 0 .522 5.783 3.007 3.007 0 0 0 2.088 2.088c1.868.502 9.396.502 9.396.502s7.506 0 9.396-.502a3.007 3.007 0 0 0 2.088-2.088 31.247 31.247 0 0 0 .5-5.783 31.247 31.247 0 0 0-.5-5.805zM9.609 15.601V8.408l6.264 3.602z"/>
+                    </svg>
+                    Resubir a YouTube
+                  </button>
                 </div>
               )}
             </div>

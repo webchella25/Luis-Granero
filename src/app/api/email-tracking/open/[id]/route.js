@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import EmailLog from '@/models/EmailLog';
 import Lead from '@/models/Lead';
+import Notification from '@/models/Notification';
 import { extractRequestMetadata } from '@/lib/email/tracking';
 
 const TRACKING_PIXEL = Buffer.from(
@@ -54,12 +55,29 @@ export async function GET(request, { params }) {
     await emailLog.trackOpen(metadata);
     
     if (emailLog.leadId) {
-      await Lead.findByIdAndUpdate(emailLog.leadId, {
+      const lead = await Lead.findByIdAndUpdate(emailLog.leadId, {
         $set: {
           lastInteraction: new Date(),
           lastInteractionType: 'email_opened'
         }
-      });
+      }, { new: false });
+
+      // Notificación si es primera apertura o lleva 3+ aperturas
+      const newOpenCount = emailLog.openCount + 1;
+      if (newOpenCount === 1 || newOpenCount === 3) {
+        await Notification.create({
+          leadId: emailLog.leadId,
+          leadName: lead?.name || 'Lead',
+          type: 'email_opened',
+          title: newOpenCount === 1
+            ? `📧 ${lead?.name || 'Lead'} abrió tu email`
+            : `🔥 ${lead?.name || 'Lead'} abrió tu email por 3ª vez`,
+          message: newOpenCount === 1
+            ? `Ha abierto "${emailLog.subject || 'tu email'}". Buen momento para hacer seguimiento.`
+            : `Muy interesado — ha abierto el mismo email 3 veces. ¡Llama ahora!`,
+          metadata: { emailLogId: emailLog._id, subject: emailLog.subject, openCount: newOpenCount }
+        }).catch(() => {}); // No bloquear el tracking si falla
+      }
     }
     
     return new Response(TRACKING_PIXEL, {

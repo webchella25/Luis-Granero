@@ -1,6 +1,5 @@
 // src/app/api/admin/email-courses/[id]/route.js
 import { NextResponse } from 'next/server'
-import { checkAuth } from '@/lib/checkAuth'
 import dbConnect from '@/lib/mongodb'
 import EmailCourse from '@/models/EmailCourse'
 import logger from '@/lib/logger'
@@ -8,10 +7,6 @@ import logger from '@/lib/logger'
 // GET - Obtener curso específico
 export async function GET(request, { params }) {
   try {
-    const session = await checkAuth()
-    if (!session) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
-    }
 
     await dbConnect()
 
@@ -31,10 +26,6 @@ export async function GET(request, { params }) {
 // PUT - Actualizar curso
 export async function PUT(request, { params }) {
   try {
-    const session = await checkAuth()
-    if (!session) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
-    }
 
     const data = await request.json()
 
@@ -86,10 +77,6 @@ export async function PUT(request, { params }) {
 // DELETE - Eliminar curso
 export async function DELETE(request, { params }) {
   try {
-    const session = await checkAuth()
-    if (!session) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
-    }
 
     await dbConnect()
 

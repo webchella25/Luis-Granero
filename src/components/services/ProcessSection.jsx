@@ -51,7 +51,7 @@ function ProcessSection() {
   ];
 
   return (
-    <section className="py-20 bg-gray-950">
+    <section className="py-20 bg-[#0B1120]">
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
           <h2 className="text-4xl md:text-5xl font-bold gradient-text mb-6">
@@ -80,7 +80,7 @@ function ProcessSection() {
                 <div className={`w-full md:w-5/12 ml-12 md:ml-0 ${
                   index % 2 === 0 ? 'md:mr-8' : 'md:ml-8'
                 }`}>
-                  <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-xl p-6 hover:border-cyan-500/30 transition-all duration-300">
+                  <div className="bg-[#1E293B] border border-slate-700/50 rounded-xl p-6 hover:border-cyan-500/30 transition-all duration-300">
                     {/* Header */}
                     <div className="flex items-center space-x-4 mb-4">
                       <span className="text-3xl">{step.icon}</span>
@@ -129,17 +129,17 @@ function ProcessSection() {
 
           {/* Process highlights */}
           <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-gray-900/30 backdrop-blur-sm border border-gray-800 rounded-xl p-6 text-center">
+            <div className="bg-[#1E293B] border border-slate-700/50 rounded-xl p-6 text-center">
               <div className="text-3xl mb-4">📊</div>
               <h3 className="font-bold text-white mb-2">Transparencia Total</h3>
               <p className="text-gray-400 text-sm">Acceso a herramientas de seguimiento y demos semanales</p>
             </div>
-            <div className="bg-gray-900/30 backdrop-blur-sm border border-gray-800 rounded-xl p-6 text-center">
+            <div className="bg-[#1E293B] border border-slate-700/50 rounded-xl p-6 text-center">
               <div className="text-3xl mb-4">💬</div>
               <h3 className="font-bold text-white mb-2">Comunicación Directa</h3>
               <p className="text-gray-400 text-sm">Canal directo conmigo, sin intermediarios</p>
             </div>
-            <div className="bg-gray-900/30 backdrop-blur-sm border border-gray-800 rounded-xl p-6 text-center">
+            <div className="bg-[#1E293B] border border-slate-700/50 rounded-xl p-6 text-center">
               <div className="text-3xl mb-4">🔄</div>
               <h3 className="font-bold text-white mb-2">Metodología Ágil</h3>
               <p className="text-gray-400 text-sm">Entregas frecuentes y ajustes sobre la marcha</p>

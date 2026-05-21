@@ -4,17 +4,18 @@ import Header from '../../../components/layout/Header';
 import Footer from '../../../components/layout/Footer';
 import BlogPost from '../../../components/blog/BlogPost';
 import RelatedPosts from '../../../components/blog/RelatedPosts';
+import SchemaOrg from '../../../components/seo/SchemaOrg';
+import { getArticleSchema, getBreadcrumbSchema } from '../../../lib/seo/schemas';
 
-// ✅ AÑADIR ESTO - Forzar renderizado dinámico
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+// ISR - Revalidar cada 24 horas
+export const revalidate = 86400;
 
 // Función para obtener un post por slug
 async function getPostBySlug(slug: string) {
   try {
     const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
     const res = await fetch(`${baseUrl}/api/public/blog/${slug}`, {
-      cache: 'no-store',
+      next: { revalidate: 86400 },
     });
     
     if (!res.ok) {
@@ -33,7 +34,7 @@ async function getRelatedPosts(category: string, currentSlug: string) {
   try {
     const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
     const res = await fetch(`${baseUrl}/api/public/blog?category=${category}&limit=3`, {
-      cache: 'no-store',
+      next: { revalidate: 86400 },
     });
     
     if (!res.ok) {
@@ -82,15 +83,38 @@ export async function generateMetadata({ params }: BlogPostPageProps) {
 export default async function BlogPostPage({ params }: BlogPostPageProps) {
   const resolvedParams = await params;
   const post = await getPostBySlug(resolvedParams.slug);
-  
+
   if (!post) {
     notFound();
   }
-  
+
   const relatedPosts = await getRelatedPosts(post.category, post.slug);
 
+  // Generar schemas
+  const articleSchema = getArticleSchema({
+    title: post.title,
+    excerpt: post.excerpt,
+    slug: post.slug,
+    featuredImage: post.featuredImage,
+    publishDate: post.publishDate,
+    modifiedDate: post.updatedAt,
+    tags: post.tags,
+    author: post.author?.name || 'Luis Granero',
+    readingTime: post.readingTime,
+    category: post.category
+  });
+
+  const breadcrumbSchema = getBreadcrumbSchema([
+    { name: 'Inicio', url: '/' },
+    { name: 'Blog', url: '/blog' },
+    { name: post.title, url: `/blog/${post.slug}` }
+  ]);
+
   return (
-    <main className="min-h-screen bg-black">
+    <main className="min-h-screen bg-[#0F172A]">
+      {/* Schema.org JSON-LD */}
+      <SchemaOrg schema={[articleSchema, breadcrumbSchema]} />
+
       <Header />
       <BlogPost post={post} />
       <RelatedPosts posts={relatedPosts} currentCategory={post.category} />

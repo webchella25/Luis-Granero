@@ -137,15 +137,15 @@ export default function EditSequencePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center">
+      <div className="flex items-center justify-center py-32">
         <div className="text-cyan-400 text-xl">Cargando...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-8">
-      <div className="max-w-5xl mx-auto">
+    <div className="space-y-6">
+      
         
         {/* Header */}
         <div className="mb-8">
@@ -166,7 +166,7 @@ export default function EditSequencePage() {
         <form onSubmit={handleSubmit} className="space-y-6">
           
           {/* Info Básica */}
-          <div className="bg-slate-800/50 backdrop-blur border border-cyan-500/20 rounded-lg p-6">
+          <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
             <h2 className="text-2xl font-bold text-white mb-6">
               📝 Información Básica
             </h2>
@@ -199,6 +199,7 @@ export default function EditSequencePage() {
                   <option value="auto_no_website">Auto - Leads sin website</option>
                   <option value="auto_slow_website">Auto - Website lento (&gt;3s)</option>
                   <option value="auto_no_ssl">Auto - Sin certificado SSL</option>
+                  <option value="auto_abandoned_website">Auto - Web abandonada (lleva meses sin actualizar)</option>
                 </select>
               </div>
             </div>
@@ -218,7 +219,7 @@ export default function EditSequencePage() {
           </div>
 
           {/* Pasos de la secuencia */}
-          <div className="bg-slate-800/50 backdrop-blur border border-cyan-500/20 rounded-lg p-6">
+          <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
             <div className="flex items-center justify-between mb-6">
               <div>
                 <h2 className="text-2xl font-bold text-white">
@@ -392,6 +393,5 @@ export default function EditSequencePage() {
           </div>
         </form>
       </div>
-    </div>
   );
 }

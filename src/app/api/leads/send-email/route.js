@@ -4,21 +4,15 @@ import dbConnect from '@/lib/mongodb';
 import Lead from '@/models/Lead';
 import EmailLog from '@/models/EmailLog';
 import EmailTemplate from '@/models/EmailTemplate';
-import nodemailer from 'nodemailer';
+import { sendEmail } from '@/lib/email/mailer';
 import { prepareEmailForTracking } from '@/lib/email/tracking';
-
-const transporter = nodemailer.createTransport({
-  host: process.env.BREVO_SMTP_HOST || 'smtp-relay.brevo.com',
-  port: 587,
-  secure: false,
-  auth: {
-    user: process.env.BREVO_SMTP_USER,
-    pass: process.env.BREVO_SMTP_PASS
-  }
-});
+import { requireAdmin } from '@/lib/adminAuth';
 
 export async function POST(request) {
   try {
+    const auth = await requireAdmin(request);
+    if (!auth.ok) return auth.response;
+
     const { leadId, to, templateId } = await request.json();
     
     if (!leadId || !to) {
@@ -88,7 +82,7 @@ export async function POST(request) {
       }
     };
     
-    const info = await transporter.sendMail(mailOptions);
+    const info = await sendEmail(mailOptions);
     
     console.log('✅ Email enviado:', info.messageId);
     

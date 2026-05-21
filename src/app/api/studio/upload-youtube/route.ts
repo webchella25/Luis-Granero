@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createReadStream, statSync } from 'fs';
+import fs from 'fs/promises';
 import { Readable } from 'stream';
 import path from 'path';
 import connectDB from '@/lib/mongodb';
 import StudioScript from '@/models/StudioScript';
 import { getValidAccessTokenForCanal } from '@/lib/studio/youtube-auth';
 import { getStudioSession } from '@/lib/studio/session';
+import { deleteLocalVideoFile, hasConfirmedYoutubeUpload } from '@/lib/studio/uploaded-local-video-cleanup';
 
 interface UploadBody {
   scriptId: string;
@@ -179,12 +181,40 @@ async function uploadBackground(
     const videoId = await uploadVideoStream(uploadUri, videoAbsPath, fileSize);
     const youtubeUrl = `https://www.youtube.com/watch?v=${videoId}`;
 
+    // Subir miniatura si existe
+    const thumbnailAbsPath = path.join(process.cwd(), 'public', 'studio', 'thumbnails', `${scriptId}.jpg`);
+    try {
+      await fs.access(thumbnailAbsPath);
+      const thumbBuffer = await fs.readFile(thumbnailAbsPath);
+      const thumbRes = await fetch(
+        `https://www.googleapis.com/upload/youtube/v3/thumbnails/set?videoId=${videoId}&uploadType=media`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'image/jpeg',
+            'Content-Length': String(thumbBuffer.byteLength),
+          },
+          body: thumbBuffer,
+        }
+      );
+      if (!thumbRes.ok) {
+        const err = await thumbRes.text();
+        console.warn('[upload-youtube] Miniatura no subida:', thumbRes.status, err.slice(0, 200));
+      } else {
+        console.log('[upload-youtube] ✅ Miniatura subida correctamente para vídeo', videoId);
+      }
+    } catch (thumbErr) {
+      // No bloquea: si falla la miniatura el vídeo ya está subido
+      console.warn('[upload-youtube] Sin miniatura o error subiéndola:', thumbErr instanceof Error ? thumbErr.message : thumbErr);
+    }
+
     await connectDB();
     const s = await StudioScript.findById(scriptId);
     if (s) {
       s.youtube_id = videoId;
       s.youtube_url = youtubeUrl;
-      s.youtube_status = 'ready';
+      s.youtube_status = 'uploaded';
       if (metadata.publishAt) {
         s.youtube_scheduled_at = new Date(metadata.publishAt);
       } else {
@@ -192,6 +222,15 @@ async function uploadBackground(
       }
       await s.save();
       console.log(`✅ Vídeo subido a YouTube: ${youtubeUrl}${metadata.publishAt ? ` (programado: ${metadata.publishAt})` : ''}`);
+
+      try {
+        const deleted = await deleteLocalVideoFile('video', s.video_path);
+        s.video_local_deleted_at = new Date();
+        await s.save();
+        console.log(deleted ? `[upload-youtube] MP4 local eliminado: ${s.video_path}` : `[upload-youtube] MP4 local ya no existía: ${s.video_path}`);
+      } catch (deleteErr) {
+        console.warn('[upload-youtube] No se pudo eliminar el MP4 local tras subirlo:', deleteErr instanceof Error ? deleteErr.message : deleteErr);
+      }
     }
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Error desconocido';
@@ -226,6 +265,17 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const videoAbsPath = path.join(process.cwd(), 'public', 'studio', 'videos', path.basename(videoFilename));
 
     try { statSync(videoAbsPath); } catch {
+      if (hasConfirmedYoutubeUpload(script)) {
+        script.youtube_status = script.youtube_status === 'ready' ? 'uploaded' : script.youtube_status;
+        script.video_local_deleted_at = script.video_local_deleted_at ?? new Date();
+        await script.save();
+        return NextResponse.json({
+          status: 'uploaded',
+          youtubeUrl: script.youtube_url,
+          youtubeVideoId: script.youtube_id,
+          message: 'El vídeo ya está subido a YouTube y el archivo local fue eliminado',
+        });
+      }
       return NextResponse.json({ error: `Fichero de vídeo no encontrado` }, { status: 404 });
     }
 

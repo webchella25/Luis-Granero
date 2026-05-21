@@ -162,7 +162,7 @@ function ServicesGrid() {
 
   if (loading) {
     return (
-      <section className="py-20 bg-gray-900">
+      <section className="py-20 bg-[#0B1120]">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
             <div className="animate-pulse">
@@ -184,7 +184,7 @@ function ServicesGrid() {
 
  if (error) {
    return (
-     <section className="py-20 bg-gray-900">
+     <section className="py-20 bg-[#0B1120]">
        <div className="container mx-auto px-4 text-center">
          <div className="text-red-400 mb-4">Error cargando servicios: {error}</div>
          <button 
@@ -199,7 +199,7 @@ function ServicesGrid() {
  }
 
  return (
-   <section className="py-20 bg-gray-900">
+   <section className="py-20 bg-[#0B1120]">
      <div className="container mx-auto px-4">
        <div className="text-center mb-16">
          <h2 className="text-4xl md:text-5xl font-bold gradient-text mb-6">
@@ -216,7 +216,7 @@ function ServicesGrid() {
              key={service._id || service.id || index}
              className="relative group cursor-pointer"
            >
-             <div className="bg-gray-800 rounded-lg p-8 h-full border border-gray-700 hover:border-cyan-500 transition-all duration-300 transform hover:-translate-y-2 hover:shadow-2xl hover:shadow-cyan-500/10">
+             <div className="bg-[#1E293B] rounded-xl p-8 h-full border border-slate-700/50 hover:border-cyan-500/40 transition-all duration-200">
                
                {/* Icon */}
                <div className="text-4xl mb-4">
@@ -267,7 +267,7 @@ function ServicesGrid() {
                      {service.technologies.slice(0, 4).map((tech, techIndex) => (
                        <span
                          key={techIndex}
-                         className="px-3 py-1 text-xs font-mono bg-gray-700 text-cyan-400 rounded-full border border-cyan-500/30"
+                         className="px-3 py-1 text-xs font-mono bg-slate-800 text-cyan-400 rounded border border-slate-700"
                        >
                          {tech}
                        </span>
@@ -290,7 +290,7 @@ function ServicesGrid() {
 
        {/* Call to Action */}
        <div className="text-center mt-16">
-         <div className="bg-gray-800 rounded-xl p-8 border border-gray-700">
+         <div className="bg-[#1E293B] rounded-xl p-8 border border-slate-700/50">
            <h3 className="text-2xl font-bold text-white mb-4">
              ¿Necesitas algo específico?
            </h3>
@@ -301,7 +301,7 @@ function ServicesGrid() {
            <div className="flex flex-col sm:flex-row gap-4 justify-center">
              <Link
                href="/contacto"
-               className="inline-flex items-center justify-center px-8 py-3 bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-semibold rounded-lg hover:from-cyan-600 hover:to-blue-600 transition-all duration-300 transform hover:scale-105"
+               className="inline-flex items-center justify-center px-8 py-3 bg-gradient-to-r bg-cyan-500 text-white font-semibold rounded-lg hover:from-cyan-600 hover:to-blue-600 transition-all duration-300 transform hover:scale-105"
              >
                Solicitar Presupuesto
              </Link>

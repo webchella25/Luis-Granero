@@ -1,21 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getStudioSession } from '@/lib/studio/session';
-import Anthropic from '@anthropic-ai/sdk';
 import connectDB from '@/lib/mongodb';
 import StudioScript from '@/models/StudioScript';
+import StudioCanal from '@/models/StudioCanal';
+import { callLLM, extractJSON } from '@/lib/studio/llm-client';
 
-function buildHooksPrompt(personaje: string, epoca: string): string {
-  return `Para un vídeo de YouTube sobre ${personaje} (${epoca}), genera 3 hooks alternativos de apertura.
+function buildHooksPrompt(personaje: string, epoca: string, nichoCtx: string): string {
+  return `Actúa como un experto en retención y CTR para YouTube especializado en ${nichoCtx}.
 
-Cada hook: máximo 2-3 frases, máximo 60 palabras. Sin emojis. En español de España.
-Nunca empieces con "En este vídeo" ni con el nombre del personaje directamente.
+Genera 4 hooks alternativos para un vídeo sobre "${personaje}" (${epoca}).
+
+REGLAS:
+- Hooks para vídeo largo (0–10s): máx 2-3 frases, máx 60 palabras, sin emojis, español de España
+- Hook para Short (0–2s): 1 sola frase ultra-agresiva, máx 15 palabras, diseñada para forzar el loop de reproducción
+- Nunca empieces con "En este vídeo", "Hoy" ni con el nombre del personaje directamente
+- La primera palabra debe crear tensión o intriga inmediata
 
 JSON exacto:
 {
   "hooks": [
     { "estilo": "pregunta_provocadora", "texto": "..." },
     { "estilo": "narrativa_alto_riesgo", "texto": "..." },
-    { "estilo": "revelacion_oculta", "texto": "..." }
+    { "estilo": "revelacion_oculta", "texto": "..." },
+    { "estilo": "short_ultra_agresivo", "texto": "..." }
   ]
 }`;
 }
@@ -37,28 +44,20 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       return NextResponse.json({ error: 'Script no encontrado' }, { status: 404 });
     }
 
-    const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey) {
-      return NextResponse.json({ error: 'ANTHROPIC_API_KEY no configurada' }, { status: 500 });
-    }
+    const canal = await StudioCanal.findById(session.canal_id).select('config nicho descripcion').lean();
+    const canalData = canal as { config?: Record<string, unknown>; nicho?: string; descripcion?: string } | null;
+    const canalConfig = canalData?.config ?? {};
+    const nichoCtx = [canalData?.nicho, canalData?.descripcion].filter(Boolean).join(' — ') || 'contenido en español';
 
-    const anthropic = new Anthropic({ apiKey });
-    const message = await anthropic.messages.create({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 1024,
-      system: 'Eres experto en hooks virales para YouTube de true crime e historia oscura en español. Generas aperturas de 2-3 frases que enganchan en los primeros 10 segundos. Nunca empiezas con "En este vídeo" ni con el nombre del personaje directamente. Respondes SOLO con JSON válido.',
-      messages: [{ role: 'user', content: buildHooksPrompt(script.personaje, script.epoca) }],
+    const raw = await callLLM({
+      system: `Eres un experto en retención para YouTube. Piensas como un retention strategist: cada hook debe crear tensión desde la primera palabra, maximizar el watch time y forzar el loop en Shorts. Canal: ${nichoCtx}. Respondes SOLO con JSON válido.`,
+      messages: [{ role: 'user', content: buildHooksPrompt(script.personaje, script.epoca, nichoCtx) }],
+      maxTokens: 1024,
+      model: 'fast',
+      canalConfig,
     });
 
-    const raw = message.content
-      .filter((b) => b.type === 'text')
-      .map((b) => (b as { type: 'text'; text: string }).text)
-      .join('')
-      .replace(/^```json\s*/i, '')
-      .replace(/\s*```$/i, '')
-      .trim();
-
-    const data = JSON.parse(raw) as { hooks: { estilo: string; texto: string }[] };
+    const data = JSON.parse(extractJSON(raw)) as { hooks: { estilo: string; texto: string }[] };
 
     await StudioScript.findByIdAndUpdate(scriptId, {
       hooks_seo: data.hooks,

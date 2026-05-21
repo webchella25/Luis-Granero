@@ -1,5 +1,6 @@
 // src/app/api/analytics/dashboard/route.js
 import { NextResponse } from 'next/server';
+import { clampPaginationLimit, requireAdmin } from '@/lib/adminAuth';
 import {
   getCompleteDashboard,
   getKeyKPIs,
@@ -23,9 +24,12 @@ import {
  */
 export async function GET(request) {
   try {
+    const auth = await requireAdmin(request);
+    if (!auth.ok) return auth.response;
+
     const { searchParams } = new URL(request.url);
     const type = searchParams.get('type') || 'full';
-    const days = parseInt(searchParams.get('days')) || 30;
+    const days = clampPaginationLimit(searchParams.get('days'), 30, 365);
 
     let data;
 
@@ -51,7 +55,7 @@ export async function GET(request) {
         break;
 
       case 'opportunities':
-        const limit = parseInt(searchParams.get('limit')) || 10;
+        const limit = clampPaginationLimit(searchParams.get('limit'), 10, 50);
         data = await getTopOpportunities(limit);
         break;
 

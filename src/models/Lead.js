@@ -40,6 +40,12 @@ const leadSchema = new mongoose.Schema({
     linkedin: String,
     youtube: String
   },
+
+  // Plataformas descartadas manualmente — no se buscarán en próximos enrichments
+  socialMediaBlocked: {
+    type: [String],
+    default: []
+  },
   
   // Business info
   category: String,
@@ -63,7 +69,12 @@ const leadSchema = new mongoose.Schema({
     hasSSL: Boolean,
     technology: String,
     hasEmail: Boolean,
-    emails: [String]
+    emails: [String],
+    // Detector de web abandonada
+    isAbandoned: Boolean,
+    inactivityScore: Number,   // 0-100
+    inactivityIndicators: [String],
+    lastCopyrightYear: Number
   },
   
   // Lead scoring
@@ -103,7 +114,7 @@ const leadSchema = new mongoose.Schema({
     },
     type: {
       type: String,
-      enum: ['email', 'call', 'meeting', 'instagram_dm', 'whatsapp', 'other'],
+      enum: ['email', 'call', 'meeting', 'instagram_dm', 'whatsapp', 'note', 'other'],
       default: 'other'
     },
     channel: {
@@ -133,9 +144,41 @@ const leadSchema = new mongoose.Schema({
     responseContent: String
   }],
   
+  // Sector clasificado
+  sector: {
+    type: String,
+    enum: ['restaurant', 'beauty', 'health', 'shop', 'service', 'generic'],
+    default: null
+  },
+
+  // Demo site generada
+  demoSiteId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'DemoSite'
+  },
+
+  // Proposal generada
+  proposalToken: String,
+
+  // Última interacción (para hot alerts)
+  lastInteraction: Date,
+  lastInteractionType: {
+    type: String,
+    enum: ['email_opened', 'email_clicked', 'demo_visited', 'appointment_booked', 'email_sent', null],
+    default: null
+  },
+
+  // Enrichment completo
+  enrichment: mongoose.Schema.Types.Mixed,
+  enrichmentStatus: {
+    type: String,
+    enum: ['idle', 'processing', 'done', 'error'],
+    default: 'idle'
+  },
+
   // Tags personalizados
   tags: [String],
-  
+
   // Asignación
   assignedTo: String,
   

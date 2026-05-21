@@ -1,21 +1,11 @@
 // src/app/api/admin/students/[id]/route.js
 import { NextResponse } from 'next/server';
-import { checkAuth } from '@/lib/checkAuth';
 import dbConnect from '@/lib/mongodb';
 import User from '@/models/User';
 import CourseProgress from '@/models/CourseProgress';
 
 export async function GET(request, { params }) {
   try {
-    const session = await checkAuth();
-
-    if (!session || session.user.role !== 'admin') {
-      return NextResponse.json(
-        { success: false, error: 'No autorizado' },
-        { status: 401 }
-      );
-    }
-
     await dbConnect();
 
     // Obtener estudiante

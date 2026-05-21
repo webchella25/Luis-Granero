@@ -4,17 +4,18 @@ import Footer from '../../components/layout/Footer';
 import PortfolioHero from '../../components/portfolio/PortfolioHero';
 import ProjectsGrid from '../../components/portfolio/ProjectsGrid';
 import TechnologiesUsed from '../../components/portfolio/TechnologiesUsed';
-import ClientTestimonials from '../../components/portfolio/ClientTestimonials';
+import SchemaOrg from '../../components/seo/SchemaOrg';
+import { getItemListSchema, getBreadcrumbSchema } from '../../lib/seo/schemas';
 
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+// ISR - Revalidar cada 24 horas
+export const revalidate = 86400;
 
 // Función para obtener proyectos
 async function getPortfolioData() {
   try {
     const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
     const res = await fetch(`${baseUrl}/api/public/projects`, {
-      cache: 'no-store',
+      next: { revalidate: 86400 },
     });
     
     if (!res.ok) {
@@ -35,7 +36,7 @@ async function getPortfolioSettings() {
   try {
     const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
     const res = await fetch(`${baseUrl}/api/public/portfolio/settings`, {
-      cache: 'no-store',
+      next: { revalidate: 86400 },
     });
     
     if (!res.ok) {
@@ -102,27 +103,31 @@ export async function generateMetadata({ searchParams }: PortfolioPageProps) {
   const projects = await getPortfolioData();
   
   return {
-    title: 'Portfolio - Luis Granero | Casos de Éxito en Desarrollo Web',
-    description: `Explora mis ${projects.length || 25} proyectos de desarrollo web: e-commerce, aplicaciones personalizadas, dashboards y más. Casos de estudio con código y resultados reales.`,
+    title: 'Portfolio de Desarrollo Web — Luis Granero | Proyectos React & Next.js en España',
+    description: `${projects.length || '+20'} proyectos reales de desarrollo web: tiendas online, aplicaciones React, dashboards y más. Casos de éxito con resultados medibles. Desarrollador freelance senior en España.`,
     keywords: [
-      'portfolio desarrollo web',
-      'casos de éxito',
-      'proyectos react',
-      'aplicaciones personalizadas',
-      'ecommerce desarrollo',
-      'dashboards corporativos'
+      'portfolio desarrollador web España',
+      'proyectos React Next.js reales',
+      'casos de éxito desarrollo web',
+      'tiendas online a medida',
+      'aplicaciones web personalizadas',
+      'freelance React portfolio',
     ],
     openGraph: {
-      title: 'Portfolio - Luis Granero | Casos de Éxito en Desarrollo Web',
-      description: `${projects.length || 25} proyectos reales con métricas y tecnologías detalladas`,
-      type: 'website'
-    }
+      title: 'Portfolio — Luis Granero | Proyectos React & Next.js',
+      description: 'Proyectos reales de desarrollo web con React, Next.js y tecnologías modernas. Freelance senior en España.',
+      type: 'website',
+      url: 'https://www.luisgranero.com/portfolio',
+    },
+    alternates: {
+      canonical: 'https://www.luisgranero.com/portfolio',
+    },
   };
 }
 
 export default async function PortfolioPage({ searchParams }: PortfolioPageProps) {
   const resolvedSearchParams = await searchParams;
-  
+
   const [projects, portfolioSettings] = await Promise.all([
     getPortfolioData(),
     getPortfolioSettings()
@@ -131,8 +136,26 @@ export default async function PortfolioPage({ searchParams }: PortfolioPageProps
   console.log('📊 Portfolio Page - Projects:', projects.length);
   console.log('📊 Portfolio Page - Settings:', portfolioSettings);
 
+  // Generar schemas
+  const portfolioListSchema = getItemListSchema(
+    projects.map((project: any) => ({
+      name: project.title,
+      url: `/portfolio/${project.slug}`,
+      image: project.images?.[0] || project.mainImage || project.image
+    })),
+    'Proyectos de Portfolio de Desarrollo Web'
+  );
+
+  const breadcrumbSchema = getBreadcrumbSchema([
+    { name: 'Inicio', url: '/' },
+    { name: 'Portfolio', url: '/portfolio' }
+  ]);
+
   return (
-    <main className="min-h-screen bg-black">
+    <main className="min-h-screen bg-[#0F172A]">
+      {/* Schema.org JSON-LD */}
+      <SchemaOrg schema={[portfolioListSchema, breadcrumbSchema]} />
+
       <Header />
       <PortfolioHero 
         data={portfolioSettings}
@@ -140,7 +163,6 @@ export default async function PortfolioPage({ searchParams }: PortfolioPageProps
       />
       <ProjectsGrid projects={projects} />
       <TechnologiesUsed />
-      <ClientTestimonials />
       <Footer />
     </main>
   );

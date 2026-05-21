@@ -31,75 +31,11 @@ interface Props {
 }
 
 export default function BlogCategories({ data }: Props) {
-  
-  const defaultCategories: Category[] = [
-    {
-      name: "React & Next.js",
-      slug: "react",
-      description: "Frameworks modernos de JavaScript",
-      icon: "⚛️",
-      color: "from-cyan-400 to-blue-500",
-      posts: 12,
-      trending: true,
-      topics: ["Hooks", "SSR", "Performance", "Best Practices"]
-    },
-    {
-      name: "JavaScript/TypeScript",
-      slug: "javascript",
-      description: "Fundamentos y características avanzadas",
-      icon: "📜",
-      color: "from-yellow-400 to-orange-500",
-      posts: 8,
-      trending: false,
-      topics: ["ES6+", "Async/Await", "Types", "Patterns"]
-    },
-    {
-      name: "Frontend",
-      slug: "frontend",
-      description: "UI/UX, CSS, animaciones y más",
-      icon: "🎨",
-      color: "from-purple-400 to-pink-500",
-      posts: 10,
-      trending: false,
-      topics: ["CSS", "Tailwind", "Responsive", "Animations"]
-    },
-    {
-      name: "Backend",
-      slug: "backend",
-      description: "APIs, bases de datos y arquitectura",
-      icon: "⚙️",
-      color: "from-green-400 to-emerald-500",
-      posts: 6,
-      trending: true,
-      topics: ["Node.js", "APIs REST", "MongoDB", "Authentication"]
-    },
-    {
-      name: "Performance",
-      slug: "performance",
-      description: "Optimización y mejores prácticas",
-      icon: "⚡",
-      color: "from-orange-400 to-red-500",
-      posts: 7,
-      trending: false,
-      topics: ["Lighthouse", "Web Vitals", "Caching", "Optimization"]
-    },
-    {
-      name: "DevOps",
-      slug: "devops",
-      description: "Deployment, CI/CD y automatización",
-      icon: "🚀",
-      color: "from-indigo-400 to-pink-500",
-      posts: 5,
-      trending: false,
-      topics: ["CI/CD", "Docker", "GitHub Actions", "Monitoring"]
-    }
-  ];
-
-  // Usar datos del prop o fallback
-  const displayCategories = data?.categories || defaultCategories;
+  // Usar datos del prop si existen, sino usar array vacío
+  const displayCategories = data?.categories || [];
 
   return (
-    <section className="py-20 bg-gray-950">
+    <section className="py-20 bg-[#0B1120]">
       <div className="container mx-auto px-4">
         
         {/* Categories section */}
@@ -118,7 +54,7 @@ export default function BlogCategories({ data }: Props) {
               <Link
                 key={index}
                 href={`/blog?category=${category.slug}`}
-                className="group bg-gradient-to-br from-gray-900/50 to-gray-800/50 backdrop-blur-sm border border-gray-800 rounded-xl p-6 hover:border-cyan-500/50 transition-all duration-300 hover:transform hover:scale-105"
+                className="group bg-gradient-to-br from-gray-900/50 to-gray-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6 hover:border-cyan-500/50 transition-all duration-300 hover:transform hover:scale-105"
               >
                 
                 {/* Header */}
@@ -152,7 +88,7 @@ export default function BlogCategories({ data }: Props) {
                     {category.topics.map((topic, topicIndex) => (
                       <span
                         key={topicIndex}
-                        className="text-xs px-2 py-1 rounded border border-gray-700"
+                        className="text-xs px-2 py-1 rounded border border-slate-700"
                       >
                         {topic}
                       </span>

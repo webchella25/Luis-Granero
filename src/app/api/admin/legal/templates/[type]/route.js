@@ -2,12 +2,6 @@
 import { NextResponse } from 'next/server';
 export async function GET(request, { params }) {
   try {
-    const session = await checkAuth();
-    
-    if (!session) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
-    }
-
     const { type } = params;
     
     const templates = {
@@ -433,8 +427,6 @@ Los derechos de propiedad intelectual de los trabajos desarrollados se transferi
 - Problemas derivados de servicios de terceros (hosting, dominios, etc.)
 
 La responsabilidad máxima se limitará al importe pagado por el servicio.
-import { checkAuth } from '@/lib/checkAuth'
-
 ## 6. Protección de Datos
 
 El tratamiento de datos personales se rige por nuestra [Política de Privacidad](/legal/privacidad), que forma parte integral de estos Términos y Condiciones.

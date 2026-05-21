@@ -1,8 +1,8 @@
-// src/components/portfolio/ProjectCard.tsx - CON IMÁGENES
 'use client';
 
 import Link from 'next/link';
 import Image from 'next/image';
+import { Rocket, ExternalLink } from 'lucide-react';
 
 interface Project {
   _id: string;
@@ -13,128 +13,128 @@ interface Project {
   status: string;
   metrics?: Record<string, string>;
   features?: string[];
-  images?: string[]; // 🔥 Array de imágenes
-  image?: string;    // Imagen antigua (compatibilidad)
+  images?: string[];
+  image?: string;
   isFeatured?: boolean;
+  isOwnProject?: boolean;
   slug?: string;
   year?: string | number;
+  urls?: { live?: string; github?: string };
 }
 
 interface Props {
   project: Project;
+  isOwn?: boolean;
 }
 
-export default function ProjectCard({ project }: Props) {
-  const projectId = String(project._id);
-  const projectSlug = project.slug || projectId;
+const CATEGORY_LABEL: Record<string, string> = {
+  saas: 'SaaS',
+  ecommerce: 'E-commerce',
+  webapp: 'Web App',
+  dashboard: 'Dashboard',
+  landing: 'Landing',
+  api: 'API',
+  mobile: 'Mobile',
+};
 
-  // 🔥 OBTENER IMAGEN PRINCIPAL
-  const getMainImage = () => {
-    if (project.images && project.images.length > 0) {
-      return project.images[0];
-    }
-    return project.image || null;
-  };
-
-  const mainImage = getMainImage();
+export default function ProjectCard({ project, isOwn = false }: Props) {
+  const slug = project.slug || String(project._id);
+  const mainImage = project.images?.[0] || project.image || null;
+  const catLabel = CATEGORY_LABEL[project.category] || project.category;
 
   return (
-    <div className="group bg-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-xl overflow-hidden hover:border-cyan-500/50 transition-all duration-300 hover:transform hover:scale-105">
-      
-      {/* 🔥 IMAGEN DEL PROYECTO */}
-      {mainImage && (
-        <div className="relative h-64 w-full overflow-hidden bg-gray-800">
+    <div className={`group relative bg-[#1E293B] border rounded-xl overflow-hidden transition-all duration-200 ${
+      isOwn
+        ? 'border-cyan-500/20 hover:border-cyan-500/50'
+        : 'border-slate-700/50 hover:border-slate-600'
+    }`}>
+
+      {/* Badge proyecto propio */}
+      {isOwn && (
+        <div className="absolute top-3 left-3 z-10 flex items-center gap-1.5 px-2.5 py-1 bg-cyan-500/15 border border-cyan-500/30 rounded-full backdrop-blur-sm">
+          <Rocket className="w-3 h-3 text-cyan-400" />
+          <span className="text-xs font-semibold text-cyan-400">Producto propio</span>
+        </div>
+      )}
+
+      {/* Imagen */}
+      {mainImage ? (
+        <div className="relative h-52 w-full overflow-hidden bg-slate-800">
           <Image
             src={mainImage}
             alt={project.title}
             fill
-            className="object-cover group-hover:scale-110 transition-transform duration-500"
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            className="object-cover group-hover:scale-105 transition-transform duration-300"
+            sizes="(max-width: 1024px) 100vw, 50vw"
           />
-          
-          {/* Overlay con gradiente */}
-          <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/40 to-transparent opacity-60"></div>
-          
-          {/* Badge de Featured */}
-          {project.isFeatured && (
-            <div className="absolute top-4 right-4 bg-gradient-to-r from-cyan-400 to-green-400 text-black px-3 py-1 rounded-full text-xs font-bold">
-              ⭐ Destacado
-            </div>
-          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-[#1E293B] via-transparent to-transparent" />
+        </div>
+      ) : (
+        <div className={`relative h-52 w-full flex items-center justify-center ${
+          isOwn
+            ? 'bg-gradient-to-br from-cyan-900/40 to-slate-800'
+            : 'bg-gradient-to-br from-slate-800 to-slate-900'
+        }`}>
+          <span className="text-7xl font-bold text-slate-700 select-none">
+            {project.title.charAt(0)}
+          </span>
         </div>
       )}
 
-      {/* Si no hay imagen, mostrar gradiente con emoji/letra */}
-      {!mainImage && (
-        <div className="relative h-64 w-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center">
-          <span className="text-8xl opacity-50">
-            {project.title.charAt(0)}
-          </span>
-          {project.isFeatured && (
-            <div className="absolute top-4 right-4 bg-white text-cyan-600 px-3 py-1 rounded-full text-xs font-bold">
-              ⭐ Destacado
-            </div>
-          )}
-        </div>
-      )}
-      
-      {/* Project content */}
+      {/* Contenido */}
       <div className="p-6">
         {/* Header */}
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex-1">
-            <h3 className="text-xl font-bold text-white group-hover:text-cyan-400 transition-colors mb-1">
+        <div className="flex items-start justify-between gap-3 mb-3">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-xs text-slate-500 font-mono">{catLabel}</span>
+              {project.year && <span className="text-xs text-slate-600">· {project.year}</span>}
+            </div>
+            <h3 className="text-base font-semibold text-slate-100 group-hover:text-cyan-400 transition-colors leading-snug">
               {project.title}
             </h3>
-            <p className="text-gray-500 text-sm">
-              {project.category} • {project.year}
-            </p>
           </div>
-          <span className={`text-xs px-2 py-1 rounded-full whitespace-nowrap ml-2 ${
-            project.status === 'En producción' 
-              ? 'bg-green-500/20 text-green-400 border border-green-500/30'
+          <span className={`shrink-0 text-xs px-2 py-0.5 rounded-full border ${
+            project.status === 'En producción'
+              ? 'bg-green-500/10 text-green-400 border-green-500/20'
               : project.status === 'En desarrollo'
-              ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'
-              : 'bg-gray-500/20 text-gray-400 border border-gray-500/30'
+              ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20'
+              : 'bg-slate-500/10 text-slate-400 border-slate-500/20'
           }`}>
             {project.status}
           </span>
         </div>
 
-        {/* Description */}
-        <p className="text-gray-400 text-sm mb-4 line-clamp-3">
+        <p className="text-sm text-slate-400 mb-4 line-clamp-2 leading-relaxed">
           {project.description}
         </p>
 
-        {/* Technologies */}
-        {project.technologies && project.technologies.length > 0 && (
-          <div className="flex flex-wrap gap-2 mb-4">
-            {project.technologies.slice(0, 4).map((tech, index) => (
-              <span
-                key={index}
-                className="text-xs px-2 py-1 bg-gray-800 text-cyan-400 rounded border border-gray-700"
-              >
+        {/* Stack */}
+        {project.technologies?.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 mb-4">
+            {project.technologies.slice(0, 5).map((tech, i) => (
+              <span key={i} className="px-2 py-0.5 text-xs font-mono bg-slate-800 text-cyan-400 rounded border border-slate-700">
                 {tech}
               </span>
             ))}
-            {project.technologies.length > 4 && (
-              <span className="text-xs px-2 py-1 bg-gray-800 text-gray-400 rounded border border-gray-700">
-                +{project.technologies.length - 4}
+            {project.technologies.length > 5 && (
+              <span className="px-2 py-0.5 text-xs bg-slate-800 text-slate-500 rounded border border-slate-700">
+                +{project.technologies.length - 5}
               </span>
             )}
           </div>
         )}
 
         {/* Metrics */}
-        {project.metrics && Object.keys(project.metrics).length > 0 && (
-          <div className="grid grid-cols-3 gap-2 mb-4 pb-4 border-b border-gray-800">
+        {project.metrics && Object.values(project.metrics).some(Boolean) && (
+          <div className="grid grid-cols-3 gap-2 mb-5 pb-4 border-b border-slate-700/50">
             {Object.entries(project.metrics)
-              .filter(([_, value]) => value)
+              .filter(([, v]) => v)
               .slice(0, 3)
-              .map(([key, value], index) => (
-                <div key={index} className="text-center">
+              .map(([key, value]) => (
+                <div key={key} className="text-center">
                   <p className="text-cyan-400 font-bold text-sm">{value}</p>
-                  <p className="text-gray-500 text-xs capitalize">
+                  <p className="text-slate-500 text-xs capitalize">
                     {key.replace(/([A-Z])/g, ' $1').trim()}
                   </p>
                 </div>
@@ -142,13 +142,26 @@ export default function ProjectCard({ project }: Props) {
           </div>
         )}
 
-        {/* CTA Button */}
-        <Link
-          href={`/portfolio/${projectSlug}`}
-          className="block w-full text-center py-3 px-4 bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border border-cyan-500/30 text-cyan-400 rounded-lg hover:from-cyan-500/20 hover:to-blue-500/20 hover:border-cyan-500/50 transition-all duration-300 font-semibold"
-        >
-          Ver caso completo →
-        </Link>
+        {/* CTAs */}
+        <div className="flex gap-2">
+          <Link
+            href={`/portfolio/${slug}`}
+            className="flex-1 text-center py-2.5 text-sm font-medium text-slate-200 bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-slate-600 rounded-lg transition-all duration-200"
+          >
+            Ver caso completo
+          </Link>
+          {project.urls?.live && (
+            <a
+              href={project.urls.live}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center w-10 h-10 bg-slate-800 hover:bg-cyan-500/10 border border-slate-700 hover:border-cyan-500/30 rounded-lg transition-all duration-200"
+              title="Ver en vivo"
+            >
+              <ExternalLink className="w-4 h-4 text-slate-400 hover:text-cyan-400" />
+            </a>
+          )}
+        </div>
       </div>
     </div>
   );

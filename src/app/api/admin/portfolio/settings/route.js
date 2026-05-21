@@ -1,11 +1,14 @@
 // src/app/api/admin/portfolio/settings/route.js
 import { NextResponse } from 'next/server'
-import { checkAuth } from '@/lib/checkAuth'
 import dbConnect from '@/lib/mongodb'
 import Page from '@/models/Page'
+import { requireAdmin } from '@/lib/adminAuth'
 
-export async function GET() {
+export async function GET(request) {
   try {
+    const auth = await requireAdmin(request)
+    if (!auth.ok) return auth.response
+
     await dbConnect()
     
     const portfolioSettings = await Page.findOne({ slug: 'portfolio-settings' })
@@ -54,11 +57,8 @@ export async function GET() {
 
 export async function POST(request) {
   try {
-    const session = await checkAuth()
-    
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const auth = await requireAdmin(request)
+    if (!auth.ok) return auth.response
 
     await dbConnect()
     

@@ -28,7 +28,7 @@ function ContactInfo() {
 
   if (loading) {
     return (
-      <section className="py-20 bg-gray-950" id="info">
+      <section className="py-20 bg-[#0B1120]" id="info">
         <div className="container mx-auto px-4">
           <div className="flex justify-center items-center py-20">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-400"></div>
@@ -174,7 +174,7 @@ function ContactInfo() {
   ];
 
   return (
-    <section className="py-20 bg-gray-950" id="info">
+    <section className="py-20 bg-[#0B1120]" id="info">
       <div className="container mx-auto px-4">
         <div className="max-w-6xl mx-auto">
           
@@ -200,7 +200,7 @@ function ContactInfo() {
                   href={method.link}
                   target={method.link.startsWith('http') ? '_blank' : '_self'}
                   rel={method.link.startsWith('http') ? 'noopener noreferrer' : ''}
-                  className="group bg-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-xl p-6 text-center hover:border-cyan-500/50 transition-all duration-300 hover:transform hover:scale-105"
+                  className="group bg-[#1E293B]/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6 text-center hover:border-cyan-500/50 transition-all duration-300 hover:transform hover:scale-105"
                 >
                   <div className="text-4xl mb-4">{method.icon}</div>
                   <h4 className="font-bold text-white text-lg mb-2">{method.title}</h4>
@@ -225,42 +225,42 @@ function ContactInfo() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               
               {site.address && (
-                <div className="bg-gray-900/30 backdrop-blur-sm border border-gray-800 rounded-xl p-6">
+                <div className="bg-[#1E293B]/30 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6">
                   <h4 className="font-bold text-white mb-2">Ubicación</h4>
                   <p className="text-gray-400">{site.address}</p>
                 </div>
               )}
 
               {site.timezone && (
-                <div className="bg-gray-900/30 backdrop-blur-sm border border-gray-800 rounded-xl p-6">
+                <div className="bg-[#1E293B]/30 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6">
                   <h4 className="font-bold text-white mb-2">Zona horaria</h4>
                   <p className="text-gray-400">{site.timezone}</p>
                 </div>
               )}
 
               {site.languages && (
-                <div className="bg-gray-900/30 backdrop-blur-sm border border-gray-800 rounded-xl p-6">
+                <div className="bg-[#1E293B]/30 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6">
                   <h4 className="font-bold text-white mb-2">Idiomas</h4>
                   <p className="text-gray-400">{site.languages}</p>
                 </div>
               )}
 
               {site.workingHours && (
-                <div className="bg-gray-900/30 backdrop-blur-sm border border-gray-800 rounded-xl p-6">
+                <div className="bg-[#1E293B]/30 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6">
                   <h4 className="font-bold text-white mb-2">Horario</h4>
                   <p className="text-gray-400">{site.workingHours}</p>
                 </div>
               )}
 
               {site.responseTime && (
-                <div className="bg-gray-900/30 backdrop-blur-sm border border-gray-800 rounded-xl p-6">
+                <div className="bg-[#1E293B]/30 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6">
                   <h4 className="font-bold text-white mb-2">Tiempo de respuesta</h4>
                   <p className="text-gray-400">{site.responseTime} en horario laboral</p>
                 </div>
               )}
 
               {/* Response speed */}
-              <div className="bg-gray-900/30 backdrop-blur-sm border border-gray-800 rounded-xl p-6">
+              <div className="bg-[#1E293B]/30 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6">
                 <h4 className="font-bold text-white mb-4">⚡ Respuesta rápida</h4>
                 <div className="space-y-3">
                   <div className="flex items-center space-x-2">
@@ -301,7 +301,7 @@ function ContactInfo() {
                     href={network.link}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="group bg-gray-900/30 backdrop-blur-sm border border-gray-800 rounded-xl p-6 text-center hover:border-cyan-500/50 transition-all duration-300 hover:transform hover:scale-105"
+                    className="group bg-[#1E293B]/30 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6 text-center hover:border-cyan-500/50 transition-all duration-300 hover:transform hover:scale-105"
                   >
                     <div className="text-4xl mb-3">{network.icon}</div>
                     <h4 className="font-bold text-white mb-1">{network.name}</h4>
@@ -324,7 +324,7 @@ function ContactInfo() {
               {faqs.map((faq, index) => (
                 <div
                   key={index}
-                  className="bg-gray-900/30 backdrop-blur-sm border border-gray-800 rounded-xl p-6"
+                  className="bg-[#1E293B]/30 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6"
                 >
                   <h4 className="font-bold text-white mb-3">{faq.question}</h4>
                   <p className="text-gray-400 text-sm leading-relaxed">{faq.answer}</p>

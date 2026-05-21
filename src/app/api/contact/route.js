@@ -7,22 +7,11 @@ import Lead from '@/models/Lead';
 import EmailLog from '@/models/EmailLog';
 import EmailTemplate from '@/models/EmailTemplate';
 import Appointment from '@/models/Appointment';
-import nodemailer from 'nodemailer';
+import { sendEmail } from '@/lib/email/mailer';
 import crypto from 'crypto';
 import { checkAuth } from '@/lib/auth';
 import { contactSchema, validate } from '@/lib/validations';
 import logger from '@/lib/logger';
-
-// ✅ CORREGIDO: Configurar transporter con variables de entorno
-const transporter = nodemailer.createTransport({
-  host: process.env.BREVO_SMTP_HOST || 'smtp-relay.brevo.com',
-  port: parseInt(process.env.BREVO_SMTP_PORT || '587'),
-  secure: false,
-  auth: {
-    user: process.env.BREVO_SMTP_USER,
-    pass: process.env.BREVO_SMTP_PASS
-  }
-});
 
 // ✅ MAPEOS PARA CONVERTIR VALORES DEL FORMULARIO A VALORES DEL MODELO
 const PROJECT_TYPE_MAP = {
@@ -287,7 +276,7 @@ export async function POST(request) {
         templateId: notificationTemplate?.templateId || 'hardcoded_notification'
       });
       
-      await transporter.sendMail({
+      await sendEmail({
         from: `"Formulario Web - Luis Granero" <${process.env.EMAIL_FROM || 'luis@luisgranero.com'}>`,
         to: process.env.EMAIL_NOTIFICATION_TO || 'luis@luisgranero.com',
         replyTo: data.email,
@@ -345,7 +334,7 @@ export async function POST(request) {
         templateId: confirmationTemplate?.templateId || 'hardcoded_confirmation'
       });
       
-      await transporter.sendMail({
+      await sendEmail({
         from: `"Luis Granero" <${process.env.EMAIL_FROM || 'luis@luisgranero.com'}>`,
         to: data.email,
         subject: confirmationSubject,

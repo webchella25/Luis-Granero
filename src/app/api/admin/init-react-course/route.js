@@ -1,16 +1,12 @@
 // src/app/api/admin/init-react-course/route.js
 import { NextResponse } from 'next/server'
-import { checkAuth } from '@/lib/checkAuth'
 import dbConnect from '@/lib/mongodb'
 import EmailCourse from '@/models/EmailCourse'
 import logger from '@/lib/logger'
 
 export async function POST(request) {
   try {
-    const session = await checkAuth()
-    if (!session) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
-    }
+
 
     await dbConnect()
 

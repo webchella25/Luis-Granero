@@ -28,7 +28,8 @@ export default function LeadDetailPage() {
   const [loading, setLoading] = useState(true);
   const [sequences, setSequences] = useState([]);
   const [templates, setTemplates] = useState([]);
-  
+  const [demoSite, setDemoSite] = useState(null);
+
   // Modal states
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [showWhatsAppModal, setShowWhatsAppModal] = useState(false);
@@ -40,7 +41,16 @@ export default function LeadDetailPage() {
     fetchLead();
     fetchTemplates();
     fetchSequences();
+    fetchDemo();
   }, [params.id]);
+
+  const fetchDemo = async () => {
+    try {
+      const res = await fetch(`/api/admin/leads/${params.id}/generate-demo`);
+      const data = await res.json();
+      if (data.success && data.demo) setDemoSite(data.demo);
+    } catch {}
+  };
 
   const fetchLead = async () => {
     try {
@@ -58,7 +68,7 @@ export default function LeadDetailPage() {
 
   const fetchTemplates = async () => {
     try {
-      const res = await fetch('/api/email-templates');
+      const res = await fetch('/api/templates?type=email');
       const data = await res.json();
       if (data.success) {
         setTemplates(data.templates);
@@ -105,56 +115,52 @@ export default function LeadDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center">
-        <div className="text-cyan-400 text-xl">Cargando lead...</div>
+      <div className="flex items-center justify-center py-32">
+        <div className="w-8 h-8 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
   if (!lead) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-6xl mb-4">😢</div>
-          <div className="text-white text-2xl mb-4">Lead no encontrado</div>
-          <Link href="/admin/leads" className="text-cyan-400 hover:text-cyan-300">
-            ← Volver a leads
-          </Link>
-        </div>
+      <div className="text-center py-32">
+        <p className="text-slate-500 text-lg mb-4">Lead no encontrado</p>
+        <Link href="/admin/leads" className="text-cyan-400 hover:text-cyan-300 text-sm">
+          ← Volver a leads
+        </Link>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-8">
-      <div className="max-w-7xl mx-auto">
-        
-        <LeadHeader 
-          lead={lead}
-          onDelete={deleteLead}
-        />
+    <div className="space-y-6">
+      <LeadHeader
+        lead={lead}
+        onDelete={deleteLead}
+      />
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          
-          {/* Columna izquierda */}
-          <div className="lg:col-span-2 space-y-8">
-            <LeadContactInfo lead={lead} />
-            {lead.webAnalysis && <LeadWebAnalysis analysis={lead.webAnalysis} />}
-            <LeadEnrichment lead={lead} onRefresh={fetchLead} />
-            <LeadContactHistory history={lead.contactHistory} />
-          </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-          {/* Columna derecha */}
-          <LeadActionsSidebar
-            lead={lead}
-            onStatusChange={updateStatus}
-            onOpenEmail={() => setShowEmailModal(true)}
-            onOpenWhatsApp={() => setShowWhatsAppModal(true)}
-            onOpenNote={() => setShowNoteModal(true)}
-            onOpenEdit={() => setShowEditModal(true)}
-            onOpenEnroll={() => setShowEnrollModal(true)}
-          />
+        {/* Columna izquierda */}
+        <div className="lg:col-span-2 space-y-6">
+          <LeadContactInfo lead={lead} onRefresh={fetchLead} />
+          {lead.webAnalysis && <LeadWebAnalysis analysis={lead.webAnalysis} />}
+          <LeadEnrichment lead={lead} onRefresh={fetchLead} />
+          <LeadContactHistory history={lead.contactHistory} />
         </div>
+
+        {/* Columna derecha */}
+        <LeadActionsSidebar
+          lead={lead}
+          onStatusChange={updateStatus}
+          onOpenEmail={() => setShowEmailModal(true)}
+          onOpenWhatsApp={() => setShowWhatsAppModal(true)}
+          onOpenNote={() => setShowNoteModal(true)}
+          onOpenEdit={() => setShowEditModal(true)}
+          onOpenEnroll={() => setShowEnrollModal(true)}
+          demoSite={demoSite}
+          onDemoGenerated={(demo) => setDemoSite(demo)}
+        />
       </div>
 
       {/* Modals */}
@@ -170,6 +176,7 @@ export default function LeadDetailPage() {
       {showWhatsAppModal && (
         <WhatsAppModal
           lead={lead}
+          demoSite={demoSite}
           onClose={() => setShowWhatsAppModal(false)}
           onSuccess={fetchLead}
         />

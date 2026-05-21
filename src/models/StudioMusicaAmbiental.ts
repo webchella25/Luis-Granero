@@ -8,6 +8,12 @@ export interface TextoOverlay {
   posicion: 'top' | 'center' | 'bottom';
 }
 
+export interface ThumbnailTexts {
+  texto_principal: string;
+  subtitulo: string;
+  contexto: string;
+}
+
 export interface IStudioMusicaAmbiental extends Document {
   canal_id: string;
   workspace_id: string;
@@ -28,6 +34,11 @@ export interface IStudioMusicaAmbiental extends Document {
   error_msg: string | null;
   scheduled_at: Date | null;
   creado_en: Date;
+  thumbnail_path: string | null;
+  thumbnail_base_path: string | null;
+  thumbnail_status: 'idle' | 'processing' | 'ready' | 'error' | null;
+  thumbnail_error: string | null;
+  thumbnail_texts: ThumbnailTexts | null;
 }
 
 const TextoOverlaySchema = new Schema<TextoOverlay>({
@@ -62,6 +73,11 @@ const StudioMusicaAmbientalSchema = new Schema<IStudioMusicaAmbiental>({
   error_msg: { type: String, default: null },
   scheduled_at: { type: Date, default: null },
   creado_en: { type: Date, default: Date.now },
+  thumbnail_path: { type: String, default: null },
+  thumbnail_base_path: { type: String, default: null },
+  thumbnail_status: { type: String, enum: ['idle', 'processing', 'ready', 'error'], default: null },
+  thumbnail_error: { type: String, default: null },
+  thumbnail_texts: { type: Schema.Types.Mixed, default: null },
 });
 
 const StudioMusicaAmbiental: Model<IStudioMusicaAmbiental> =

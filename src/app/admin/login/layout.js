@@ -1,8 +1,4 @@
-// src/app/admin/login/layout.js - Layout SOLO para login
+// src/app/admin/login/layout.js - Layout para login (sin AuthWrapper)
 export default function LoginLayout({ children }) {
-  return (
-    <div className="min-h-screen bg-gray-900">
-      {children}
-    </div>
-  )
+  return children
 }

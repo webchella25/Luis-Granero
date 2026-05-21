@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect } from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import {
@@ -131,6 +132,12 @@ const RichTextEditor = ({ content, onChange }: RichTextEditorProps) => {
             onChange(editor.getHTML())
         },
     })
+
+    useEffect(() => {
+        if (editor && content && editor.getHTML() !== content) {
+            editor.commands.setContent(content, false)
+        }
+    }, [editor, content])
 
     return (
         <div className="w-full border border-gray-600 rounded-md overflow-hidden bg-gray-900">

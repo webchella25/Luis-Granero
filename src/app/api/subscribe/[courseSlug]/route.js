@@ -5,18 +5,7 @@ import Subscriber from '@/models/Subscriber'
 import EmailCourse from '@/models/EmailCourse'
 import logger from '@/lib/logger'
 import crypto from 'crypto'
-import nodemailer from 'nodemailer'
-
-// Configurar transporter con Brevo
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || 'smtp-relay.brevo.com',
-  port: parseInt(process.env.SMTP_PORT || '587'),
-  secure: false,
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASSWORD
-  }
-})
+import { sendEmail } from '@/lib/email/mailer'
 
 // Función para reemplazar variables
 function replaceVariables(text, subscriber) {
@@ -99,7 +88,7 @@ export async function POST(request, { params }) {
               unsubscribeToken: existing.unsubscribeToken
             })
 
-            await transporter.sendMail({
+            await sendEmail({
               from: `${process.env.EMAIL_FROM_NAME || 'Luis Granero'} <${process.env.SMTP_USER}>`,
               to: existing.email,
               subject: subject,
@@ -170,7 +159,7 @@ export async function POST(request, { params }) {
             unsubscribeToken
           })
 
-          await transporter.sendMail({
+          await sendEmail({
             from: `${process.env.EMAIL_FROM_NAME || 'Luis Granero'} <${process.env.SMTP_USER}>`,
             to: email.toLowerCase(),
             subject: subject,

@@ -1,5 +1,6 @@
 // src/app/blog/page.tsx - Versión corregida
 import Link from 'next/link';
+import { Suspense } from 'react';
 import Header from '../../components/layout/Header';
 import Footer from '../../components/layout/Footer';
 import BlogHero from '../../components/blog/BlogHero';
@@ -7,27 +8,26 @@ import FeaturedPost from '../../components/blog/FeaturedPost';
 import BlogGrid from '../../components/blog/BlogGrid';
 import BlogCategories from '../../components/blog/BlogCategories';
 import NewsletterSignup from '../../components/blog/NewsletterSignup';
+import SchemaOrg from '../../components/seo/SchemaOrg';
+import { getItemListSchema, getBreadcrumbSchema } from '../../lib/seo/schemas';
 
-// ✅ AÑADIR ESTO - Forzar renderizado dinámico
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+export const revalidate = 3600;
 
-// ✅ Función corregida con tipos explícitos
 async function getBlogData(searchParams: Record<string, any> = {}) {
   try {
     const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
     const params = new URLSearchParams();
-    
-    // ✅ Verificar que las propiedades existan antes de acceder
+    params.append('limit', '20');
+
     if (searchParams?.category && typeof searchParams.category === 'string') {
       params.append('category', searchParams.category);
     }
     if (searchParams?.page) {
       params.append('page', searchParams.page.toString());
     }
-    
+
     const res = await fetch(`${baseUrl}/api/public/blog?${params}`, {
-      cache: 'no-store',
+      next: { revalidate: 3600 },
     });
     
     if (!res.ok) {
@@ -51,17 +51,36 @@ async function getFeaturedPost() {
   try {
     const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
     const res = await fetch(`${baseUrl}/api/public/blog/featured`, {
-      cache: 'no-store',
+      next: { revalidate: 86400 },
     });
-    
+
     if (!res.ok) {
       throw new Error('Error fetching featured post');
     }
-    
+
     return res.json();
   } catch (error) {
     console.error('Error:', error);
     return null;
+  }
+}
+
+// Función para obtener categorías
+async function getCategories() {
+  try {
+    const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+    const res = await fetch(`${baseUrl}/api/public/blog/categories`, {
+      next: { revalidate: 86400 },
+    });
+
+    if (!res.ok) {
+      throw new Error('Error fetching categories');
+    }
+
+    return res.json();
+  } catch (error) {
+    console.error('Error:', error);
+    return [];
   }
 }
 
@@ -73,26 +92,35 @@ interface BlogPageProps {
 
 export async function generateMetadata({ searchParams }: BlogPageProps) {
   const resolvedSearchParams = await searchParams;
-  const blogData = await getBlogData(resolvedSearchParams);
-  
+  const hasFilters = !!(resolvedSearchParams.tag || resolvedSearchParams.category || resolvedSearchParams.page);
+
   return {
-    title: `Blog - Luis Granero | ${blogData.total} Artículos de Desarrollo Web`,
-    description: 'Artículos técnicos, tutoriales de React/Next.js, mejores prácticas de desarrollo web y tendencias tecnológicas.',
+    title: 'Blog de Desarrollo Web — Luis Granero | React, Next.js y JavaScript',
+    description: 'Tutoriales, guías y artículos sobre React, Next.js, JavaScript y desarrollo web moderno. Aprende con ejemplos reales y buenas prácticas aplicadas en proyectos profesionales.',
     keywords: [
-      'blog desarrollo web',
-      'tutoriales react',
-      'next.js',
-      'javascript',
-      'typescript',
-      'frontend',
-      'backend',
-      'luis granero blog'
+      'tutorial React español',
+      'guía Next.js español',
+      'aprender JavaScript 2025',
+      'React hooks tutorial',
+      'blog desarrollo web España',
+      'tutoriales programación web',
+      'Next.js tutorial completo',
     ],
     openGraph: {
-      title: 'Blog - Luis Granero',
-      description: 'Artículos técnicos y tutoriales de desarrollo web',
+      title: 'Blog de Desarrollo Web — Luis Granero | React & Next.js',
+      description: 'Tutoriales prácticos de React, Next.js y JavaScript. Aprende desarrollo web moderno con ejemplos reales.',
       type: 'website',
-    }
+      url: 'https://www.luisgranero.com/blog',
+    },
+    alternates: {
+      canonical: 'https://www.luisgranero.com/blog',
+    },
+    ...(hasFilters && {
+      robots: {
+        index: false,
+        follow: true,
+      },
+    }),
   };
 }
 
@@ -100,28 +128,49 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
   const resolvedSearchParams = await searchParams;
   const blogData = await getBlogData(resolvedSearchParams);
   const featuredPost = await getFeaturedPost();
+  const categories = await getCategories();
+
+  // Generar schemas
+  const blogListSchema = getItemListSchema(
+    blogData.posts.map((post: any) => ({
+      name: post.title,
+      url: `/blog/${post.slug}`,
+      image: post.featuredImage
+    })),
+    'Artículos de Blog sobre Desarrollo Web'
+  );
+
+  const breadcrumbSchema = getBreadcrumbSchema([
+    { name: 'Inicio', url: '/' },
+    { name: 'Blog', url: '/blog' }
+  ]);
 
   return (
-    <main className="min-h-screen bg-black">
+    <main className="min-h-screen bg-[#0F172A]">
+      {/* Schema.org JSON-LD */}
+      <SchemaOrg schema={[blogListSchema, breadcrumbSchema]} />
+
       <Header />
-      
+
       <BlogHero />
-      
+
       {featuredPost && <FeaturedPost post={featuredPost} />}
-      
-      <BlogGrid 
-        posts={blogData.posts}
-        pagination={blogData.pagination}
-      />
-      
-      <BlogCategories />
+
+      <Suspense fallback={<div className="py-20 text-center text-slate-500">Cargando artículos…</div>}>
+        <BlogGrid
+          posts={blogData.posts}
+          pagination={blogData.pagination}
+        />
+      </Suspense>
+
+      <BlogCategories data={{ categories }} />
       
       {/* CTA a Cursos */}
-      <section className="py-20 bg-gray-900">
+      <section className="py-20 bg-[#0B1120]">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto text-center">
-            <div className="inline-block px-4 py-2 bg-purple-500/10 border border-purple-500/30 rounded-full mb-6">
-              <span className="text-purple-400 font-semibold text-sm">
+            <div className="badge mb-6">
+              <span className="">
                 🎓 ¿Quieres aprender de forma estructurada?
               </span>
             </div>
@@ -133,7 +182,7 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
             </p>
             <Link
               href="/cursos"
-              className="inline-block px-8 py-4 bg-gradient-to-r from-purple-500 to-cyan-500 text-white font-bold rounded-lg hover:shadow-xl hover:shadow-purple-500/50 transition-all duration-300 transform hover:scale-105"
+              className="inline-block px-8 py-4 btn-primary"
             >
               Ver todas las rutas →
             </Link>

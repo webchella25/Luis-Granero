@@ -16,6 +16,7 @@ const blogPostSchema = new mongoose.Schema({
     required: true
   },
   excerpt: String,
+  featuredImage: String,
   status: {
     type: String,
     enum: ['draft', 'published', 'archived'],

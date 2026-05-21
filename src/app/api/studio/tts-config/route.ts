@@ -10,7 +10,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   await connectDB();
   const canal = await StudioCanal.findById(session.canal_id).select('config').lean();
   const motor = (canal as { config?: { voz_motor?: string } } | null)?.config?.voz_motor ?? 'elevenlabs';
-  const preferred_engine = motor === 'edge-tts' ? 'edge-tts' : motor === 'elevenlabs' ? 'elevenlabs' : 'auto';
+  const validMotors = ['elevenlabs', 'edge-tts', 'gemini-tts', 'nvidia-tts', 'azure-tts', 'openai-tts'];
+  const preferred_engine = validMotors.includes(motor) ? motor : 'auto';
   return NextResponse.json({ preferred_engine });
 }
 
@@ -19,11 +20,16 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   if (!session?.canal_id) return NextResponse.json({ error: 'Canal no seleccionado' }, { status: 400 });
 
   const { preferred_engine } = (await request.json()) as { preferred_engine?: string };
-  if (!['auto', 'elevenlabs', 'edge-tts'].includes(preferred_engine ?? '')) {
+  if (!['auto', 'elevenlabs', 'edge-tts', 'gemini-tts', 'nvidia-tts', 'azure-tts', 'openai-tts'].includes(preferred_engine ?? '')) {
     return NextResponse.json({ error: 'Motor no válido' }, { status: 400 });
   }
 
-  const voz_motor = preferred_engine === 'edge-tts' ? 'edge-tts' : 'elevenlabs';
+  const voz_motor = preferred_engine === 'edge-tts' ? 'edge-tts'
+    : preferred_engine === 'gemini-tts' ? 'gemini-tts'
+    : preferred_engine === 'nvidia-tts' ? 'nvidia-tts'
+    : preferred_engine === 'azure-tts' ? 'azure-tts'
+    : preferred_engine === 'openai-tts' ? 'openai-tts'
+    : 'elevenlabs';
 
   await connectDB();
   await StudioCanal.findByIdAndUpdate(session.canal_id, { $set: { 'config.voz_motor': voz_motor } });

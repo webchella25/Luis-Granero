@@ -44,12 +44,13 @@ export default function BlogManager() {
     }
   }
 
-  const togglePublished = async (id, isPublished) => {
+  const togglePublished = async (id, currentStatus) => {
+    const newStatus = currentStatus === 'published' ? 'draft' : 'published'
     try {
       await fetch(`/api/admin/blog/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ isPublished: !isPublished })
+        body: JSON.stringify({ status: newStatus })
       })
       fetchPosts()
     } catch (error) {
@@ -58,13 +59,14 @@ export default function BlogManager() {
   }
 
   const filteredPosts = posts.filter(post => {
-    const matchesFilter = filter === 'all' || 
-      (filter === 'published' && post.isPublished) ||
-      (filter === 'draft' && !post.isPublished)
-    
-    const matchesSearch = post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    const isPublished = post.status === 'published'
+    const matchesFilter = filter === 'all' ||
+      (filter === 'published' && isPublished) ||
+      (filter === 'draft' && !isPublished)
+
+    const matchesSearch = post.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       post.excerpt?.toLowerCase().includes(searchTerm.toLowerCase())
-    
+
     return matchesFilter && matchesSearch
   })
 
@@ -137,7 +139,7 @@ export default function BlogManager() {
                 : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
             }`}
           >
-            Publicados ({posts.filter(p => p.isPublished).length})
+            Publicados ({posts.filter(p => p.status === 'published').length})
           </button>
           <button
             onClick={() => setFilter('draft')}
@@ -147,7 +149,7 @@ export default function BlogManager() {
                 : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
             }`}
           >
-            Borradores ({posts.filter(p => !p.isPublished).length})
+            Borradores ({posts.filter(p => p.status !== 'published').length})
           </button>
         </div>
 
@@ -176,7 +178,7 @@ export default function BlogManager() {
                 <div className="flex-1">
                   <div className="flex items-center space-x-3 mb-2">
                     <h3 className="text-xl font-bold text-white">{post.title}</h3>
-                    {post.isPublished ? (
+                    {post.status === 'published' ? (
                       <span className="bg-green-500/20 text-green-400 text-xs px-2 py-1 rounded">
                         Publicado
                       </span>
@@ -192,7 +194,7 @@ export default function BlogManager() {
                   <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500">
                     <span className="flex items-center space-x-1">
                       <CalendarIcon className="w-4 h-4" />
-                      <span>{formatDate(post.publishDate)}</span>
+                      <span>{formatDate(post.publishedAt || post.createdAt)}</span>
                     </span>
                     <span className="flex items-center space-x-1">
                       <EyeIcon className="w-4 h-4" />
@@ -223,14 +225,14 @@ export default function BlogManager() {
   <PencilIcon className="w-5 h-5" />
 </Link>
                   <button
-                    onClick={() => togglePublished(post._id, post.isPublished)}
+                    onClick={() => togglePublished(post._id, post.status)}
                     className={`px-3 py-1 rounded text-xs font-semibold ${
-                      post.isPublished
+                      post.status === 'published'
                         ? 'bg-orange-600 hover:bg-orange-700 text-white'
                         : 'bg-green-600 hover:bg-green-700 text-white'
                     }`}
                   >
-                    {post.isPublished ? 'Despublicar' : 'Publicar'}
+                    {post.status === 'published' ? 'Despublicar' : 'Publicar'}
                   </button>
                   <button
                     onClick={() => deletePost(post._id)}

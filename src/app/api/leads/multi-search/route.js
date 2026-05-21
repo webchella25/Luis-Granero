@@ -3,10 +3,16 @@ import { NextResponse } from 'next/server';
 import { multiSourceEnrichment } from '@/lib/scraper/multiSourceEnrichment';
 import connectDB from '@/lib/mongodb';
 import Lead from '@/models/Lead';
+import { clampPaginationLimit, requireAdmin } from '@/lib/adminAuth';
 
 export async function POST(request) {
   try {
-    const { query, location, maxResults = 20, saveToDb = false } = await request.json();
+    const auth = await requireAdmin(request);
+    if (!auth.ok) return auth.response;
+
+    const body = await request.json();
+    const { query, location, saveToDb = false } = body;
+    const maxResults = clampPaginationLimit(body.maxResults, 20, 50);
 
     if (!query || !location) {
       return NextResponse.json(

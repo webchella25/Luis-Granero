@@ -46,7 +46,7 @@ export default function SkillsDetail({ data }: Props) {
   ];
 
   return (
-    <section className="py-20 bg-gray-950">
+    <section className="py-20 bg-[#0B1120]">
       <div className="container mx-auto px-4">
         <div className="max-w-6xl mx-auto">
           
@@ -63,7 +63,7 @@ export default function SkillsDetail({ data }: Props) {
             {skillCategories.map((category, index) => (
               <div
                 key={index}
-                className="bg-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-xl p-6"
+                className="bg-[#1E293B] border border-slate-700/50 rounded-xl p-6"
               >
                 
                 <div className="text-center mb-6">
@@ -77,7 +77,7 @@ export default function SkillsDetail({ data }: Props) {
                   {category.skills?.map((skill, skillIndex) => (
                     <div
                       key={skillIndex}
-                      className="flex items-center justify-between p-3 bg-gray-800/50 rounded-lg"
+                      className="flex items-center justify-between p-3 bg-slate-800/60 rounded-lg"
                     >
                       <span className="text-gray-300">{skill}</span>
                       <span className="text-green-400">✓</span>

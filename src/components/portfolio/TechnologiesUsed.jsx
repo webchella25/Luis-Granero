@@ -103,7 +103,7 @@ function TechnologiesUsed() {
   ];
 
   return (
-    <section className="py-20 bg-black">
+    <section className="py-20 bg-[#0F172A]">
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
           <h2 className="text-4xl md:text-5xl font-bold gradient-text mb-6">
@@ -119,7 +119,7 @@ function TechnologiesUsed() {
           {techStack.map((category, categoryIndex) => (
             <div
               key={categoryIndex}
-              className="bg-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-xl p-6 hover:border-cyan-500/30 transition-all duration-300"
+              className="bg-[#1E293B]/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6 hover:border-cyan-500/30 transition-all duration-300"
             >
               <h3 className={`text-xl font-bold bg-gradient-to-r ${category.color} bg-clip-text text-transparent mb-6`}>
                 {category.category}
@@ -158,7 +158,7 @@ function TechnologiesUsed() {
             {projectTypes.map((project, index) => (
               <div
                 key={index}
-                className="bg-gray-900/30 backdrop-blur-sm border border-gray-800 rounded-xl p-6 hover:border-cyan-500/30 transition-all duration-300 hover:transform hover:scale-105"
+                className="bg-[#1E293B]/30 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6 hover:border-cyan-500/30 transition-all duration-300 hover:transform hover:scale-105"
               >
                 <div className="text-center mb-4">
                   <div className="text-3xl font-bold gradient-text mb-2">{project.count}</div>
@@ -188,7 +188,7 @@ function TechnologiesUsed() {
         </div>
 
         {/* Development approach */}
-        <div className="bg-gradient-to-r from-gray-900/50 to-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-2xl p-8">
+        <div className="bg-gradient-to-r from-gray-900/50 to-gray-800/50 backdrop-blur-sm border border-slate-700 rounded-2xl p-8">
           <h3 className="text-2xl font-bold gradient-text mb-6 text-center">
             Mi Enfoque de Desarrollo
           </h3>

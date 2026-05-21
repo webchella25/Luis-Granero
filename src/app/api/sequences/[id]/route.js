@@ -5,10 +5,14 @@ import Sequence from '@/models/Sequence';
 import SequenceEnrollment from '@/models/SequenceEnrollment';
 import EmailLog from '@/models/EmailLog';
 import Lead from '@/models/Lead'; // ← AÑADE ESTA LÍNEA
+import { requireAdmin } from '@/lib/adminAuth';
 
 // GET - Obtener secuencia con stats detalladas
 export async function GET(request, { params }) {
   try {
+    const auth = await requireAdmin(request);
+    if (!auth.ok) return auth.response;
+
     const { id } = await params;
     await dbConnect();
     
@@ -62,6 +66,9 @@ export async function GET(request, { params }) {
 // PATCH - Actualizar secuencia
 export async function PATCH(request, { params }) {
   try {
+    const auth = await requireAdmin(request);
+    if (!auth.ok) return auth.response;
+
     const { id } = await params;
     await dbConnect();
     
@@ -97,6 +104,9 @@ export async function PATCH(request, { params }) {
 // DELETE - Eliminar secuencia
 export async function DELETE(request, { params }) {
   try {
+    const auth = await requireAdmin(request);
+    if (!auth.ok) return auth.response;
+
     const { id } = await params;
     await dbConnect();
     

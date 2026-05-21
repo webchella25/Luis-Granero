@@ -6,6 +6,7 @@ import Link from 'next/link';
 import StudioLayout from '@/components/studio/StudioLayout';
 
 type MusicCategory = 'intro' | 'background' | 'intense' | 'ending';
+type AudioEngine = 'elevenlabs' | 'edge-tts' | 'gemini-tts' | 'nvidia-tts' | 'azure-tts' | 'openai-tts';
 
 type Tono = string;
 type Duracion = string;
@@ -27,12 +28,20 @@ interface FormData {
   tono: Tono;
   duracion: Duracion;
   tipo_guion?: string;
+  titulo?: string;
+  angulo?: string;
 }
 
 interface GenerateResponse {
   success: boolean;
   id: string;
   sections: ScriptSection[];
+  tavily?: {
+    configured: boolean;
+    enabled: boolean;
+    used: boolean;
+    context_chars: number;
+  };
   error?: string;
 }
 
@@ -52,23 +61,27 @@ function StudioPageInner() {
     epoca: searchParams.get('epoca') ?? '',
     tono: 'divulgativo',
     duracion: '10',
+    titulo: searchParams.get('titulo') ?? undefined,
+    angulo: searchParams.get('angulo') ?? undefined,
   });
   const [sections, setSections] = useState<ScriptSection[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [scriptId, setScriptId] = useState('');
+  const [tavilyStatus, setTavilyStatus] = useState<GenerateResponse['tavily'] | null>(null);
   const [copied, setCopied] = useState(false);
   const [musicCounts, setMusicCounts] = useState<Record<MusicCategory, number> | null>(null);
   const [audioUrl, setAudioUrl] = useState('');
   const [audioEngine, setAudioEngine] = useState('');
-  const [audioLoading, setAudioLoading] = useState<'elevenlabs' | 'edge-tts' | 'gemini-tts' | 'nvidia-tts' | null>(null);
+  const [audioLoading, setAudioLoading] = useState<AudioEngine | null>(null);
   const [audioError, setAudioError] = useState('');
   const [tiposGuion, setTiposGuion] = useState<TipoGuion[]>([]);
+  const [canalFormLabels, setCanalFormLabels] = useState({ campo1_label: '', campo1_placeholder: '', campo2_label: '', campo2_placeholder: '' });
 
   useEffect(() => {
     fetch('/api/studio/canal/current')
       .then((r) => r.json())
-      .then((d: { canal?: { tipos_guion?: string } }) => {
+      .then((d: { canal?: { tipos_guion?: string; tono_default?: string; form_campo1_label?: string; form_campo1_placeholder?: string; form_campo2_label?: string; form_campo2_placeholder?: string } }) => {
         const raw = d.canal?.tipos_guion?.trim();
         if (raw) {
           try {
@@ -81,6 +94,16 @@ function StudioPageInner() {
             // tipos_guion inválido, ignorar
           }
         }
+        const tonoDefault = d.canal?.tono_default?.trim();
+        if (tonoDefault) {
+          setForm((prev) => ({ ...prev, tono: tonoDefault }));
+        }
+        setCanalFormLabels({
+          campo1_label: d.canal?.form_campo1_label ?? '',
+          campo1_placeholder: d.canal?.form_campo1_placeholder ?? '',
+          campo2_label: d.canal?.form_campo2_label ?? '',
+          campo2_placeholder: d.canal?.form_campo2_placeholder ?? '',
+        });
       })
       .catch(() => {});
   }, []);
@@ -100,6 +123,7 @@ function StudioPageInner() {
     setError('');
     setSections([]);
     setScriptId('');
+    setTavilyStatus(null);
     setAudioUrl('');
     setAudioEngine('');
     setAudioError('');
@@ -120,6 +144,7 @@ function StudioPageInner() {
 
       setSections(data.sections);
       setScriptId(data.id);
+      setTavilyStatus(data.tavily ?? null);
     } catch {
       setError('Error de conexión con el servidor');
     } finally {
@@ -127,7 +152,7 @@ function StudioPageInner() {
     }
   }
 
-  async function generateAudio(engine: 'elevenlabs' | 'edge-tts' | 'gemini-tts' | 'nvidia-tts') {
+  async function generateAudio(engine: AudioEngine) {
     if (!scriptId) return;
     setAudioLoading(engine);
     setAudioError('');
@@ -139,7 +164,11 @@ function StudioPageInner() {
         ? '/api/studio/generate-audio-gemini'
         : engine === 'nvidia-tts'
           ? '/api/studio/generate-audio-nvidia'
-          : '/api/studio/generate-audio-edge';
+          : engine === 'azure-tts'
+            ? '/api/studio/generate-audio-azure'
+            : engine === 'openai-tts'
+              ? '/api/studio/generate-audio-openai'
+              : '/api/studio/generate-audio-edge';
 
     try {
       const res = await fetch(endpoint, {
@@ -196,13 +225,13 @@ function StudioPageInner() {
             <div className="space-y-4">
               <div>
                 <label className="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">
-                  Nombre del personaje
+                  {canalFormLabels.campo1_label || 'Nombre del personaje'}
                 </label>
                 <input
                   type="text"
                   value={form.personaje}
                   onChange={(e) => handleChange('personaje', e.target.value)}
-                  placeholder="Ej: Heinrich Himmler"
+                  placeholder={canalFormLabels.campo1_placeholder || 'Ej: Heinrich Himmler'}
                   className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-600 focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition-colors text-sm"
                   required
                   disabled={loading}
@@ -211,13 +240,13 @@ function StudioPageInner() {
 
               <div>
                 <label className="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">
-                  Época / Contexto histórico
+                  {canalFormLabels.campo2_label || 'Época / Contexto histórico'}
                 </label>
                 <input
                   type="text"
                   value={form.epoca}
                   onChange={(e) => handleChange('epoca', e.target.value)}
-                  placeholder="Ej: Alemania Nazi, 1930s-1945"
+                  placeholder={canalFormLabels.campo2_placeholder || 'Ej: Alemania Nazi, 1930s-1945'}
                   className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-600 focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition-colors text-sm"
                   required
                   disabled={loading}
@@ -287,6 +316,18 @@ function StudioPageInner() {
               </div>
             </div>
 
+            {(form.titulo || form.angulo) && (
+              <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-xl space-y-1.5">
+                <p className="text-xs font-medium text-blue-400 uppercase tracking-wider">Contexto del calendario</p>
+                {form.titulo && (
+                  <p className="text-xs text-gray-300"><span className="text-gray-500">Título:</span> {form.titulo}</p>
+                )}
+                {form.angulo && (
+                  <p className="text-xs text-gray-300"><span className="text-gray-500">Ángulo:</span> {form.angulo}</p>
+                )}
+              </div>
+            )}
+
             <button
               type="submit"
               disabled={loading}
@@ -317,47 +358,6 @@ function StudioPageInner() {
             )}
           </form>
 
-          {/* Widget de música */}
-          <div className="mt-6 p-4 bg-white/[0.03] border border-white/8 rounded-xl">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Música de fondo</h3>
-              <Link
-                href="/studio/musica"
-                className="text-xs text-violet-400 hover:text-violet-300 transition-colors"
-              >
-                Gestionar →
-              </Link>
-            </div>
-
-            {musicCounts === null ? (
-              <p className="text-gray-600 text-xs">Cargando...</p>
-            ) : (
-              <div className="space-y-1.5">
-                {((['intro', 'background', 'intense', 'ending'] as MusicCategory[])).map((cat) => {
-                  const count = musicCounts[cat] ?? 0;
-                  const labels: Record<MusicCategory, string> = {
-                    intro: 'Intro', background: 'Background', intense: 'Intense', ending: 'Ending',
-                  };
-                  return (
-                    <div key={cat} className="flex items-center justify-between">
-                      <span className="text-gray-500 text-xs">{labels[cat]}</span>
-                      {count === 0 ? (
-                        <span className="text-xs text-amber-400 font-medium">Sin pistas</span>
-                      ) : (
-                        <span className="text-xs text-gray-400">{count} pista{count !== 1 ? 's' : ''}</span>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-
-            {musicCounts && Object.values(musicCounts).some((c) => c === 0) && (
-              <p className="mt-3 text-xs text-amber-400/80">
-                Algunas secciones no tienen pistas — el vídeo se generará sin música en ellas.
-              </p>
-            )}
-          </div>
         </aside>
 
         {/* Resultado */}
@@ -396,6 +396,17 @@ function StudioPageInner() {
                       <span className="text-gray-700 ml-2">· ID: {scriptId.slice(-8)}</span>
                     )}
                   </p>
+                  {tavilyStatus && (
+                    <p className={`text-xs mt-1 ${tavilyStatus.used ? 'text-emerald-400' : tavilyStatus.configured ? 'text-amber-400' : 'text-gray-600'}`}>
+                      Tavily: {tavilyStatus.used
+                        ? `usado (${tavilyStatus.context_chars.toLocaleString('es')} chars de contexto)`
+                        : tavilyStatus.configured && tavilyStatus.enabled
+                          ? 'configurado, pero sin contexto útil'
+                          : tavilyStatus.configured
+                            ? 'desactivado'
+                            : 'sin API key'}
+                    </p>
+                  )}
                 </div>
                 <button
                   onClick={copyAll}
@@ -535,6 +546,52 @@ function StudioPageInner() {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.114 5.636a9 9 0 010 12.728M16.463 8.288a5.25 5.25 0 010 7.424M6.75 8.25l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z" />
                         </svg>
                         NVIDIA TTS
+                      </>
+                    )}
+                  </button>
+
+                  <button
+                    onClick={() => generateAudio('azure-tts')}
+                    disabled={!!audioLoading}
+                    className="flex items-center gap-2 px-4 py-2.5 bg-sky-600/20 hover:bg-sky-600/30 disabled:opacity-50 disabled:cursor-not-allowed border border-sky-500/30 text-sky-300 text-sm font-medium rounded-lg transition-colors"
+                  >
+                    {audioLoading === 'azure-tts' ? (
+                      <>
+                        <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                        </svg>
+                        Generando...
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+                        </svg>
+                        Azure TTS
+                      </>
+                    )}
+                  </button>
+
+                  <button
+                    onClick={() => generateAudio('openai-tts')}
+                    disabled={!!audioLoading}
+                    className="flex items-center gap-2 px-4 py-2.5 bg-teal-600/20 hover:bg-teal-600/30 disabled:opacity-50 disabled:cursor-not-allowed border border-teal-500/30 text-teal-300 text-sm font-medium rounded-lg transition-colors"
+                  >
+                    {audioLoading === 'openai-tts' ? (
+                      <>
+                        <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                        </svg>
+                        Generando...
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18.75a6.75 6.75 0 006.75-6.75V8.25a6.75 6.75 0 00-13.5 0V12A6.75 6.75 0 0012 18.75zM12 21v-2.25" />
+                        </svg>
+                        OpenAI TTS
                       </>
                     )}
                   </button>

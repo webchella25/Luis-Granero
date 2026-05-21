@@ -36,7 +36,7 @@ export interface PageMetadata {
   };
 }
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://luisgranero.com';
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://www.luisgranero.com';
 
 /**
  * Obtiene los settings desde MongoDB

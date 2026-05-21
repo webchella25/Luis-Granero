@@ -1,12 +1,12 @@
 // src/app/api/public/blog/route.js
 import { NextResponse } from 'next/server'
 import dbConnect from '@/lib/mongodb'
-import Post from '@/models/Post'
+import BlogPost from '@/models/BlogPost'
 
 export async function GET(request) {
   try {
     await dbConnect()
-    
+
     const { searchParams } = new URL(request.url)
     const category = searchParams.get('category')
     const limit = parseInt(searchParams.get('limit')) || 10
@@ -14,24 +14,24 @@ export async function GET(request) {
     const skip = (page - 1) * limit
 
     // Filtros
-    let filter = { isPublished: true }
+    let filter = { status: 'published' }
     if (category && category !== 'all') {
       filter.category = category
     }
 
     // Obtener posts publicados
-    const posts = await Post.find(filter)
-      .select('title excerpt content category tags readTime publishDate views difficulty featured slug createdAt')
-      .sort({ publishDate: -1, createdAt: -1 })
+    const posts = await BlogPost.find(filter)
+      .select('title excerpt content category tags readTime views featured slug createdAt featuredImage')
+      .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
       .lean()
 
     // Contar total para paginación
-    const total = await Post.countDocuments(filter)
+    const total = await BlogPost.countDocuments(filter)
 
     // Obtener categorías disponibles
-    const categories = await Post.distinct('category', { isPublished: true })
+    const categories = await BlogPost.distinct('category', { status: 'published' })
 
     return NextResponse.json({
       posts,

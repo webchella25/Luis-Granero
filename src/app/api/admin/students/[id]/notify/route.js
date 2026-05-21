@@ -1,21 +1,11 @@
 // src/app/api/admin/students/[id]/notify/route.js
 import { NextResponse } from 'next/server';
-import { checkAuth } from '@/lib/checkAuth';
 import dbConnect from '@/lib/mongodb';
 import User from '@/models/User';
-import nodemailer from 'nodemailer';
+import { sendEmail } from '@/lib/email/mailer';
 
 export async function POST(request, { params }) {
   try {
-    const session = await checkAuth();
-
-    if (!session || session.user.role !== 'admin') {
-      return NextResponse.json(
-        { success: false, error: 'No autorizado' },
-        { status: 401 }
-      );
-    }
-
     await dbConnect();
 
     const body = await request.json();
@@ -32,16 +22,6 @@ export async function POST(request, { params }) {
       );
     }
 
-    // Configurar transporter SMTP
-    const transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: parseInt(process.env.SMTP_PORT || '587'),
-      secure: process.env.SMTP_PORT === '465',
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS
-      }
-    });
 
     // Preparar email según tipo
     let subject, html;
@@ -80,7 +60,7 @@ export async function POST(request, { params }) {
     }
 
     // Enviar email
-    await transporter.sendMail({
+    await sendEmail({
       from: `${process.env.EMAIL_FROM_NAME} <${process.env.SMTP_USER}>`,
       to: student.email,
       subject,

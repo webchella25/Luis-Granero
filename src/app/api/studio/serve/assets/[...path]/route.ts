@@ -1,0 +1,47 @@
+import { NextRequest, NextResponse } from 'next/server';
+import fs from 'fs/promises';
+import path from 'path';
+
+interface RouteParams {
+  params: Promise<{ path: string[] }>;
+}
+
+export async function GET(
+  _request: NextRequest,
+  { params }: RouteParams
+): Promise<NextResponse> {
+  try {
+    const { path: segments } = await params;
+
+    // Sanitizar cada segmento para evitar path traversal
+    const safeSegments = segments.map((s) => path.basename(s));
+
+    const filePath = path.join(
+      process.cwd(),
+      'public',
+      'studio',
+      'assets',
+      ...safeSegments
+    );
+
+    const buffer = await fs.readFile(filePath);
+    const ext = path.extname(safeSegments[safeSegments.length - 1]).toLowerCase();
+    const mimeTypes: Record<string, string> = {
+      '.jpg': 'image/jpeg',
+      '.jpeg': 'image/jpeg',
+      '.png': 'image/png',
+      '.webp': 'image/webp',
+    };
+    const contentType = mimeTypes[ext] ?? 'image/jpeg';
+
+    return new NextResponse(buffer, {
+      headers: {
+        'Content-Type': contentType,
+        'Cache-Control': 'public, max-age=2592000',
+        'Content-Length': String(buffer.length),
+      },
+    });
+  } catch {
+    return new NextResponse(null, { status: 404 });
+  }
+}

@@ -39,6 +39,11 @@ export async function PATCH(request: NextRequest): Promise<NextResponse> {
       { $set: { [`entries.$.${field}`]: value, actualizado_en: new Date() } }
     );
 
+    console.log(`[calendario/entry PATCH] canal=${session.canal_id} entryId=${entryId} field=${field} value=${value} matched=${result.matchedCount} modified=${result.modifiedCount}`);
+
+    if (result.matchedCount === 0) {
+      return NextResponse.json({ error: 'Entrada no encontrada' }, { status: 404 });
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {
@@ -71,6 +76,35 @@ export async function PUT(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error reordenando:', error);
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
+  }
+}
+
+// DELETE — eliminar una entrada del calendario
+export async function DELETE(request: NextRequest): Promise<NextResponse> {
+  const session = getStudioSession(request);
+  if (!session?.canal_id) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+  try {
+    const { entryId } = (await request.json()) as { entryId?: string };
+    if (!entryId) return NextResponse.json({ error: 'entryId requerido' }, { status: 400 });
+
+    let objectId: Types.ObjectId;
+    try { objectId = new Types.ObjectId(entryId); }
+    catch { return NextResponse.json({ error: 'entryId inválido' }, { status: 400 }); }
+
+    await connectDB();
+    const result = await StudioCalendario.updateOne(
+      { canal_id: session.canal_id },
+      { $pull: { entries: { _id: objectId } } }
+    );
+
+    if (result.matchedCount === 0) {
+      return NextResponse.json({ error: 'Calendario no encontrado' }, { status: 404 });
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Error eliminando entrada del calendario:', error);
     return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
   }
 }

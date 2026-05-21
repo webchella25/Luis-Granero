@@ -6,6 +6,7 @@ import connectDB from '@/lib/mongodb';
 import StudioScript from '@/models/StudioScript';
 import { getValidAccessTokenForCanal } from '@/lib/studio/youtube-auth';
 import { getStudioSession } from '@/lib/studio/session';
+import { deleteLocalVideoFile, hasConfirmedYoutubeUpload } from '@/lib/studio/uploaded-local-video-cleanup';
 
 interface UploadShortBody {
   scriptId: string;
@@ -147,13 +148,24 @@ async function uploadShortBackground(
       if (entry) {
         entry.youtube_id = videoId;
         entry.youtube_url = youtubeUrl;
-        entry.youtube_status = 'ready';
+        entry.youtube_status = 'uploaded';
         if (metadata.publishAt) {
           entry.scheduled_at = new Date(metadata.publishAt);
         }
       }
       await s.save();
       console.log(`✅ Short sección ${seccion} subido a YouTube: ${youtubeUrl}${metadata.publishAt ? ` (programado: ${metadata.publishAt})` : ''}`);
+
+      if (entry) {
+        try {
+          const deleted = await deleteLocalVideoFile('short', entry.path);
+          entry.local_deleted_at = new Date();
+          await s.save();
+          console.log(deleted ? `[upload-youtube-short] MP4 local eliminado: ${entry.path}` : `[upload-youtube-short] MP4 local ya no existía: ${entry.path}`);
+        } catch (deleteErr) {
+          console.warn('[upload-youtube-short] No se pudo eliminar el MP4 local tras subirlo:', deleteErr instanceof Error ? deleteErr.message : deleteErr);
+        }
+      }
     }
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Error desconocido';
@@ -195,6 +207,17 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const shortAbsPath = path.join(process.cwd(), 'public', 'studio', 'shorts', path.basename(shortFilename));
 
     try { statSync(shortAbsPath); } catch {
+      if (hasConfirmedYoutubeUpload(entry)) {
+        entry.youtube_status = entry.youtube_status === 'ready' ? 'uploaded' : entry.youtube_status;
+        entry.local_deleted_at = entry.local_deleted_at ?? new Date();
+        await script.save();
+        return NextResponse.json({
+          status: 'uploaded',
+          youtubeUrl: entry.youtube_url,
+          youtubeVideoId: entry.youtube_id,
+          message: 'El Short ya está subido a YouTube y el archivo local fue eliminado',
+        });
+      }
       return NextResponse.json({ error: `Fichero del Short no encontrado` }, { status: 404 });
     }
 

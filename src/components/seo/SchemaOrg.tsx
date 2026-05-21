@@ -1,17 +1,11 @@
-// src/components/seo/SchemaOrg.tsx - NUEVO
-'use client';
-
-import { useEffect } from 'react';
+// src/components/seo/SchemaOrg.tsx
+// Server Component para Schema.org JSON-LD
 
 interface SchemaOrgProps {
   schema: object | object[];
 }
 
 export default function SchemaOrg({ schema }: SchemaOrgProps) {
-  useEffect(() => {
-    // El schema se inyecta en el head automáticamente al renderizar
-  }, [schema]);
-
   const schemas = Array.isArray(schema) ? schema : [schema];
 
   return (

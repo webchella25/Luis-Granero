@@ -1,18 +1,11 @@
 // src/app/api/admin/stats/route.js
 import { NextResponse } from 'next/server'
-import { checkAuth } from '@/lib/checkAuth'
 import dbConnect from '@/lib/mongodb'
 import Project from '@/models/Project'
 import Post from '@/models/Post'
 
 export async function GET() {
   try {
-    const session = await checkAuth()
-    
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
     await dbConnect()
     
     const [projects, posts] = await Promise.all([

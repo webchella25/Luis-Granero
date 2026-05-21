@@ -28,7 +28,7 @@ const SequenceSchema = new mongoose.Schema({
   
   trigger: {
     type: String,
-    enum: ['manual', 'auto_no_website', 'auto_slow_website', 'auto_no_ssl'],
+    enum: ['manual', 'auto_no_website', 'auto_slow_website', 'auto_no_ssl', 'auto_abandoned_website'],
     default: 'manual'
   },
   

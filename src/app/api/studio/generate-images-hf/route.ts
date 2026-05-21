@@ -3,6 +3,8 @@ import { getStudioSession } from '@/lib/studio/session';
 import path from 'path';
 import connectDB from '@/lib/mongodb';
 import StudioScript from '@/models/StudioScript';
+import StudioCanal from '@/models/StudioCanal';
+import { type LLMConfig } from '@/lib/studio/llm-client';
 import { generateImagesHFBackground } from '@/lib/studio/hf-images';
 import {
   getAudioDurationSeconds,
@@ -22,11 +24,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       return NextResponse.json({ error: 'scriptId es obligatorio' }, { status: 400 });
     }
 
-    const anthropicKey = process.env.ANTHROPIC_API_KEY;
-    if (!anthropicKey) return NextResponse.json({ error: 'ANTHROPIC_API_KEY no configurada' }, { status: 500 });
     if (!process.env.HUGGINGFACE_TOKEN) return NextResponse.json({ error: 'HUGGINGFACE_TOKEN no configurado' }, { status: 500 });
 
     await connectDB();
+    const canal = await StudioCanal.findById(session.canal_id).lean();
+    const canalConfig = ((canal as { config?: LLMConfig } | null)?.config ?? {}) as LLMConfig;
     const script = await StudioScript.findById(scriptId);
     if (!script) return NextResponse.json({ error: 'Guión no encontrado' }, { status: 404 });
 
@@ -60,7 +62,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const personaje = script.personaje;
     const epoca = script.epoca;
 
-    generateImagesHFBackground(sid, sections, personaje, epoca, anthropicKey, numImages, imageDuration)
+    generateImagesHFBackground(sid, sections, personaje, epoca, canalConfig, numImages, imageDuration)
       .catch(async (err: unknown) => {
         const msg = err instanceof Error ? err.message : 'Error desconocido';
         console.error('Error generando imágenes con HF:', msg);

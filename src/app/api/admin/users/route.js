@@ -2,20 +2,16 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import User from '@/models/User';
-import { checkAuth } from '@/lib/checkAuth'
-
+import { requireAdmin } from '@/lib/adminAuth';
 export async function GET(request) {
   try {
-    const session = await checkAuth();
-
-    if (!session || session.user.role !== 'admin') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const auth = await requireAdmin(request);
+    if (!auth.ok) return auth.response;
 
     await dbConnect();
 
     const users = await User.find({})
-      .select('-password')
+      .select('username email role isActive createdAt updatedAt profile.firstName profile.lastName')
       .sort({ createdAt: -1 })
       .lean();
 

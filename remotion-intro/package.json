@@ -1,0 +1,24 @@
+{
+  "name": "almas-corruptas-intro",
+  "version": "1.0.0",
+  "description": "Video intro para el canal Almas Corruptas",
+  "scripts": {
+    "start": "npx remotion studio",
+    "render": "npx remotion render AlmasIntro out/intro.mp4",
+    "render:gif": "npx remotion render AlmasIntro out/intro.gif"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.290",
+    "remotion": "4.0.290",
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.1",
+    "@types/react-dom": "^18.3.0",
+    "typescript": "^5.4.0"
+  },
+  "remotion": {
+    "entryPoint": "src/index.ts"
+  }
+}

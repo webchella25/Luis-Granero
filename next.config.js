@@ -42,13 +42,54 @@ const nextConfig = {
     ];
   },
 
+  // Rewrites para servir archivos estáticos de studio desde API routes
+  // (evita el cache de 404 de Next.js para archivos en public/ creados en runtime)
+  async rewrites() {
+    return [
+      {
+        source: '/studio/audio/:filename',
+        destination: '/api/studio/audio/:filename',
+      },
+      {
+        source: '/studio/thumbnails/:filename',
+        destination: '/api/studio/thumbnails/:filename',
+      },
+      {
+        source: '/studio/assets/:path*',
+        destination: '/api/studio/serve/assets/:path*',
+      },
+      {
+        source: '/studio/carteles/:path*',
+        destination: '/api/studio/carteles/files/:path*',
+      },
+    ];
+  },
+
+  // Redirects 301 para SEO
+  async redirects() {
+    return [
+      // Redirect de /home a /
+      {
+        source: '/home',
+        destination: '/',
+        permanent: true,
+      },
+      // Evitar duplicados de index.html
+      {
+        source: '/index.html',
+        destination: '/',
+        permanent: true,
+      },
+    ];
+  },
+
   // Tu configuración original
   eslint: {
     ignoreDuringBuilds: true,
   },
   typescript: {
     ignoreBuildErrors: false,
-  }
+  },
 }
 
 export default nextConfig

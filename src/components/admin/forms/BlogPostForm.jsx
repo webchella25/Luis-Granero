@@ -11,18 +11,26 @@ export default function BlogPostForm({ initialData = null, isEditing = false }) 
   const [loadingCategories, setLoadingCategories] = useState(true)
   const [errors, setErrors] = useState({})
 
-  const [formData, setFormData] = useState({
-    title: '',
-    slug: '',
-    excerpt: '',
-    content: '',
-    category: '',
-    tags: '',
-    featuredImage: '',
-    status: 'draft',
-    readingTime: 0,
-    difficulty: 'intermedio',
-    ...initialData
+  const [formData, setFormData] = useState(() => {
+    const base = {
+      title: '',
+      slug: '',
+      excerpt: '',
+      content: '',
+      category: '',
+      tags: '',
+      featuredImage: '',
+      status: 'draft',
+      readingTime: 0,
+      difficulty: 'intermedio',
+    }
+    if (!initialData) return base
+    return {
+      ...base,
+      ...initialData,
+      tags: Array.isArray(initialData.tags) ? initialData.tags.join(', ') : (initialData.tags || ''),
+      readingTime: initialData.readTime || initialData.readingTime || 0,
+    }
   })
 
   // Cargar categorías al montar el componente
@@ -139,10 +147,10 @@ export default function BlogPostForm({ initialData = null, isEditing = false }) 
 
       const method = isEditing ? 'PUT' : 'POST'
 
-      // Procesar tags
       const processedData = {
         ...formData,
-        tags: typeof formData.tags === 'string' ? formData.tags.split(',').map(tag => tag.trim()).filter(Boolean) : formData.tags
+        tags: typeof formData.tags === 'string' ? formData.tags.split(',').map(tag => tag.trim()).filter(Boolean) : formData.tags,
+        readTime: parseInt(formData.readingTime) || 0,
       }
 
       const response = await fetch(url, {

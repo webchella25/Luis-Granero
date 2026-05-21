@@ -62,7 +62,7 @@ export default function LearningPathsGrid({ paths, featured = false }: Props) {
         <Link 
           key={path._id}
           href={`/cursos/${path.slug}`}
-          className="group relative bg-gradient-to-br from-gray-900/80 to-gray-800/80 backdrop-blur-sm border border-gray-800 rounded-xl p-6 hover:border-purple-500/50 transition-all duration-300 hover:transform hover:scale-105 hover:shadow-2xl hover:shadow-purple-500/20"
+          className="group relative bg-gradient-to-br from-gray-900/80 to-gray-800/80 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6 hover:border-purple-500/50 transition-all duration-300 hover:transform hover:scale-105 hover:shadow-2xl hover:shadow-purple-500/20"
         >
           
           {/* Badge premium */}
@@ -95,7 +95,7 @@ export default function LearningPathsGrid({ paths, featured = false }: Props) {
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-2 gap-4 mb-6 pb-6 border-b border-gray-700">
+          <div className="grid grid-cols-2 gap-4 mb-6 pb-6 border-b border-slate-700">
             <div className="text-center">
               <ClockIcon className="w-5 h-5 text-cyan-400 mx-auto mb-1" />
               <div className="text-lg font-bold text-white">{path.duration}</div>
@@ -124,13 +124,13 @@ export default function LearningPathsGrid({ paths, featured = false }: Props) {
               {path.topics.slice(0, 4).map((topic, index) => (
                 <span
                   key={index}
-                  className="px-2 py-1 bg-gray-800 text-cyan-400 text-xs rounded border border-gray-700"
+                  className="px-2 py-1 bg-gray-800 text-cyan-400 text-xs rounded border border-slate-700"
                 >
                   {topic}
                 </span>
               ))}
               {path.topics.length > 4 && (
-                <span className="px-2 py-1 bg-gray-800 text-gray-400 text-xs rounded border border-gray-700">
+                <span className="px-2 py-1 bg-gray-800 text-gray-400 text-xs rounded border border-slate-700">
                   +{path.topics.length - 4} más
                 </span>
               )}

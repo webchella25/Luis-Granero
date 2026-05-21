@@ -3,10 +3,14 @@ import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import Lead from '@/models/Lead';
 import MessageTemplate from '@/models/MessageTemplate';
+import { requireAdmin } from '@/lib/adminAuth';
 
 // ✅ POST - Registrar contacto con un lead
 export async function POST(request, { params }) {
   try {
+    const auth = await requireAdmin(request);
+    if (!auth.ok) return auth.response;
+
     await dbConnect();
     
     const { id } = await params; // ⚠️ AÑADIR await
@@ -81,6 +85,9 @@ export async function POST(request, { params }) {
 // ✅ GET - Obtener historial de contacto de un lead
 export async function GET(request, { params }) {
   try {
+    const auth = await requireAdmin(request);
+    if (!auth.ok) return auth.response;
+
     await dbConnect();
     
     const { id } = await params; // ⚠️ AÑADIR await
@@ -113,6 +120,9 @@ export async function GET(request, { params }) {
 // ✅ PATCH - Actualizar un contacto existente (marcar como respondido, etc.)
 export async function PATCH(request, { params }) {
   try {
+    const auth = await requireAdmin(request);
+    if (!auth.ok) return auth.response;
+
     await dbConnect();
     
     const { id } = await params; // ⚠️ AÑADIR await

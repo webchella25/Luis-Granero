@@ -104,7 +104,7 @@ function ClientTestimonials() {
   const currentClient = testimonials[currentTestimonial];
 
   return (
-    <section className="py-20 bg-gray-950">
+    <section className="py-20 bg-[#0B1120]">
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
           <h2 className="text-4xl md:text-5xl font-bold gradient-text mb-6">
@@ -117,7 +117,7 @@ function ClientTestimonials() {
 
         {/* Featured testimonial */}
         <div className="max-w-6xl mx-auto mb-16">
-          <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-2xl p-8 hover:border-cyan-500/30 transition-all duration-300">
+          <div className="bg-[#1E293B]/50 backdrop-blur-sm border border-slate-700/50 rounded-2xl p-8 hover:border-cyan-500/30 transition-all duration-300">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
               {/* Testimonial content */}
               <div className="space-y-6">
@@ -198,7 +198,7 @@ function ClientTestimonials() {
           {testimonials.map((client, index) => (
             <div
               key={index}
-              className="bg-gray-900/30 backdrop-blur-sm border border-gray-800 rounded-xl p-6 text-center hover:border-cyan-500/30 transition-all duration-300 hover:transform hover:scale-105 cursor-pointer"
+              className="bg-[#1E293B]/30 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6 text-center hover:border-cyan-500/30 transition-all duration-300 hover:transform hover:scale-105 cursor-pointer"
               onClick={() => setCurrentTestimonial(index)}
             >
               <div className="text-3xl mb-2">{client.avatar}</div>
@@ -209,7 +209,7 @@ function ClientTestimonials() {
         </div>
 
         {/* Overall stats */}
-        <div className="bg-gradient-to-r from-gray-900/50 to-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-2xl p-8">
+        <div className="bg-gradient-to-r from-gray-900/50 to-gray-800/50 backdrop-blur-sm border border-slate-700 rounded-2xl p-8">
           <h3 className="text-2xl font-bold gradient-text mb-8 text-center">
             Resultados Globales de mis Proyectos
           </h3>

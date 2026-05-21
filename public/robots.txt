@@ -1,15 +1,24 @@
 # robots.txt para luisgranero.com
 
-# Permitir todos los bots en el sitio público
 User-agent: *
 Allow: /
 
-# Bloquear acceso a rutas administrativas
-Disallow: /admin
-Disallow: /api/
+# Panel de administración
+Disallow: /admin/
 
-# Permitir acceso a páginas principales
+# Área privada de estudiantes
+Disallow: /estudiante/
+
+# Dashboard privado de usuario
+Disallow: /dashboard/
+
+# URLs con tokens privados
+Disallow: /agendar/
+Disallow: /unsubscribe/
+
+# APIs (excepto las públicas)
+Disallow: /api/
 Allow: /api/public/
 
 # Sitemap
-Sitemap: https://luisgranero.com/sitemap.xml
+Sitemap: https://www.luisgranero.com/sitemap.xml

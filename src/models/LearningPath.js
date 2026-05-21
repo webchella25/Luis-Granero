@@ -99,8 +99,7 @@ const LearningPathSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Índices para búsquedas
-LearningPathSchema.index({ slug: 1 });
+// Índices para búsquedas (slug no necesita index explícito: unique:true ya lo crea)
 LearningPathSchema.index({ isPublished: 1, isFeatured: -1 });
 LearningPathSchema.index({ topics: 1 });
 LearningPathSchema.index({ level: 1 });

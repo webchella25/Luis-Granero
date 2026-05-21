@@ -1,18 +1,11 @@
 // src/app/api/admin/categories/[id]/route.js
 import { NextResponse } from 'next/server'
-import { checkAuth } from '@/lib/checkAuth'
 import dbConnect from '@/lib/mongodb'
 import Category from '@/models/Category'
 import Post from '@/models/Post'
 
 export async function PUT(request, { params }) {
   try {
-    const session = await checkAuth()
-    
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
     await dbConnect()
     
     const { id } = params
@@ -39,12 +32,6 @@ export async function PUT(request, { params }) {
 
 export async function DELETE(request, { params }) {
   try {
-    const session = await checkAuth()
-    
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
     await dbConnect()
     
     const { id } = params

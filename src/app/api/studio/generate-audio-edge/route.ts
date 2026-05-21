@@ -4,8 +4,9 @@ import fs from 'fs/promises';
 import path from 'path';
 import connectDB from '@/lib/mongodb';
 import StudioScript from '@/models/StudioScript';
-import { runEdgeTTS, EDGE_TTS_VOICE } from '@/lib/studio/edge-tts';
+import { runEdgeTTS, EDGE_TTS_PITCH, EDGE_TTS_RATE, EDGE_TTS_VOICE, EDGE_TTS_VOLUME } from '@/lib/studio/edge-tts';
 import { cleanScriptForTTS } from '@/lib/studio/clean-script-for-tts';
+import { addAudioVersion, createAudioOutput } from '@/lib/studio/audio-versions';
 
 export const maxDuration = 300;
 
@@ -54,27 +55,32 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const audioDir = path.join(process.cwd(), 'public', 'studio', 'audio');
     await fs.mkdir(audioDir, { recursive: true });
 
-    const outputFilename = `${scriptId}.mp3`;
-    const outputPath = path.join(audioDir, outputFilename);
-    const audioPath = `/studio/audio/${outputFilename}`;
+    const { outputPath, audioPath } = createAudioOutput(scriptId, 'edge-tts');
 
     // Ejecutar edge-tts
-    await runEdgeTTS(tmpTextPath, outputPath);
+    const { sectionDurations } = await runEdgeTTS(tmpTextPath, outputPath);
 
     // Borrar fichero temporal
     await fs.unlink(tmpTextPath).catch(() => null);
     tmpTextPath = null;
 
-    // Actualizar MongoDB
-    script.audio_path = audioPath;
-    script.audio_engine = 'edge-tts';
+    const audioVersion = addAudioVersion(script, {
+      engine: 'edge-tts',
+      path: audioPath,
+      sectionDurations,
+      meta: { voice: EDGE_TTS_VOICE, rate: EDGE_TTS_RATE, pitch: EDGE_TTS_PITCH, volume: EDGE_TTS_VOLUME },
+    });
     await script.save();
 
     return NextResponse.json({
       success: true,
       audioPath,
+      audioVersion,
       engine: 'edge-tts',
       voice: EDGE_TTS_VOICE,
+      rate: EDGE_TTS_RATE,
+      pitch: EDGE_TTS_PITCH,
+      volume: EDGE_TTS_VOLUME,
     });
   } catch (error) {
     if (tmpTextPath) {

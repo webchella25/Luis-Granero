@@ -3,22 +3,15 @@ import { NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import Appointment from '@/models/Appointment';
 import EmailLog from '@/models/EmailLog';
-import nodemailer from 'nodemailer';
-
-// ✅ Configurar transporter
-const transporter = nodemailer.createTransport({
-  host: process.env.BREVO_SMTP_HOST || 'smtp-relay.brevo.com',
-  port: parseInt(process.env.BREVO_SMTP_PORT || '587'),
-  secure: false,
-  auth: {
-    user: process.env.BREVO_SMTP_USER,
-    pass: process.env.BREVO_SMTP_PASS
-  }
-});
+import { sendEmail } from '@/lib/email/mailer';
+import { requireAdmin } from '@/lib/adminAuth';
 
 // POST - Enviar recordatorios automáticos
 export async function POST(request) {
   try {
+    const auth = await requireAdmin(request);
+    if (!auth.ok) return auth.response;
+
     await connectDB();
     
     const { appointmentId, type } = await request.json();
@@ -219,7 +212,7 @@ async function sendReminder(appointment, type) {
     });
     
     // Enviar email
-    await transporter.sendMail({
+    await sendEmail({
       from: `"Luis Granero" <${process.env.EMAIL_FROM || 'luis@luisgranero.com'}>`,
       to: appointment.email,
       subject,
@@ -255,6 +248,9 @@ async function sendReminder(appointment, type) {
 // GET - Obtener citas que necesitan recordatorio
 export async function GET(request) {
   try {
+    const auth = await requireAdmin(request);
+    if (!auth.ok) return auth.response;
+
     await connectDB();
     
     const now = new Date();

@@ -133,7 +133,7 @@ function ProcessTimeline() {
   ];
 
   return (
-    <section className="py-20 bg-black">
+    <section className="py-20 bg-[#0F172A]">
       <div className="container mx-auto px-4">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
@@ -168,7 +168,7 @@ function ProcessTimeline() {
                   <div className={`w-full md:w-5/12 ml-12 md:ml-0 ${
                     index % 2 === 0 ? 'md:mr-8' : 'md:ml-8'
                   }`}>
-                    <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-xl p-6 hover:border-cyan-500/30 transition-all duration-300">
+                    <div className="bg-[#1E293B]/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6 hover:border-cyan-500/30 transition-all duration-300">
                       {/* Header */}
                       <div className="flex items-center space-x-4 mb-4">
                         <span className="text-3xl">{step.icon}</span>
@@ -227,7 +227,7 @@ function ProcessTimeline() {
               {commitments.map((commitment, index) => (
                 <div
                   key={index}
-                  className="bg-gray-900/30 backdrop-blur-sm border border-gray-800 rounded-xl p-6 text-center hover:border-cyan-500/30 transition-all duration-300"
+                  className="bg-[#1E293B]/30 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6 text-center hover:border-cyan-500/30 transition-all duration-300"
                 >
                   <div className="text-4xl mb-4">{commitment.icon}</div>
                   <h4 className="font-bold text-white mb-2">{commitment.title}</h4>
@@ -242,7 +242,7 @@ function ProcessTimeline() {
             <h3 className="text-2xl font-bold text-white mb-8 text-center">
               Próximos pasos
             </h3>
-            <div className="bg-gradient-to-r from-gray-900/50 to-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-2xl p-8">
+            <div className="bg-gradient-to-r from-gray-900/50 to-gray-800/50 backdrop-blur-sm border border-slate-700 rounded-2xl p-8">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {nextSteps.map((step, index) => (
                   <div key={index} className="text-center">

@@ -2,14 +2,8 @@
 import { NextResponse } from 'next/server'
 import connectDB from '@/lib/mongodb'
 import Project from '@/models/Project'
-import { checkAuth } from '@/lib/checkAuth'
-
 export async function GET() {
   try {
-    const session = await checkAuth()
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
     
     await connectDB()
     
@@ -33,10 +27,7 @@ export async function GET() {
 
 export async function POST(request) {
   try {
-    const session = await checkAuth()
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+
     
     await connectDB()
     

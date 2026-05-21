@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import Template from '@/models/Template';
 import MessageTemplate from '@/models/MessageTemplate';
+import { requireAdmin } from '@/lib/adminAuth';
 
 // Helper para determinar qué modelo usar
 async function getTemplateModel(id) {
@@ -28,6 +29,9 @@ async function getTemplateModel(id) {
 // ✅ GET - Obtener template específico
 export async function GET(request, { params }) {
   try {
+    const auth = await requireAdmin(request);
+    if (!auth.ok) return auth.response;
+
     await dbConnect();
     
     const { template, isMessage } = await getTemplateModel(params.id);
@@ -56,6 +60,9 @@ export async function GET(request, { params }) {
 // ✅ PATCH/PUT - Actualizar template
 export async function PATCH(request, { params }) {
   try {
+    const auth = await requireAdmin(request);
+    if (!auth.ok) return auth.response;
+
     await dbConnect();
     
     const updates = await request.json();
@@ -120,6 +127,9 @@ export async function PUT(request, { params }) {
 // ✅ DELETE - Eliminar template
 export async function DELETE(request, { params }) {
   try {
+    const auth = await requireAdmin(request);
+    if (!auth.ok) return auth.response;
+
     await dbConnect();
     
     const { searchParams } = new URL(request.url);

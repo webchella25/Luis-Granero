@@ -65,7 +65,7 @@ export default function SequenceDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center">
+      <div className="flex items-center justify-center py-32">
         <div className="text-cyan-400 text-xl">Cargando detalles...</div>
       </div>
     );
@@ -73,15 +73,15 @@ export default function SequenceDetailPage() {
 
   if (!sequence) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center">
+      <div className="flex items-center justify-center py-32">
         <div className="text-red-400 text-xl">Secuencia no encontrada</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-8">
-      <div className="max-w-7xl mx-auto">
+    <div className="space-y-6">
+      
         
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
@@ -110,7 +110,7 @@ export default function SequenceDetailPage() {
 
         {/* Métricas principales */}
         <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
-          <div className="bg-slate-800/50 backdrop-blur border border-cyan-500/20 rounded-lg p-6">
+          <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
             <div className="text-gray-400 text-sm mb-2">Emails Enviados</div>
             <div className="text-3xl font-bold text-white">
               {metrics?.emailsSent || 0}
@@ -147,7 +147,7 @@ export default function SequenceDetailPage() {
         </div>
 
         {/* Pasos de la secuencia */}
-        <div className="bg-slate-800/50 backdrop-blur border border-cyan-500/20 rounded-lg p-6 mb-8">
+        <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 mb-8">
           <h2 className="text-2xl font-bold text-white mb-4">
             📋 Pasos de la Secuencia
           </h2>
@@ -186,7 +186,7 @@ export default function SequenceDetailPage() {
         </div>
 
         {/* Lista de enrollments */}
-        <div className="bg-slate-800/50 backdrop-blur border border-cyan-500/20 rounded-lg p-6">
+        <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
           <h2 className="text-2xl font-bold text-white mb-4">
             👥 Leads en esta Secuencia ({enrollments.length})
           </h2>
@@ -283,6 +283,5 @@ export default function SequenceDetailPage() {
         </div>
 
       </div>
-    </div>
   );
 }

@@ -150,7 +150,7 @@ export default function BlogGrid({
   };
 
   return (
-    <section className="py-20 bg-black">
+    <section className="py-20 bg-[#0F172A]">
       <div className="container mx-auto px-4">
         
         <div className="text-center mb-12">
@@ -184,10 +184,10 @@ export default function BlogGrid({
           {filteredPosts.map((post) => (
             <article
               key={post._id}
-              className={`group bg-gray-900/50 backdrop-blur-sm border rounded-xl overflow-hidden transition-all duration-300 hover:transform hover:scale-105 cursor-pointer ${
+              className={`group bg-[#1E293B]/50 backdrop-blur-sm border rounded-xl overflow-hidden transition-all duration-300 hover:transform hover:scale-105 cursor-pointer ${
                 post.featured 
                   ? 'border-cyan-500/50 shadow-lg shadow-cyan-500/20' 
-                  : 'border-gray-800 hover:border-cyan-500/50'
+                  : 'border-slate-700/50 hover:border-cyan-500/50'
               }`}
             >
               

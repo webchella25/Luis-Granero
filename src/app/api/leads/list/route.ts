@@ -1,23 +1,31 @@
 // src/app/api/leads/list/route.ts
 import { NextResponse } from 'next/server';
-import { checkAuth } from '@/lib/checkAuth'
 import connectDB from '@/lib/mongodb';
 import Lead from '@/models/Lead';
+import { clampPage, clampPaginationLimit, requireAdmin } from '@/lib/adminAuth';
+
+const ALLOWED_SORT_FIELDS = new Set([
+  'opportunityScore',
+  'createdAt',
+  'updatedAt',
+  'lastContactedAt',
+  'name',
+  'status',
+  'category'
+]);
 
 export async function GET(request: Request) {
   try {
-    // Verificar autenticación
-    const session = await checkAuth();
-    if (!session) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
-    }
+    const auth = await requireAdmin(request);
+    if (!auth.ok) return auth.response;
 
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status') || 'all';
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '50');
+    const page = clampPage(searchParams.get('page'));
+    const limit = clampPaginationLimit(searchParams.get('limit'), 50, 100);
     const search = searchParams.get('search') || '';
-    const sortBy = searchParams.get('sortBy') || 'opportunityScore';
+    const requestedSortBy = searchParams.get('sortBy') || 'opportunityScore';
+    const sortBy = ALLOWED_SORT_FIELDS.has(requestedSortBy) ? requestedSortBy : 'opportunityScore';
     const sortOrder = searchParams.get('sortOrder') || 'desc';
     
     await connectDB();

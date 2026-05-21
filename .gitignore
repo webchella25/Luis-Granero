@@ -2,6 +2,7 @@
 
 # dependencies
 /node_modules
+**/node_modules/
 /.pnp
 .pnp.*
 .yarn/*
@@ -19,6 +20,14 @@
 
 # production
 /build
+
+# generated media
+*.mp3
+*.mp4
+*.mov
+*.m4a
+*.wav
+*.flac
 
 # misc
 .DS_Store

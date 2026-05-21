@@ -1,6 +1,6 @@
 // src/app/admin/estudiantes/lista/page.js
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import {
@@ -13,7 +13,7 @@ import {
   FireIcon
 } from '@heroicons/react/24/outline'
 
-export default function StudentsList() {
+function StudentsListContent() {
   const searchParams = useSearchParams()
   const initialFilter = searchParams.get('filter') || 'all'
 
@@ -321,5 +321,17 @@ export default function StudentsList() {
         </>
       )}
     </div>
+  )
+}
+
+export default function StudentsList() {
+  return (
+    <Suspense fallback={
+      <div className="text-center py-12">
+        <div className="text-white">Cargando...</div>
+      </div>
+    }>
+      <StudentsListContent />
+    </Suspense>
   )
 }

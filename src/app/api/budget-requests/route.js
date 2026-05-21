@@ -4,18 +4,8 @@
 import { NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import BudgetRequest from '@/models/BudgetRequest';
-import nodemailer from 'nodemailer';
-
-// ✅ CORREGIDO: Configurar transporter con variables de entorno
-const transporter = nodemailer.createTransport({
-  host: process.env.BREVO_SMTP_HOST || 'smtp-relay.brevo.com',
-  port: parseInt(process.env.BREVO_SMTP_PORT || '587'),
-  secure: false,
-  auth: {
-    user: process.env.BREVO_SMTP_USER,
-    pass: process.env.BREVO_SMTP_PASS
-  }
-});
+import { sendEmail } from '@/lib/email/mailer';
+import { clampPaginationLimit, requireAdmin } from '@/lib/adminAuth';
 
 // POST - Enviar solicitud de presupuesto
 export async function POST(request) {
@@ -76,12 +66,16 @@ export async function POST(request) {
 // GET - Listar presupuestos (admin)
 export async function GET(request) {
   try {
+    const auth = await requireAdmin(request);
+    if (!auth.ok) return auth.response;
+
     await connectDB();
     
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status');
-    const limit = parseInt(searchParams.get('limit') || '100');
-    const skip = parseInt(searchParams.get('skip') || '0');
+    const limit = clampPaginationLimit(searchParams.get('limit'), 50, 100);
+    const parsedSkip = parseInt(searchParams.get('skip') || '0', 10);
+    const skip = Number.isNaN(parsedSkip) || parsedSkip < 0 ? 0 : parsedSkip;
     
     const filter = status && status !== 'all' ? { status } : {};
     
@@ -116,6 +110,9 @@ export async function GET(request) {
 // PATCH - Actualizar estado
 export async function PATCH(request) {
   try {
+    const auth = await requireAdmin(request);
+    if (!auth.ok) return auth.response;
+
     await connectDB();
     
     const body = await request.json();
@@ -149,6 +146,9 @@ export async function PATCH(request) {
 // DELETE - Eliminar presupuesto
 export async function DELETE(request) {
   try {
+    const auth = await requireAdmin(request);
+    if (!auth.ok) return auth.response;
+
     await connectDB();
     
     const { searchParams } = new URL(request.url);
@@ -258,7 +258,7 @@ async function sendAdminNotification(budgetRequest) {
     </html>
   `;
   
-  await transporter.sendMail({
+  await sendEmail({
     from: '"Luis Granero - Presupuestos" <luis@luisgranero.com>',
     to: 'luis@luisgranero.com',
     subject: `🎯 Nuevo Presupuesto: ${clientInfo.name} - ${budget.total}€`,
@@ -343,7 +343,7 @@ async function sendClientConfirmation(clientInfo, budget) {
     </html>
   `;
   
-  await transporter.sendMail({
+  await sendEmail({
     from: '"Luis Granero" <luis@luisgranero.com>',
     to: clientInfo.email,
     subject: '✅ Presupuesto recibido - Luis Granero',

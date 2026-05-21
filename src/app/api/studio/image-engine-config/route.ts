@@ -13,7 +13,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   await connectDB();
   const canal = await StudioCanal.findById(session.canal_id).select('config').lean();
   const motor = (canal as { config?: { imagen_motor?: string } } | null)?.config?.imagen_motor ?? 'freepik';
-  const image_engine = motor === 'huggingface' ? 'huggingface' : motor === 'freepik' ? 'freepik' : 'auto';
+  const image_engine = ['huggingface', 'freepik', 'comfyui', 'auto'].includes(motor) ? motor : 'auto';
 
   // El token de HuggingFace sigue siendo global (es una API key, no por canal)
   const hfConfig = await StudioConfig.findOne({ key: 'image_engine_config' }).lean();
@@ -33,9 +33,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   await connectDB();
 
-  if (image_engine && ['auto', 'freepik', 'huggingface'].includes(image_engine)) {
-    const imagen_motor = image_engine === 'huggingface' ? 'huggingface' : 'freepik';
-    await StudioCanal.findByIdAndUpdate(session.canal_id, { $set: { 'config.imagen_motor': imagen_motor } });
+  if (image_engine && ['auto', 'freepik', 'huggingface', 'comfyui'].includes(image_engine)) {
+    await StudioCanal.findByIdAndUpdate(session.canal_id, { $set: { 'config.imagen_motor': image_engine } });
   }
 
   // El token HF sigue siendo global

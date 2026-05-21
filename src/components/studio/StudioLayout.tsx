@@ -8,6 +8,7 @@ interface CanalInfo { _id: string; nombre: string; nicho: string; pipeline_tipo?
 function getCanalEmoji(_nombre: string): string { return '📹'; }
 
 interface NavItem { href: string; label: string; exact: boolean; icon: React.ReactNode }
+interface NavGroup { label: string; items: NavItem[] }
 
 const ICON_PLUS = (
   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -46,22 +47,87 @@ const ICON_MUSIC = (
   </svg>
 );
 
-const NAV_NARRATIVO: NavItem[] = [
-  { href: '/studio', label: 'Nuevo vídeo', exact: true, icon: ICON_PLUS },
-  { href: '/studio/historial', label: 'Historial', exact: false, icon: ICON_HISTORIAL },
-  { href: '/studio/calendario', label: 'Calendario', exact: false, icon: ICON_CALENDAR },
-  { href: '/studio/carteles', label: 'Carteles', exact: false, icon: ICON_CARTELES },
-  { href: '/studio/canales', label: 'Canales', exact: false, icon: ICON_CANALES },
-  { href: '/studio/configuracion', label: 'Configuración', exact: false, icon: ICON_CONFIG },
+const NAV_NARRATIVO: NavGroup[] = [
+  {
+    label: 'Narrativa',
+    items: [
+      { href: '/studio', label: 'Nuevo vídeo', exact: true, icon: ICON_PLUS },
+      { href: '/studio/historial', label: 'Producción', exact: false, icon: ICON_HISTORIAL },
+      { href: '/studio/calendario', label: 'Calendario', exact: false, icon: ICON_CALENDAR },
+      { href: '/studio/musica', label: 'Música narrativa', exact: false, icon: ICON_MUSIC },
+    ],
+  },
+  {
+    label: 'Carteles',
+    items: [
+      { href: '/studio/carteles', label: 'Galería', exact: true, icon: ICON_CARTELES },
+      { href: '/studio/carteles/nuevo', label: 'Editor manual', exact: false, icon: ICON_PLUS },
+      { href: '/studio/carteles/nuevo-ia', label: 'Generar con IA', exact: false, icon: ICON_CARTELES },
+      { href: '/studio/carteles/djs', label: 'Assets', exact: false, icon: ICON_CANALES },
+    ],
+  },
+  {
+    label: 'Sistema',
+    items: [
+      { href: '/studio/canales', label: 'Canales', exact: false, icon: ICON_CANALES },
+      { href: '/studio/configuracion', label: 'Configuración', exact: false, icon: ICON_CONFIG },
+    ],
+  },
 ];
 
-const NAV_MUSICA_AMBIENTAL: NavItem[] = [
-  { href: '/studio/musica-ambiental/nuevo', label: 'Nuevo vídeo', exact: true, icon: ICON_PLUS },
-  { href: '/studio/musica-ambiental/historial', label: 'Historial', exact: false, icon: ICON_HISTORIAL },
-  { href: '/studio/musica-ambiental/biblioteca', label: 'Biblioteca', exact: false, icon: ICON_MUSIC },
-  { href: '/studio/calendario', label: 'Calendario', exact: false, icon: ICON_CALENDAR },
-  { href: '/studio/canales', label: 'Canales', exact: false, icon: ICON_CANALES },
-  { href: '/studio/configuracion', label: 'Configuración', exact: false, icon: ICON_CONFIG },
+const NAV_MUSICA_AMBIENTAL: NavGroup[] = [
+  {
+    label: 'Ambiental',
+    items: [
+      { href: '/studio/musica-ambiental/nuevo', label: 'Nuevo vídeo', exact: true, icon: ICON_PLUS },
+      { href: '/studio/musica-ambiental/historial', label: 'Producción', exact: false, icon: ICON_HISTORIAL },
+      { href: '/studio/musica-ambiental/biblioteca', label: 'Biblioteca musical', exact: false, icon: ICON_MUSIC },
+      { href: '/studio/calendario', label: 'Calendario', exact: false, icon: ICON_CALENDAR },
+    ],
+  },
+  {
+    label: 'Carteles',
+    items: [
+      { href: '/studio/carteles', label: 'Galería', exact: true, icon: ICON_CARTELES },
+      { href: '/studio/carteles/nuevo', label: 'Editor manual', exact: false, icon: ICON_PLUS },
+      { href: '/studio/carteles/nuevo-ia', label: 'Generar con IA', exact: false, icon: ICON_CARTELES },
+      { href: '/studio/carteles/djs', label: 'Assets', exact: false, icon: ICON_CANALES },
+    ],
+  },
+  {
+    label: 'Sistema',
+    items: [
+      { href: '/studio/canales', label: 'Canales', exact: false, icon: ICON_CANALES },
+      { href: '/studio/configuracion', label: 'Configuración', exact: false, icon: ICON_CONFIG },
+    ],
+  },
+];
+
+const NAV_DJ_SESSION: NavGroup[] = [
+  {
+    label: 'DJ',
+    items: [
+      { href: '/studio/dj-sessions/nuevo', label: 'Subir sesión', exact: true, icon: ICON_PLUS },
+      { href: '/studio/dj-sessions/historial', label: 'Historial', exact: false, icon: ICON_HISTORIAL },
+      { href: '/studio/calendario', label: 'Calendario', exact: false, icon: ICON_CALENDAR },
+    ],
+  },
+  {
+    label: 'Carteles',
+    items: [
+      { href: '/studio/carteles', label: 'Galería', exact: true, icon: ICON_CARTELES },
+      { href: '/studio/carteles/nuevo', label: 'Editor manual', exact: false, icon: ICON_PLUS },
+      { href: '/studio/carteles/nuevo-ia', label: 'Generar con IA', exact: false, icon: ICON_CARTELES },
+      { href: '/studio/carteles/djs', label: 'Assets', exact: false, icon: ICON_CANALES },
+    ],
+  },
+  {
+    label: 'Sistema',
+    items: [
+      { href: '/studio/canales', label: 'Canales', exact: false, icon: ICON_CANALES },
+      { href: '/studio/configuracion', label: 'Configuración', exact: false, icon: ICON_CONFIG },
+    ],
+  },
 ];
 
 export default function StudioLayout({ children }: { children: React.ReactNode }) {
@@ -83,9 +149,11 @@ export default function StudioLayout({ children }: { children: React.ReactNode }
       .catch(() => null);
   }, []);
 
-  const navItems = canalActivo?.pipeline_tipo === 'musica_ambiental'
+  const navGroups = canalActivo?.pipeline_tipo === 'musica_ambiental'
     ? NAV_MUSICA_AMBIENTAL
-    : NAV_NARRATIVO;
+    : canalActivo?.pipeline_tipo === 'dj_session'
+      ? NAV_DJ_SESSION
+      : NAV_NARRATIVO;
 
   function isActive(href: string, exact: boolean): boolean {
     if (exact) return pathname === href;
@@ -116,7 +184,7 @@ export default function StudioLayout({ children }: { children: React.ReactNode }
   return (
     <div className="flex min-h-screen bg-[#0A0F1C] text-gray-100 font-sans">
       {/* ── Sidebar ── */}
-      <aside className="w-[220px] shrink-0 fixed left-0 top-0 h-screen bg-[#090C14] border-r border-white/[0.06] flex flex-col z-30">
+      <aside className="w-[240px] shrink-0 fixed left-0 top-0 h-screen bg-[#090C14] border-r border-white/[0.06] flex flex-col z-30">
 
         {/* Logo */}
         <div className="px-5 py-5 border-b border-white/[0.06]">
@@ -194,24 +262,31 @@ export default function StudioLayout({ children }: { children: React.ReactNode }
         )}
 
         {/* Nav */}
-        <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
-          {navItems.map((item) => {
-            const active = isActive(item.href, item.exact);
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm transition-all ${
-                  active
-                    ? 'bg-violet-600/15 text-violet-300 border border-violet-500/20'
-                    : 'text-gray-500 hover:text-gray-200 hover:bg-white/[0.05] border border-transparent'
-                }`}
-              >
-                <span className={active ? 'text-violet-400' : 'text-gray-600'}>{item.icon}</span>
-                {item.label}
-              </Link>
-            );
-          })}
+        <nav className="flex-1 px-3 py-4 space-y-5 overflow-y-auto">
+          {navGroups.map((group) => (
+            <div key={group.label} className="space-y-1">
+              <p className="px-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-gray-700">
+                {group.label}
+              </p>
+              {group.items.map((item) => {
+                const active = isActive(item.href, item.exact);
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm transition-all ${
+                      active
+                        ? 'bg-violet-600/15 text-violet-300 border border-violet-500/20'
+                        : 'text-gray-500 hover:text-gray-200 hover:bg-white/[0.05] border border-transparent'
+                    }`}
+                  >
+                    <span className={active ? 'text-violet-400' : 'text-gray-600'}>{item.icon}</span>
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </div>
+          ))}
         </nav>
 
         {/* Bottom: logout + version */}
@@ -231,7 +306,7 @@ export default function StudioLayout({ children }: { children: React.ReactNode }
       </aside>
 
       {/* ── Contenido principal ── */}
-      <main className="ml-[220px] flex-1 min-h-screen overflow-y-auto bg-[#0A0F1C]">
+      <main className="ml-[240px] flex-1 min-h-screen overflow-y-auto bg-[#0A0F1C]">
         {children}
       </main>
     </div>

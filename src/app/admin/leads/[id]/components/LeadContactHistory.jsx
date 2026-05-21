@@ -1,67 +1,57 @@
-// src/app/admin/leads/[id]/components/LeadContactHistory.jsx
 'use client';
 
-import { motion } from 'framer-motion';
+import { Mail, MessageCircle, Phone, StickyNote, Calendar } from 'lucide-react';
+
+const TYPE_MAP = {
+  email:     { icon: Mail,           color: 'text-blue-400',   bg: 'bg-blue-500/10',   label: 'Email' },
+  whatsapp:  { icon: MessageCircle,  color: 'text-green-400',  bg: 'bg-green-500/10',  label: 'WhatsApp' },
+  call:      { icon: Phone,          color: 'text-yellow-400', bg: 'bg-yellow-500/10', label: 'Llamada' },
+  note:      { icon: StickyNote,     color: 'text-slate-400',  bg: 'bg-slate-700',     label: 'Nota' },
+  meeting:   { icon: Calendar,       color: 'text-purple-400', bg: 'bg-purple-500/10', label: 'Reunión' },
+};
 
 export default function LeadContactHistory({ history }) {
+  if (!history?.length) {
+    return (
+      <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">
+        <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-4">Historial de Contacto</h2>
+        <div className="text-center py-8 text-slate-600 text-sm">Sin historial de contacto todavía</div>
+      </div>
+    );
+  }
+
+  const sorted = [...history].sort((a, b) => new Date(b.date) - new Date(a.date));
+
   return (
-    <div className="bg-slate-800/50 backdrop-blur border border-cyan-500/20 rounded-lg p-6">
-      <h2 className="text-2xl font-bold text-white mb-6">
-        📞 Historial de Contacto
+    <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">
+      <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-4">
+        Historial de Contacto
+        <span className="ml-2 text-xs font-normal text-slate-600">({history.length})</span>
       </h2>
-      
-      {history?.length > 0 ? (
-        <div className="space-y-4">
-          {history
-            .sort((a, b) => new Date(b.date) - new Date(a.date))
-            .map((contact, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.05 }}
-                className="flex gap-4 p-4 bg-slate-700/50 rounded-lg border border-slate-600"
-              >
-                <div className="flex-shrink-0 w-12 h-12 bg-cyan-500/20 rounded-full flex items-center justify-center border border-cyan-500/50">
-                  {contact.type === 'email' && '📧'}
-                  {contact.type === 'whatsapp' && '💬'}
-                  {contact.type === 'call' && '📞'}
-                  {contact.type === 'note' && '📝'}
+
+      <div className="space-y-2">
+        {sorted.map((contact, i) => {
+          const t = TYPE_MAP[contact.type] || TYPE_MAP.note;
+          const Icon = t.icon;
+          return (
+            <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-slate-800/50 border border-slate-800">
+              <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${t.bg}`}>
+                <Icon className={`w-3.5 h-3.5 ${t.color}`} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between gap-2 mb-0.5">
+                  <span className="text-xs font-semibold text-slate-300">{t.label}</span>
+                  <span className="text-xs text-slate-600 shrink-0">
+                    {new Date(contact.date).toLocaleString('es-ES', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                  </span>
                 </div>
-                
-                <div className="flex-1">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-white font-semibold capitalize">
-                      {contact.type}
-                    </span>
-                    <span className="text-gray-400 text-sm">
-                      {new Date(contact.date).toLocaleString('es-ES')}
-                    </span>
-                  </div>
-                  
-                  {contact.subject && (
-                    <div className="text-cyan-400 text-sm mb-1">
-                      {contact.subject}
-                    </div>
-                  )}
-                  
-                  {contact.notes && (
-                    <div className="text-gray-300 text-sm">
-                      {contact.notes}
-                    </div>
-                  )}
-                </div>
-              </motion.div>
-            ))}
-        </div>
-      ) : (
-        <div className="text-center py-8">
-          <div className="text-6xl mb-4">📭</div>
-          <div className="text-gray-400">
-            No hay historial de contacto todavía
-          </div>
-        </div>
-      )}
+                {contact.subject && <p className="text-xs text-cyan-400/80 truncate">{contact.subject}</p>}
+                {contact.notes && <p className="text-xs text-slate-400 mt-0.5">{contact.notes}</p>}
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

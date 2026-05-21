@@ -2,24 +2,36 @@ import Header from '../../components/layout/Header';
 import Footer from '../../components/layout/Footer';
 import ContactHero from '../../components/contact/ContactHero';
 import ContactForm from '../../components/contact/ContactForm';
-import BudgetCalculator from '../../components/contact/BudgetCalculator';
-import ContactInfo from '../../components/contact/ContactInfo';
-import ProcessTimeline from '../../components/contact/ProcessTimeline';
+import SchemaOrg from '../../components/seo/SchemaOrg';
+import { getContactPageSchema, getOrganizationSchema } from '../../lib/seo/schemas';
 
 export const metadata = {
-  title: 'Contacto - Luis Granero | Solicita tu Presupuesto Web',
-  description: 'Contáctame para tu proyecto web. Formulario de contacto, calculadora de presupuestos y consulta gratuita disponible.',
+  title: 'Contacto | Presupuesto Desarrollo Web España - Luis Granero',
+  description: 'Solicita presupuesto para tu proyecto web. Desarrollador freelance React y Next.js en España. Consulta gratuita, respuesta en 24h.',
+  keywords: [
+    'contratar desarrollador web España',
+    'presupuesto desarrollo web',
+    'freelance react España contacto',
+    'contratar programador next.js',
+    'consulta desarrollo web gratis',
+    'presupuesto tienda online',
+    'contratar desarrollador e-commerce',
+    'freelance desarrollo web',
+  ],
+  openGraph: {
+    title: 'Contacto | Presupuesto Desarrollo Web - Luis Granero',
+    description: 'Solicita presupuesto gratis para tu proyecto web. Desarrollador freelance en España.',
+    type: 'website',
+  },
 };
 
 export default function ContactPage() {
   return (
-    <main className="min-h-screen bg-black">
+    <main className="min-h-screen bg-[#0F172A]">
+      <SchemaOrg schema={[getContactPageSchema(), getOrganizationSchema()]} />
       <Header />
       <ContactHero />
       <ContactForm />
-      <BudgetCalculator />
-      <ContactInfo />
-      <ProcessTimeline />
       <Footer />
     </main>
   );

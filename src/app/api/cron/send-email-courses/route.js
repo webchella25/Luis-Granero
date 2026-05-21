@@ -3,19 +3,8 @@ import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import EmailCourse from '@/models/EmailCourse';
 import Subscriber from '@/models/Subscriber';
-import nodemailer from 'nodemailer';
+import { sendEmail } from '@/lib/email/mailer';
 import logger from '@/lib/logger';
-
-// Configurar transporter con Brevo
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || 'smtp-relay.brevo.com',
-  port: parseInt(process.env.SMTP_PORT || '587'),
-  secure: false,
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASSWORD
-  }
-});
 
 // Función para reemplazar variables en el contenido del email
 function replaceVariables(text, subscriber) {
@@ -146,7 +135,7 @@ async function handleRequest(request) {
         logger.info(`📧 Sending day ${nextDay} email to ${subscriber.email} for course ${course.slug}`);
 
         // Enviar email
-        await transporter.sendMail({
+        await sendEmail({
           from: `${process.env.EMAIL_FROM_NAME || 'Luis Granero'} <${process.env.SMTP_USER}>`,
           to: subscriber.email,
           subject: subject,

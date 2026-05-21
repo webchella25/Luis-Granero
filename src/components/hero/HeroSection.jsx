@@ -58,17 +58,7 @@ function HeroSection() {
     ]
   };
 
-  if (loading) {
-    return (
-      <section className="min-h-screen bg-black flex items-center justify-center">
-        <div className="animate-pulse text-center">
-          <div className="h-16 bg-gray-800 rounded w-96 mb-6"></div>
-          <div className="h-8 bg-gray-800 rounded w-64 mb-4"></div>
-          <div className="h-12 bg-cyan-600 rounded w-48"></div>
-        </div>
-      </section>
-    );
-  }
+  // Removed loading state to avoid showing placeholder boxes
 
   return (
     <section className="min-h-screen flex items-center justify-center bg-black relative overflow-hidden pt-20">

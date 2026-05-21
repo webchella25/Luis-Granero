@@ -5,20 +5,68 @@ import EmailLog from '@/models/EmailLog';
 import Lead from '@/models/Lead';
 import { extractRequestMetadata } from '@/lib/email/tracking';
 
+const DEFAULT_REDIRECT_URL = 'https://luisgranero.com';
+
+function getAllowedRedirectHosts() {
+  const configuredHosts = (process.env.EMAIL_TRACKING_ALLOWED_HOSTS || '')
+    .split(',')
+    .map(host => host.trim().toLowerCase())
+    .filter(Boolean);
+
+  const envHosts = [
+    process.env.NEXTAUTH_URL,
+    process.env.NEXT_PUBLIC_BASE_URL
+  ]
+    .map(value => {
+      try {
+        return value ? new URL(value).hostname.toLowerCase() : null;
+      } catch {
+        return null;
+      }
+    })
+    .filter(Boolean);
+
+  return new Set([
+    'luisgranero.com',
+    'www.luisgranero.com',
+    ...envHosts,
+    ...configuredHosts
+  ]);
+}
+
+function getSafeRedirectUrl(targetUrl) {
+  if (!targetUrl) return DEFAULT_REDIRECT_URL;
+
+  try {
+    const parsed = new URL(targetUrl);
+    const isAllowedProtocol = parsed.protocol === 'https:' || parsed.protocol === 'http:';
+    const isAllowedHost = getAllowedRedirectHosts().has(parsed.hostname.toLowerCase());
+
+    if (!isAllowedProtocol || !isAllowedHost || parsed.username || parsed.password) {
+      return DEFAULT_REDIRECT_URL;
+    }
+
+    return parsed.toString();
+  } catch {
+    return DEFAULT_REDIRECT_URL;
+  }
+}
+
 export async function GET(request, { params }) {
   try {
     const emailLogId = params.id;
     const { searchParams } = new URL(request.url);
     const targetUrl = searchParams.get('url');
+    const safeTargetUrl = getSafeRedirectUrl(targetUrl);
     
     if (!emailLogId || !/^[0-9a-fA-F]{24}$/.test(emailLogId)) {
       console.log('❌ Invalid emailLogId:', emailLogId);
-      return NextResponse.redirect(targetUrl || 'https://luisgranero.com');
+      return NextResponse.redirect(safeTargetUrl);
     }
     
     if (!targetUrl) {
       console.log('❌ Missing target URL');
-      return NextResponse.redirect('https://luisgranero.com');
+      return NextResponse.redirect(DEFAULT_REDIRECT_URL);
     }
     
     await dbConnect();
@@ -27,7 +75,7 @@ export async function GET(request, { params }) {
     
     if (!emailLog) {
       console.log('❌ EmailLog not found:', emailLogId);
-      return NextResponse.redirect(targetUrl);
+      return NextResponse.redirect(safeTargetUrl);
     }
     
     const metadata = extractRequestMetadata(request);
@@ -37,11 +85,12 @@ export async function GET(request, { params }) {
       leadId: emailLog.leadId,
       emailTo: emailLog.emailTo,
       targetUrl,
+      safeTargetUrl,
       clickCount: emailLog.clickCount + 1,
       ip: metadata.ip
     });
     
-    await emailLog.trackClick(targetUrl, metadata);
+    await emailLog.trackClick(safeTargetUrl, metadata);
     
     if (emailLog.leadId) {
       await Lead.findByIdAndUpdate(emailLog.leadId, {
@@ -53,20 +102,20 @@ export async function GET(request, { params }) {
           contactHistory: {
             date: new Date(),
             type: 'note',
-            notes: `Hizo click en: ${targetUrl}`
+            notes: `Hizo click en: ${safeTargetUrl}`
           }
         }
       });
     }
     
-    return NextResponse.redirect(targetUrl);
+    return NextResponse.redirect(safeTargetUrl);
     
   } catch (error) {
     console.error('❌ Error tracking click:', error);
     
     const { searchParams } = new URL(request.url);
-    const targetUrl = searchParams.get('url') || 'https://luisgranero.com';
-    return NextResponse.redirect(targetUrl);
+    const targetUrl = searchParams.get('url');
+    return NextResponse.redirect(getSafeRedirectUrl(targetUrl));
   }
 }
 

@@ -98,7 +98,7 @@ function FAQSection() {
   };
 
   return (
-    <section className="py-20 bg-black">
+    <section className="py-20 bg-[#0F172A]">
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
           <h2 className="text-4xl md:text-5xl font-bold gradient-text mb-6">
@@ -123,11 +123,11 @@ function FAQSection() {
                   return (
                     <div
                       key={questionIndex}
-                      className="bg-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-xl overflow-hidden hover:border-cyan-500/30 transition-all duration-300"
+                      className="bg-[#1E293B] border border-slate-700/50 rounded-xl overflow-hidden hover:border-cyan-500/40 transition-all duration-300"
                     >
                       <button
                         onClick={() => toggleFAQ(categoryIndex, questionIndex)}
-                        className="w-full p-6 text-left flex items-center justify-between hover:bg-gray-800/30 transition-colors duration-300"
+                        className="w-full p-6 text-left flex items-center justify-between hover:bg-slate-700/20 transition-colors duration-300"
                       >
                         <h4 className="font-semibold text-white pr-4">
                           {faq.question}
@@ -153,7 +153,7 @@ function FAQSection() {
                       
                       {isOpen && (
                         <div className="px-6 pb-6">
-                          <div className="border-t border-gray-700 pt-4">
+                          <div className="border-t border-slate-700/50 pt-4">
                             <p className="text-gray-300 leading-relaxed">
                               {faq.answer}
                             </p>
@@ -170,7 +170,7 @@ function FAQSection() {
 
         {/* CTA final */}
         <div className="text-center mt-16">
-          <div className="bg-gradient-to-r from-gray-900/50 to-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-2xl p-8 max-w-2xl mx-auto">
+          <div className="bg-gradient-to-r from-gray-900/50 to-gray-800/50 backdrop-blur-sm border border-slate-700/50 rounded-2xl p-8 max-w-2xl mx-auto">
             <h3 className="text-2xl font-bold gradient-text mb-4">
               ¿Tienes más preguntas?
             </h3>

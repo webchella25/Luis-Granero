@@ -10,7 +10,7 @@ export default function EditLeadModal({ lead, onClose, onSuccess }) {
     possibleEmails: lead.possibleEmails || [],
     phoneNumbers: lead.phoneNumbers || [],
     website: lead.website || '',
-    location: lead.location || '',
+    location: lead.location || lead.address || '',
     companyName: lead.companyName || ''
   });
   

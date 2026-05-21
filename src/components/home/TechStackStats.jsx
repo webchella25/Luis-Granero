@@ -34,22 +34,7 @@ export default function TechStackStats() {
 
   const mainTechnologies = techStack.slice(0, 6);
 
-  if (loading) {
-    return (
-      <section className="py-20 bg-black">
-        <div className="container mx-auto px-4">
-          <div className="animate-pulse">
-            <div className="h-8 bg-gray-700 rounded w-64 mx-auto mb-12"></div>
-            <div className="flex justify-center items-center space-x-8">
-              {[...Array(6)].map((_, i) => (
-                <div key={i} className="w-16 h-16 bg-gray-800 rounded-lg"></div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-    );
-  }
+  // Removed loading state to avoid showing placeholder boxes
 
   return (
     <section className="py-20 bg-black">

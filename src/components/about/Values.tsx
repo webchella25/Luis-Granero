@@ -38,7 +38,7 @@ export default function Values({ data }: Props) {
   const values = (data && data.length > 0) ? data : defaultValues;
 
   return (
-    <section className="py-20 bg-gray-950">
+    <section className="py-20 bg-[#0B1120]">
       <div className="container mx-auto px-4">
         <div className="max-w-6xl mx-auto">
           
@@ -55,7 +55,7 @@ export default function Values({ data }: Props) {
             {values.map((value, index) => (
               <div
                 key={index}
-                className="bg-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-xl p-6 text-center hover:border-cyan-500/50 transition-all duration-300 hover:transform hover:scale-105"
+                className="bg-[#1E293B] border border-slate-700/50 rounded-xl p-6 text-center hover:border-cyan-500/40 transition-all duration-200"
               >
                 
                 <div className="text-4xl mb-4">{value.icon}</div>

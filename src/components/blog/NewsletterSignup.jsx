@@ -72,7 +72,7 @@ function NewsletterSignup() {
 
   if (isSubscribed) {
     return (
-      <section className="py-20 bg-black">
+      <section className="py-20 bg-[#0F172A]">
         <div className="container mx-auto px-4">
           <div className="max-w-2xl mx-auto text-center">
             <div className="bg-gradient-to-r from-gray-900/50 to-gray-800/50 backdrop-blur-sm border border-green-500/30 rounded-2xl p-8">
@@ -101,7 +101,7 @@ function NewsletterSignup() {
   }
 
   return (
-    <section className="py-20 bg-black relative overflow-hidden">
+    <section className="py-20 bg-[#0F172A] relative overflow-hidden">
       {/* Background effects */}
       <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 via-transparent to-green-500/5"></div>
       <div className="absolute top-0 left-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl"></div>
@@ -121,7 +121,7 @@ function NewsletterSignup() {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
             {/* Form */}
-            <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-2xl p-8">
+            <div className="bg-[#1E293B]/50 backdrop-blur-sm border border-slate-700/50 rounded-2xl p-8">
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
                   <label htmlFor="email" className="block text-sm font-semibold text-white mb-2">
@@ -133,7 +133,7 @@ function NewsletterSignup() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="tu@email.com"
-                    className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-cyan-400 transition-colors"
+                    className="w-full px-4 py-3 bg-gray-800 border border-slate-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-cyan-400 transition-colors"
                     required
                   />
                 </div>
@@ -217,7 +217,7 @@ function NewsletterSignup() {
               </div>
 
               {/* Stats */}
-              <div className="bg-gray-900/30 backdrop-blur-sm border border-gray-800 rounded-xl p-6">
+              <div className="bg-[#1E293B]/30 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6">
                 <h4 className="font-bold text-white mb-4 text-center">
                   Números que hablan por sí solos
                 </h4>
@@ -232,7 +232,7 @@ function NewsletterSignup() {
               </div>
 
               {/* Testimonial */}
-              <div className="bg-gray-900/30 backdrop-blur-sm border border-gray-800 rounded-xl p-6">
+              <div className="bg-[#1E293B]/30 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6">
                 <div className="flex space-x-1 mb-3">
                   {[...Array(5)].map((_, i) => (
                     <span key={i} className="text-yellow-400">★</span>

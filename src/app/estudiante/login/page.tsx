@@ -30,15 +30,16 @@ export default function StudentLoginPage() {
     setError('')
 
     try {
-      const res = await fetch('/api/auth/signin', {
+      const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify(loginData)
       })
 
       const data = await res.json()
 
-      if (res.ok) {
+      if (res.ok && data.success) {
         router.push('/estudiante/dashboard')
       } else {
         setError(data.error || 'Error al iniciar sesión')
@@ -67,7 +68,7 @@ export default function StudentLoginPage() {
     setLoading(true)
 
     try {
-      const res = await fetch('/api/auth/signup', {
+      const res = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -79,17 +80,12 @@ export default function StudentLoginPage() {
 
       const data = await res.json()
 
-      if (res.ok) {
-        // Auto-login después del registro
-        setLoginData({
-          email: registerData.email,
-          password: registerData.password
-        })
-
-        // Login automático
-        const loginRes = await fetch('/api/auth/signin', {
+      if (res.ok && data.success) {
+        // Login automático tras el registro
+        const loginRes = await fetch('/api/auth/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
           body: JSON.stringify({
             email: registerData.email,
             password: registerData.password
@@ -98,6 +94,9 @@ export default function StudentLoginPage() {
 
         if (loginRes.ok) {
           router.push('/estudiante/dashboard')
+        } else {
+          setError('Registro completado. Por favor, inicia sesión.')
+          setIsLogin(true)
         }
       } else {
         setError(data.error || 'Error al registrarse')

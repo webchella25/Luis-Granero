@@ -51,7 +51,7 @@ export default function CursosFeatures() {
   ];
 
   return (
-    <section className="py-20 bg-black relative overflow-hidden">
+    <section className="py-20 bg-[#0F172A] relative overflow-hidden">
       
       {/* Background gradient */}
       <div className="absolute inset-0">
@@ -79,11 +79,11 @@ export default function CursosFeatures() {
           {features.map((feature, index) => (
             <div
               key={index}
-              className="group bg-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-xl p-6 hover:border-purple-500/50 transition-all duration-300 hover:transform hover:scale-105"
+              className="group bg-[#1E293B]/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6 hover:border-purple-500/50 transition-all duration-300 hover:transform hover:scale-105"
             >
               {/* Icon with gradient */}
               <div className={`w-16 h-16 rounded-lg bg-gradient-to-br ${feature.color} p-0.5 mb-4`}>
-                <div className="w-full h-full bg-gray-900 rounded-lg flex items-center justify-center text-white">
+                <div className="w-full h-full bg-[#1E293B] rounded-lg flex items-center justify-center text-white">
                   {feature.icon}
                 </div>
               </div>

@@ -2,36 +2,23 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 
 export default function CategoriesPage() {
-  // // useSession() // TODO: Implementar auth manual // TODO: Implementar auth manual;
-  const router = useRouter();
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (status === 'loading') return; // Still loading
-    
-    if (status === 'unauthenticated') {
-      router.push('/admin/login');
-      return;
-    }
-
-    // Usuario autenticado, cargar categorías
+    // Middleware handles auth, just load categories
     fetchCategories();
-  }, [status, router]);
+  }, []);
 
   const fetchCategories = async () => {
     try {
       setLoading(true);
-      // Por ahora, categorías estáticas hasta que la API esté lista
-      const defaultCategories = [
-        { _id: '1', name: 'React', slug: 'react', postCount: 5 },
-        { _id: '2', name: 'Next.js', slug: 'nextjs', postCount: 3 },
-        { _id: '3', name: 'JavaScript', slug: 'javascript', postCount: 8 },
-      ];
-      setCategories(defaultCategories);
+      const res = await fetch('/api/admin/blog/categories');
+      if (!res.ok) throw new Error('Error fetching categories');
+      const data = await res.json();
+      setCategories(data);
     } catch (error) {
       console.error('Error loading categories:', error);
     } finally {
@@ -39,16 +26,12 @@ export default function CategoriesPage() {
     }
   };
 
-  if (status === 'loading' || loading) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
         <div className="text-white">Cargando...</div>
       </div>
     );
-  }
-
-  if (status === 'unauthenticated') {
-    return null; // Será redirigido
   }
 
   return (
@@ -59,11 +42,28 @@ export default function CategoriesPage() {
             Gestión de Categorías
           </h1>
           
-          <div className="grid gap-4">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
             {categories.map((category) => (
-              <div key={category._id} className="bg-gray-700 p-4 rounded-lg">
-                <h3 className="text-white font-semibold">{category.name}</h3>
-                <p className="text-gray-400 text-sm">{category.postCount} posts</p>
+              <div key={category._id} className="bg-gray-700 p-6 rounded-lg border border-gray-600 hover:border-cyan-500 transition-colors">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <span className="text-3xl">{category.icon}</span>
+                    <div>
+                      <h3 className="text-white font-semibold text-lg">{category.name}</h3>
+                      <p className="text-xs text-gray-400">{category.slug}</p>
+                    </div>
+                  </div>
+                </div>
+                {category.description && (
+                  <p className="text-gray-400 text-sm mb-3">{category.description}</p>
+                )}
+                <div className="flex items-center gap-2">
+                  <div
+                    className="w-4 h-4 rounded-full"
+                    style={{ backgroundColor: category.color }}
+                  />
+                  <span className="text-xs text-gray-500">Color de categoría</span>
+                </div>
               </div>
             ))}
           </div>

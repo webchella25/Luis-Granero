@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import Appointment from '@/models/Appointment';
 import Lead from '@/models/Lead';
-import nodemailer from 'nodemailer';
+import { sendEmail } from '@/lib/email/mailer';
 import { emailTemplates } from '@/lib/email/templates';
 
 export async function POST(request: Request) {
@@ -58,19 +58,9 @@ export async function POST(request: Request) {
     });
     
     // Enviar email de confirmación
-    const transporter = nodemailer.createTransport({  // ← CORREGIDO: createTransport
-      host: process.env.SMTP_HOST,
-      port: parseInt(process.env.SMTP_PORT || '587'),
-      secure: false,
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASSWORD,
-      },
-    });
-    
     const confirmationTemplate = emailTemplates.appointmentConfirmation;
-    
-    await transporter.sendMail({
+
+    await sendEmail({
       from: `${process.env.EMAIL_FROM_NAME} <${process.env.EMAIL_FROM}>`,
       to: appointment.email || phone,
       subject: confirmationTemplate.subject(),
@@ -78,9 +68,9 @@ export async function POST(request: Request) {
     });
     
     // Enviar notificación a ti mismo
-    await transporter.sendMail({
+    await sendEmail({
       from: `${process.env.EMAIL_FROM_NAME} <${process.env.EMAIL_FROM}>`,
-      to: process.env.EMAIL_FROM,
+      to: process.env.EMAIL_FROM || 'luis@luisgranero.com',
       subject: `🔔 Nueva llamada agendada - ${name}`,
       html: `
         <h2>Nueva llamada agendada</h2>

@@ -13,15 +13,17 @@ export default {
         foreground: "var(--foreground)",
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
-        mono: ['Fira Code', 'monospace'],
+        heading: ['var(--font-heading)', 'Space Grotesk', 'system-ui', 'sans-serif'],
+        body:    ['var(--font-body)', 'DM Sans', 'system-ui', 'sans-serif'],
+        sans:    ['var(--font-body)', 'DM Sans', 'system-ui', 'sans-serif'],
+        mono:    ['Fira Code', 'monospace'],
       },
       animation: {
-        'fade-in-up': 'fadeInUp 0.6s ease-out',
-        'pulse-slow': 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-        'twinkling': 'twinkling 5s linear infinite',
+        'fade-in-up': 'fadeInUp 0.5s ease-out',
       },
     },
   },
-  plugins: [],
+  plugins: [
+    require('@tailwindcss/typography'),
+  ],
 }

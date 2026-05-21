@@ -1,6 +1,5 @@
 // src/app/api/admin/courses/[id]/students/route.js
 import { NextResponse } from 'next/server';
-import { checkAuth } from '@/lib/checkAuth';
 import dbConnect from '@/lib/mongodb';
 import LearningPath from '@/models/LearningPath';
 import CourseProgress from '@/models/CourseProgress';
@@ -8,15 +7,6 @@ import User from '@/models/User';
 
 export async function GET(request, { params }) {
   try {
-    const session = await checkAuth();
-
-    if (!session || session.user.role !== 'admin') {
-      return NextResponse.json(
-        { success: false, error: 'No autorizado' },
-        { status: 401 }
-      );
-    }
-
     await dbConnect();
 
     const { searchParams } = new URL(request.url);

@@ -50,9 +50,7 @@ const LegalPageSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Índices
-LegalPageSchema.index({ pageType: 1 });
-LegalPageSchema.index({ slug: 1 });
+// Índices (pageType y slug tienen unique:true, su índice se crea automáticamente)
 LegalPageSchema.index({ isPublished: 1 });
 
 // Middleware para actualizar lastUpdated

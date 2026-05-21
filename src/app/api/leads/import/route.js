@@ -1,14 +1,25 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import Lead from '@/models/Lead';
+import { requireAdmin } from '@/lib/adminAuth';
 
 export async function POST(request) {
   try {
+    const auth = await requireAdmin(request);
+    if (!auth.ok) return auth.response;
+
     const { leads } = await request.json();
     
     if (!leads || !Array.isArray(leads) || leads.length === 0) {
       return NextResponse.json(
         { error: 'No hay leads para importar' },
+        { status: 400 }
+      );
+    }
+
+    if (leads.length > 100) {
+      return NextResponse.json(
+        { error: 'Máximo 100 leads por importación' },
         { status: 400 }
       );
     }

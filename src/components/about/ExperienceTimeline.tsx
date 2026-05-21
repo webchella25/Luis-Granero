@@ -1,6 +1,8 @@
 // src/components/about/ExperienceTimeline.tsx
 'use client';
 
+import { Trophy } from 'lucide-react';
+
 interface Experience {
   company: string;
   position: string;
@@ -17,35 +19,43 @@ interface Props {
 export default function ExperienceTimeline({ data }: Props) {
   const defaultExperience: Experience[] = [
     {
+      company: "Proyectos propios + Freelance",
+      position: "Desarrollador Web Full Stack — React & Next.js",
+      period: "2024 - Presente",
+      description: "Tras años con WordPress, di el salto definitivo al stack moderno. Ahora construyo webs y aplicaciones a medida para pequeñas empresas, sin las limitaciones de temas ni plugins. Paralelamente desarrollo dos productos SaaS propios.",
+      technologies: ["React", "Next.js", "Node.js", "MongoDB", "TypeScript", "Tailwind CSS"],
+      achievements: ["Salto a stack moderno en 2024", "2 proyectos SaaS en desarrollo", "Webs sin límites ni dependencias de terceros"]
+    },
+    {
       company: "Freelance",
-      position: "Desarrollador Web Full Stack",
-      period: "2020 - Presente",
-      description: "Desarrollo de aplicaciones web personalizadas para startups y empresas, especializado en React, Next.js y soluciones de e-commerce.",
-      technologies: ["React", "Next.js", "Node.js", "MongoDB", "TypeScript"],
-      achievements: ["50+ proyectos completados", "98% satisfacción del cliente", "Especialista en performance web"]
+      position: "Desarrollador WordPress",
+      period: "2015 - 2024",
+      description: "Empecé a hacer webs con WordPress por hobby y terminé con clientes reales. Construí sitios para empresas de telecomunicaciones, carpinterías metálicas y otros negocios locales. Con el tiempo las limitaciones de WordPress — plugins de pago, temas que no se adaptan del todo — me llevaron a buscar algo mejor.",
+      technologies: ["WordPress", "WooCommerce", "PHP", "MySQL", "CSS", "jQuery"],
+      achievements: ["Webs para sectores como telecomunicaciones y metal", "Gestión completa: diseño, desarrollo y SEO", "Proyectos activos a día de hoy"]
     },
     {
-      company: "Transición Tecnológica",
-      position: "Especialización en Stack Moderno",
-      period: "2018 - 2020",
-      description: "Migración completa de WordPress a tecnologías modernas. Dominio del ecosistema React y arquitecturas escalables.",
-      technologies: ["React", "Next.js", "TypeScript", "API REST", "JAMstack"],
-      achievements: ["Migración exitosa a stack moderno", "Reducción 60% en tiempo de desarrollo"]
+      company: "Empresa de telecomunicaciones",
+      position: "Técnico de instalaciones — Internet por antenas",
+      period: "2011 - 2015",
+      description: "Instalación y mantenimiento de sistemas de acceso a internet mediante antenas. Trabajo de campo que me dio una base sólida en redes e infraestructura.",
+      technologies: ["Redes IP", "Antenas WiFi", "Mikrotik", "Ubiquiti", "Cableado estructurado"],
+      achievements: ["Instalaciones de internet en zona rural", "Administración de redes y routers", "Diagnóstico y resolución de fallos en campo"]
     },
     {
-      company: "Proyectos Diversos",
-      position: "Desarrollador WordPress Senior",
-      period: "2014 - 2018",
-      description: "Desarrollo de sitios corporativos, e-commerce con WooCommerce y optimización de performance.",
-      technologies: ["WordPress", "PHP", "MySQL", "WooCommerce", "jQuery"],
-      achievements: ["100+ sitios WordPress", "Especialista en WooCommerce", "Optimización SEO avanzada"]
+      company: "Negocio propio",
+      position: "Emprendedor — Tienda de informática",
+      period: "2008 - 2011",
+      description: "Abrí mi propia tienda de informática. Reparación, montaje de equipos y venta de componentes. La crisis de 2011 obligó al cierre, pero fue una escuela brutal de autonomía, atención al cliente y resolución de problemas.",
+      technologies: ["Hardware PC", "Redes LAN", "Sistemas Windows/Linux", "Reparación de equipos"],
+      achievements: ["Gestión completa del negocio", "Reparación y montaje de ordenadores", "Experiencia directa con clientes y proveedores"]
     }
   ];
 
   const experiences = (data && data.length > 0) ? data : defaultExperience;
 
   return (
-    <section className="py-20 bg-black">
+    <section className="py-20 bg-[#0F172A]">
       <div className="container mx-auto px-4">
         <div className="max-w-4xl mx-auto">
           
@@ -66,10 +76,10 @@ export default function ExperienceTimeline({ data }: Props) {
               <div key={index} className="relative flex items-start mb-12 last:mb-0">
                 
                 {/* Timeline dot */}
-                <div className="absolute left-6 w-4 h-4 bg-cyan-400 rounded-full border-4 border-black z-10"></div>
+                <div className="absolute left-6 w-4 h-4 bg-cyan-400 rounded-full border-4 border-[#0F172A] z-10"></div>
                 
                 {/* Content */}
-                <div className="ml-20 bg-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-xl p-6 w-full hover:border-gray-600 transition-colors">
+                <div className="ml-20 bg-[#1E293B] border border-slate-700/50 rounded-xl p-6 w-full hover:border-slate-600 transition-colors">
                   
                   <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4">
                     <div>
@@ -107,7 +117,7 @@ export default function ExperienceTimeline({ data }: Props) {
                       <ul className="space-y-1">
                         {exp.achievements.map((achievement, achievementIndex) => (
                           <li key={achievementIndex} className="flex items-center text-sm text-gray-300">
-                            <span className="text-green-400 mr-2">🏆</span>
+                            <Trophy className="w-3.5 h-3.5 text-green-400 mr-2 flex-shrink-0" />
                             {achievement}
                           </li>
                         ))}

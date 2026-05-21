@@ -6,14 +6,14 @@ import axios from 'axios';
  * Extrae y analiza reviews de Google usando SerpAPI
  */
 
-const SERPAPI_KEY = process.env.SERPAPI_API_KEY;
+const SERPAPI_KEY = process.env.SERPAPI_KEY;
 
 /**
  * Obtener reviews de un negocio por Place ID
  */
 export async function getGoogleReviews(placeId, maxReviews = 20) {
   if (!SERPAPI_KEY) {
-    console.warn('⚠️ SERPAPI_API_KEY no configurada');
+    console.warn('⚠️ SERPAPI_KEY no configurada');
     return null;
   }
 
@@ -80,7 +80,7 @@ export async function getGoogleReviews(placeId, maxReviews = 20) {
  */
 export async function getReviewsByBusinessName(businessName, location = null) {
   if (!SERPAPI_KEY) {
-    console.warn('⚠️ SERPAPI_API_KEY no configurada');
+    console.warn('⚠️ SERPAPI_KEY no configurada');
     return null;
   }
 
@@ -389,6 +389,60 @@ export function calculateReviewsOpportunityScore(reviewsData) {
   }
 
   return Math.min(100, score);
+}
+
+/**
+ * Obtener fotos del negocio desde Google Maps (para demos)
+ * Usa engine google_maps con type=place para extraer fotos del listing
+ */
+export async function getGooglePlacePhotos(placeId, maxPhotos = 10) {
+  if (!SERPAPI_KEY) {
+    console.warn('⚠️ SERPAPI_KEY no configurada');
+    return [];
+  }
+
+  if (!placeId) return [];
+
+  console.log(`\n📸 Obteniendo fotos del negocio (Place ID: ${placeId})`);
+
+  try {
+    const response = await axios.get('https://serpapi.com/search.json', {
+      params: {
+        engine: 'google_maps',
+        type: 'place',
+        place_id: placeId,
+        api_key: SERPAPI_KEY,
+        hl: 'es'
+      }
+    });
+
+    const data = response.data;
+    const rawPhotos = data.place_results?.photos || data.photos || [];
+
+    if (rawPhotos.length === 0) {
+      console.log('   ⚠️ No se encontraron fotos');
+      return [];
+    }
+
+    // Extraer URLs limpias y filtrar thumbnails pequeños
+    const photos = rawPhotos
+      .slice(0, maxPhotos)
+      .map((photo, index) => ({
+        index,
+        url: photo.image || photo.url || photo.thumbnail || null,
+        thumbnail: photo.thumbnail || photo.image || null,
+        width: photo.width || null,
+        height: photo.height || null
+      }))
+      .filter(p => p.url !== null);
+
+    console.log(`   ✅ ${photos.length} fotos obtenidas`);
+    return photos;
+
+  } catch (error) {
+    console.error('❌ Error obteniendo fotos:', error.message);
+    return [];
+  }
 }
 
 /**

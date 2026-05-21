@@ -1,6 +1,5 @@
 // src/app/api/admin/blog/categories/route.js
 import { NextResponse } from 'next/server'
-import { checkAuth } from '@/lib/checkAuth'
 import dbConnect from '@/lib/mongodb'
 import Category from '@/models/Category'
 
@@ -58,15 +57,6 @@ const defaultCategories = [
 
 export async function GET() {
   try {
-    const session = await checkAuth()
-    
-    if (!session) {
-      return NextResponse.json(
-        { error: 'No autorizado' }, 
-        { status: 401 }
-      )
-    }
-
     await dbConnect()
     
     let categories = await Category.find({ isActive: true })
@@ -91,14 +81,6 @@ export async function GET() {
 
 export async function POST(request) {
   try {
-    const session = await checkAuth()
-    
-    if (!session) {
-      return NextResponse.json(
-        { error: 'No autorizado' }, 
-        { status: 401 }
-      )
-    }
 
     await dbConnect()
     
