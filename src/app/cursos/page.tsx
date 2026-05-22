@@ -13,6 +13,7 @@ import LearningPath from '@/models/LearningPath';
 import EmailCourse from '@/models/EmailCourse';
 import Link from 'next/link';
 import { BookOpen, Code2, Rocket, Users, CheckCircle, ArrowRight } from 'lucide-react';
+import { DEFAULT_OG_IMAGE, SITE_URL } from '@/lib/seo/metadata';
 
 export const revalidate = 3600;
 
@@ -62,10 +63,17 @@ export async function generateMetadata() {
       title: 'Aprende React desde cero — Cursos gratis | Luis Granero',
       description: 'Rutas de aprendizaje gratuitas para aprender React, Next.js y desarrollo web moderno. De principiante a avanzado.',
       type: 'website',
-      url: 'https://www.luisgranero.com/cursos',
+      url: `${SITE_URL}/cursos`,
+      images: [DEFAULT_OG_IMAGE],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: 'Aprende React desde cero — Cursos gratis | Luis Granero',
+      description: 'Rutas gratuitas para aprender React, Next.js y desarrollo web moderno.',
+      images: [DEFAULT_OG_IMAGE],
     },
     alternates: {
-      canonical: 'https://www.luisgranero.com/cursos',
+      canonical: `${SITE_URL}/cursos`,
     },
   };
 }

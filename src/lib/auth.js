@@ -5,7 +5,13 @@ import dbConnect from '@/lib/mongodb'
 import User from '@/models/User'
 import bcrypt from 'bcryptjs'
 
-const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET)
+function getAuthSecret() {
+  if (!process.env.NEXTAUTH_SECRET) {
+    throw new Error('NEXTAUTH_SECRET is required for admin authentication')
+  }
+
+  return new TextEncoder().encode(process.env.NEXTAUTH_SECRET)
+}
 
 export async function login(email, password) {
   await dbConnect()
@@ -23,7 +29,7 @@ export async function login(email, password) {
   })
     .setProtectedHeader({ alg: 'HS256' })
     .setExpirationTime('14d') // Reducido de 30d a 14d por seguridad
-    .sign(secret)
+    .sign(getAuthSecret())
   
   return { user, token }
 }
@@ -35,7 +41,7 @@ export async function getSession() {
   if (!token) return null
   
   try {
-    const { payload } = await jwtVerify(token, secret)
+    const { payload } = await jwtVerify(token, getAuthSecret())
     return {
       user: {
         id: payload.id,

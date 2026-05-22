@@ -19,6 +19,43 @@ function getBaseUrl(request) {
   return `${proto}://${host}`
 }
 
+function getJwtSecret() {
+  const secret = process.env.NEXTAUTH_SECRET
+
+  if (!secret) {
+    throw new Error('NEXTAUTH_SECRET is required to validate admin sessions')
+  }
+
+  return new TextEncoder().encode(secret)
+}
+
+function clearSessionCookie(response) {
+  response.cookies.set('session', '', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/',
+    maxAge: 0,
+  })
+  return response
+}
+
+function unauthorizedResponse(pathname, request, message = 'No autorizado') {
+  if (pathname.startsWith('/api/')) {
+    return NextResponse.json({ success: false, error: message }, { status: 401 })
+  }
+
+  return NextResponse.redirect(new URL('/admin/login', getBaseUrl(request)))
+}
+
+function forbiddenResponse(pathname, request, message = 'No tienes permisos de administrador') {
+  if (pathname.startsWith('/api/')) {
+    return NextResponse.json({ success: false, error: message }, { status: 403 })
+  }
+
+  return NextResponse.redirect(new URL('/admin/login', getBaseUrl(request)))
+}
+
 export async function middleware(request) {
   const { pathname } = request.nextUrl
 
@@ -103,34 +140,33 @@ export async function middleware(request) {
     const token = request.cookies.get('session')?.value
 
     if (!token) {
-      if (pathname.startsWith('/api/')) {
-        return NextResponse.json({ success: false, error: 'No autorizado' }, { status: 401 })
-      }
-      return NextResponse.redirect(new URL('/admin/login', getBaseUrl(request)))
+      return unauthorizedResponse(pathname, request)
     }
 
     try {
-      const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET)
-      const { payload } = await jwtVerify(token, secret)
+      const { payload } = await jwtVerify(token, getJwtSecret())
+      const role = typeof payload.role === 'string' ? payload.role : ''
+
+      if (role !== 'admin') {
+        return forbiddenResponse(pathname, request)
+      }
 
       // Pasar identidad verificada como headers de request
       // Así los route handlers no necesitan re-verificar el JWT
       const requestHeaders = new Headers(request.headers)
-      requestHeaders.set('x-admin-id', payload.id || '')
-      requestHeaders.set('x-admin-email', payload.email || '')
-      requestHeaders.set('x-admin-role', payload.role || 'admin')
+      requestHeaders.set('x-admin-id', typeof payload.id === 'string' ? payload.id : '')
+      requestHeaders.set('x-admin-email', typeof payload.email === 'string' ? payload.email : '')
+      requestHeaders.set('x-admin-role', role)
       requestHeaders.set('x-admin-verified', '1')
 
       return NextResponse.next({ request: { headers: requestHeaders } })
-    } catch (error) {
+    } catch {
       if (pathname.startsWith('/api/')) {
         const response = NextResponse.json({ success: false, error: 'Sesión inválida' }, { status: 401 })
-        response.cookies.delete('session')
-        return response
+        return clearSessionCookie(response)
       }
       const response = NextResponse.redirect(new URL('/admin/login', getBaseUrl(request)))
-      response.cookies.delete('session')
-      return response
+      return clearSessionCookie(response)
     }
   }
 

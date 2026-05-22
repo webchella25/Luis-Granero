@@ -10,6 +10,7 @@ import BlogCategories from '../../components/blog/BlogCategories';
 import NewsletterSignup from '../../components/blog/NewsletterSignup';
 import SchemaOrg from '../../components/seo/SchemaOrg';
 import { getItemListSchema, getBreadcrumbSchema } from '../../lib/seo/schemas';
+import { DEFAULT_OG_IMAGE, SITE_URL } from '@/lib/seo/metadata';
 
 export const revalidate = 3600;
 
@@ -110,10 +111,17 @@ export async function generateMetadata({ searchParams }: BlogPageProps) {
       title: 'Blog de Desarrollo Web — Luis Granero | React & Next.js',
       description: 'Tutoriales prácticos de React, Next.js y JavaScript. Aprende desarrollo web moderno con ejemplos reales.',
       type: 'website',
-      url: 'https://www.luisgranero.com/blog',
+      url: `${SITE_URL}/blog`,
+      images: [DEFAULT_OG_IMAGE],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: 'Blog de Desarrollo Web — Luis Granero',
+      description: 'Tutoriales prácticos de React, Next.js y JavaScript con ejemplos reales.',
+      images: [DEFAULT_OG_IMAGE],
     },
     alternates: {
-      canonical: 'https://www.luisgranero.com/blog',
+      canonical: `${SITE_URL}/blog`,
     },
     ...(hasFilters && {
       robots: {

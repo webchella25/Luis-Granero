@@ -2,8 +2,7 @@
 import type { Metadata } from 'next'
 import { Space_Grotesk, DM_Sans } from 'next/font/google'
 import './globals.css'
-import SessionWrapper from '@/components/providers/SessionWrapper'
-import ConditionalLayout from '@/components/layout/ConditionalLayout'
+import { DEFAULT_OG_IMAGE, SITE_URL } from '@/lib/seo/metadata'
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ['latin'],
@@ -18,20 +17,25 @@ const dmSans = DM_Sans({
 })
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || 'https://luisgranero.com'),
+  metadataBase: new URL(SITE_URL),
   title: {
     default: 'Luis Granero - Desarrollador Full Stack',
     template: '%s | Luis Granero'
   },
   description: 'Desarrollo web moderno con React, Next.js y tecnologías de vanguardia',
+  alternates: {
+    canonical: '/',
+  },
   openGraph: {
     siteName: 'Luis Granero',
     locale: 'es_ES',
     type: 'website',
+    images: [DEFAULT_OG_IMAGE],
   },
   twitter: {
     card: 'summary_large_image',
     creator: '@luisgranero',
+    images: [DEFAULT_OG_IMAGE],
   },
   robots: {
     index: true,
@@ -48,11 +52,7 @@ export default function RootLayout({
   return (
     <html lang="es">
       <body className={`${spaceGrotesk.variable} ${dmSans.variable} font-body`}>
-        <SessionWrapper>
-          <ConditionalLayout>
-            {children}
-          </ConditionalLayout>
-        </SessionWrapper>
+        {children}
       </body>
     </html>
   )

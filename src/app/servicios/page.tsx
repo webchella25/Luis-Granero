@@ -11,6 +11,7 @@ import TestimonialsSection from '../../components/testimonials/TestimonialsSecti
 import SchemaOrg from '../../components/seo/SchemaOrg';
 import { getBreadcrumbSchema, getOrganizationSchema } from '../../lib/seo/schemas';
 import { ArrowRight, Rocket, ShoppingCart, Code2, MessageSquare } from 'lucide-react';
+import { DEFAULT_OG_IMAGE, SITE_URL } from '@/lib/seo/metadata';
 
 export const metadata = {
   title: 'Servicios de Desarrollo Web Freelance en España | React, Next.js, E-commerce',
@@ -31,10 +32,17 @@ export const metadata = {
     title: 'Servicios de Desarrollo Web Freelance | Luis Granero — España',
     description: 'Freelance senior en React y Next.js: apps a medida, tiendas online, consultoría técnica. Presupuesto sin compromiso.',
     type: 'website',
-    url: 'https://www.luisgranero.com/servicios',
+    url: `${SITE_URL}/servicios`,
+    images: [DEFAULT_OG_IMAGE],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Servicios de Desarrollo Web Freelance | Luis Granero',
+    description: 'Freelance senior en React y Next.js: apps a medida, tiendas online, consultoría técnica.',
+    images: [DEFAULT_OG_IMAGE],
   },
   alternates: {
-    canonical: 'https://www.luisgranero.com/servicios',
+    canonical: `${SITE_URL}/servicios`,
   },
 };
 

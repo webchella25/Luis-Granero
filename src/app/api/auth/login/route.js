@@ -1,10 +1,11 @@
 // src/app/api/auth/login/route.js
 import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
 import { login } from '@/lib/auth'
 import { rateLimit, getClientIP } from '@/lib/rateLimit'
 import logger from '@/lib/logger'
 import { loginSchema, validate } from '@/lib/validations'
+
+const SESSION_MAX_AGE = 14 * 24 * 60 * 60
 
 export async function POST(request) {
   const startTime = Date.now()
@@ -53,19 +54,6 @@ export async function POST(request) {
 
     logger.auth('Login successful', { email })
 
-    const cookieStore = await cookies()
-
-    // Configuración mejorada de cookie
-    cookieStore.set('session', result.token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 30 * 24 * 60 * 60,
-      path: '/',
-      // NO establecer domain para que funcione en subdominio
-    })
-    
-    // Crear respuesta con header adicional para forzar cookie
     const response = NextResponse.json({ 
       success: true,
       user: {
@@ -75,12 +63,11 @@ export async function POST(request) {
       redirect: '/admin' // Indicar dónde redirigir
     })
     
-    // Establecer cookie también en el header de respuesta
     response.cookies.set('session', result.token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 30 * 24 * 60 * 60,
+      maxAge: SESSION_MAX_AGE,
       path: '/'
     })
     

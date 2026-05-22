@@ -1,92 +1,66 @@
-import { Metadata } from "next"
 import Link from "next/link"
 import { Suspense } from "react"
 import {
-  Code2, Rocket, Shield, Zap, Clock, Star, Trophy,
+  Code2, Rocket, Shield, Clock, Star, Trophy,
   ArrowRight, Sparkles, Target, CheckCircle2,
-  TrendingUp, Award, Heart, Layers, ExternalLink, Users
+  TrendingUp, Award, Heart, Layers
 } from "lucide-react"
 
 import Header from '@/components/layout/Header'
 import Footer from '@/components/layout/Footer'
 import SchemaOrg from '@/components/seo/SchemaOrg'
 import { getOrganizationSchema, getWebSiteSchema } from '@/lib/seo/schemas'
+import {
+  getFeaturedCourse,
+  getFeaturedProjects,
+  getHomeServices,
+  getLatestPosts,
+} from '@/lib/publicData'
+import { DEFAULT_OG_IMAGE, SITE_URL } from '@/lib/seo/metadata'
 
-export const metadata: Metadata = {
-  title: 'Luis Granero — Desarrollador Web Freelance en España | React & Next.js',
-  description: 'Desarrollador web freelance en España con +10 años de experiencia. Especializado en React, Next.js y aplicaciones web a medida. Transforma tu idea en un producto digital real.',
-  keywords: [
-    'desarrollador web freelance España',
-    'programador React España',
-    'freelance Next.js',
-    'desarrollo web a medida',
-    'aplicaciones web React',
-    'desarrollo e-commerce España',
-    'aprender React desde cero',
-    'curso React gratis español',
-    'tutorial Next.js español',
-  ],
-  authors: [{ name: 'Luis Granero' }],
-  creator: 'Luis Granero',
-  publisher: 'Luis Granero',
-  openGraph: {
-    title: 'Luis Granero — Desarrollador Web Freelance en España | React & Next.js',
-    description: 'Desarrollo web a medida con React y Next.js. +10 años de experiencia, cursos gratuitos y proyectos reales. Freelance senior en España.',
-    url: 'https://www.luisgranero.com',
-    siteName: 'Luis Granero — Desarrollador Web',
-    locale: 'es_ES',
-    type: 'website',
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'Luis Granero — Desarrollador Web Freelance | React & Next.js',
-    description: 'Desarrollo web a medida con React y Next.js. Freelance senior en España con +10 años de experiencia.',
-  },
-  robots: { index: true, follow: true },
-  alternates: {
-    canonical: 'https://www.luisgranero.com',
-  },
-}
+export const revalidate = 3600
 
-// ====== DATA FETCHING ======
-async function getFeaturedProjects() {
-  try {
-    const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000'
-    const res = await fetch(`${baseUrl}/api/public/projects/featured`, { next: { revalidate: 3600 } })
-    if (!res.ok) return []
-    const data = await res.json()
-    return Array.isArray(data) ? data.slice(0, 6) : []
-  } catch { return [] }
-}
+export async function generateMetadata() {
+  const title = 'Luis Granero — Desarrollador Web Freelance en España | React & Next.js'
+  const description = 'Desarrollador web freelance en España con +10 años de experiencia. Especializado en React, Next.js y aplicaciones web a medida. Transforma tu idea en un producto digital real.'
 
-async function getServices() {
-  try {
-    const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000'
-    const res = await fetch(`${baseUrl}/api/public/services`, { next: { revalidate: 3600 } })
-    if (!res.ok) return []
-    const data = await res.json()
-    return data.slice(0, 6)
-  } catch { return [] }
-}
-
-async function getLatestPosts() {
-  try {
-    const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000'
-    const res = await fetch(`${baseUrl}/api/public/blog`, { next: { revalidate: 3600 } })
-    if (!res.ok) return []
-    const data = await res.json()
-    return data.posts?.slice(0, 3) || []
-  } catch { return [] }
-}
-
-async function getFeaturedCourse() {
-  try {
-    const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000'
-    const res = await fetch(`${baseUrl}/api/public/email-courses`, { next: { revalidate: 3600 } })
-    if (!res.ok) return null
-    const data = await res.json()
-    return data.courses?.find((c: any) => c.slug === 'react-5-dias') || null
-  } catch { return null }
+  return {
+    title,
+    description,
+    keywords: [
+      'desarrollador web freelance España',
+      'programador React España',
+      'freelance Next.js',
+      'desarrollo web a medida',
+      'aplicaciones web React',
+      'desarrollo e-commerce España',
+      'aprender React desde cero',
+      'curso React gratis español',
+      'tutorial Next.js español',
+    ],
+    authors: [{ name: 'Luis Granero' }],
+    creator: 'Luis Granero',
+    publisher: 'Luis Granero',
+    openGraph: {
+      title,
+      description: 'Desarrollo web a medida con React y Next.js. +10 años de experiencia, cursos gratuitos y proyectos reales. Freelance senior en España.',
+      url: SITE_URL,
+      siteName: 'Luis Granero — Desarrollador Web',
+      locale: 'es_ES',
+      type: 'website',
+      images: [DEFAULT_OG_IMAGE],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: 'Luis Granero — Desarrollador Web Freelance | React & Next.js',
+      description: 'Desarrollo web a medida con React y Next.js. Freelance senior en España con +10 años de experiencia.',
+      images: [DEFAULT_OG_IMAGE],
+    },
+    robots: { index: true, follow: true },
+    alternates: {
+      canonical: SITE_URL,
+    },
+  }
 }
 
 // ====== LOADING ======
@@ -110,11 +84,39 @@ const techStack = [
   { name: 'Tailwind', sub: 'Styling' },
 ]
 
+type FeaturedProject = {
+  _id: string
+  slug: string
+  title: string
+  description?: string
+  image?: string
+  images?: string[]
+  technologies?: string[]
+  isOwnProject?: boolean
+}
+
+type HomeService = {
+  _id?: string
+  title: string
+  description?: string
+  features?: string[]
+  technologies?: string[]
+}
+
+type LatestPost = {
+  _id: string
+  slug: string
+  title: string
+  excerpt?: string
+  category?: string
+  featuredImage?: string
+}
+
 // ====== PAGE ======
 export default async function HomePage() {
   const [featuredProjects, services, latestPosts, featuredCourse] = await Promise.all([
     getFeaturedProjects(),
-    getServices(),
+    getHomeServices(),
     getLatestPosts(),
     getFeaturedCourse()
   ])
@@ -229,7 +231,7 @@ export default async function HomePage() {
 
             <Suspense fallback={<LoadingGrid />}>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                {featuredProjects.map((project: any) => (
+                {featuredProjects.map((project: FeaturedProject) => (
                   <Link key={project._id} href={`/portfolio/${project.slug}`}>
                     <article className={`group relative bg-[#1E293B] border rounded-xl overflow-hidden transition-all duration-200 cursor-pointer h-full ${
                       project.isOwnProject
@@ -259,7 +261,7 @@ export default async function HomePage() {
                         <p className="text-sm text-slate-400 mb-4 line-clamp-2">
                           {project.description}
                         </p>
-                        {project.technologies?.length > 0 && (
+                        {!!project.technologies?.length && (
                           <div className="flex flex-wrap gap-1.5">
                             {project.technologies.slice(0, 3).map((tech: string, idx: number) => (
                               <span key={idx} className="px-2 py-0.5 text-xs font-mono bg-slate-800 text-cyan-400 rounded border border-slate-700">
@@ -309,7 +311,7 @@ export default async function HomePage() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-              {services.map((service: any) => (
+              {services.map((service: HomeService) => (
                 <article
                   key={service._id}
                   className="group bg-[#1E293B] border border-slate-700/50 rounded-xl p-6 hover:border-slate-600 transition-all duration-200"
@@ -323,7 +325,7 @@ export default async function HomePage() {
                   <p className="text-sm text-slate-400 mb-4 leading-relaxed">
                     {service.description}
                   </p>
-                  {service.features?.length > 0 && (
+                  {!!service.features?.length && (
                     <ul className="space-y-1.5 mb-4">
                       {service.features.slice(0, 3).map((feature: string, idx: number) => (
                         <li key={idx} className="flex items-center gap-2 text-sm text-slate-400">
@@ -333,7 +335,7 @@ export default async function HomePage() {
                       ))}
                     </ul>
                   )}
-                  {service.technologies?.length > 0 && (
+                  {!!service.technologies?.length && (
                     <div className="flex flex-wrap gap-1.5">
                       {service.technologies.slice(0, 3).map((tech: string, idx: number) => (
                         <span key={idx} className="px-2 py-0.5 text-xs font-mono bg-slate-800 text-slate-400 rounded border border-slate-700">
@@ -380,7 +382,7 @@ export default async function HomePage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-              {latestPosts.map((post: any) => (
+              {latestPosts.map((post: LatestPost) => (
                 <Link key={post._id} href={`/blog/${post.slug}`}>
                   <article className="group bg-[#1E293B] border border-slate-700/50 rounded-xl overflow-hidden hover:border-slate-600 transition-all duration-200 cursor-pointer h-full">
                     {post.featuredImage && (
@@ -433,10 +435,10 @@ export default async function HomePage() {
                     Curso gratuito
                   </div>
                   <h2 className="text-2xl md:text-3xl font-bold text-slate-50 mb-4">
-                    {featuredCourse.titulo}
+                    {featuredCourse.title}
                   </h2>
                   <p className="text-slate-400 mb-8 max-w-xl mx-auto">
-                    {featuredCourse.descripcion}
+                    {featuredCourse.description}
                   </p>
                   <div className="flex flex-wrap justify-center gap-6 mb-8 text-sm text-slate-400">
                     <div className="flex items-center gap-2">

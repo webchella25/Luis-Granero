@@ -1,18 +1,43 @@
 // src/lib/rateLimit.js
-// Sistema simple de rate limiting basado en memoria
-// Para producción considera usar Redis o Upstash
+// Rate limit en memoria para VPS de un solo proceso.
+// Limitación: no comparte estado entre procesos PM2 cluster ni sobrevive reinicios.
+// Si se activa cluster o se escala horizontalmente, sustituir memoryStore por un adapter Redis.
 
 const rateLimitStore = new Map()
 
-// Limpiar entradas antiguas cada 10 minutos
-setInterval(() => {
+const memoryStore = {
+  get(key) {
+    return rateLimitStore.get(key)
+  },
+  set(key, record) {
+    rateLimitStore.set(key, record)
+  },
+  delete(key) {
+    rateLimitStore.delete(key)
+  },
+  entries() {
+    return rateLimitStore.entries()
+  },
+}
+
+let store = memoryStore
+
+export function setRateLimitStore(customStore) {
+  store = customStore || memoryStore
+}
+
+function cleanupExpiredRecords() {
   const now = Date.now()
-  for (const [key, value] of rateLimitStore.entries()) {
+  for (const [key, value] of store.entries()) {
     if (now - value.resetTime > 0) {
-      rateLimitStore.delete(key)
+      store.delete(key)
     }
   }
-}, 10 * 60 * 1000)
+}
+
+// En VPS mantiene la memoria acotada. unref evita mantener vivo el proceso por el timer.
+const cleanupTimer = setInterval(cleanupExpiredRecords, 10 * 60 * 1000)
+cleanupTimer.unref?.()
 
 /**
  * Rate limiter simple
@@ -25,7 +50,7 @@ export function rateLimit(identifier, limit = 5, windowMs = 15 * 60 * 1000) {
   const now = Date.now()
   const key = identifier
 
-  let record = rateLimitStore.get(key)
+  let record = store.get(key)
 
   // Si no existe o ya expiró, crear nuevo registro
   if (!record || now > record.resetTime) {
@@ -33,7 +58,7 @@ export function rateLimit(identifier, limit = 5, windowMs = 15 * 60 * 1000) {
       count: 1,
       resetTime: now + windowMs
     }
-    rateLimitStore.set(key, record)
+    store.set(key, record)
 
     return {
       success: true,
@@ -53,7 +78,7 @@ export function rateLimit(identifier, limit = 5, windowMs = 15 * 60 * 1000) {
 
   // Incrementar contador
   record.count++
-  rateLimitStore.set(key, record)
+  store.set(key, record)
 
   return {
     success: true,

@@ -6,6 +6,7 @@ import ProjectsGrid from '../../components/portfolio/ProjectsGrid';
 import TechnologiesUsed from '../../components/portfolio/TechnologiesUsed';
 import SchemaOrg from '../../components/seo/SchemaOrg';
 import { getItemListSchema, getBreadcrumbSchema } from '../../lib/seo/schemas';
+import { DEFAULT_OG_IMAGE, SITE_URL } from '@/lib/seo/metadata';
 
 // ISR - Revalidar cada 24 horas
 export const revalidate = 86400;
@@ -98,8 +99,15 @@ interface PortfolioPageProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }
 
-export async function generateMetadata({ searchParams }: PortfolioPageProps) {
-  const resolvedSearchParams = await searchParams;
+interface PortfolioProject {
+  title: string
+  slug: string
+  image?: string
+  images?: string[]
+  mainImage?: string
+}
+
+export async function generateMetadata() {
   const projects = await getPortfolioData();
   
   return {
@@ -117,16 +125,23 @@ export async function generateMetadata({ searchParams }: PortfolioPageProps) {
       title: 'Portfolio — Luis Granero | Proyectos React & Next.js',
       description: 'Proyectos reales de desarrollo web con React, Next.js y tecnologías modernas. Freelance senior en España.',
       type: 'website',
-      url: 'https://www.luisgranero.com/portfolio',
+      url: `${SITE_URL}/portfolio`,
+      images: [DEFAULT_OG_IMAGE],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: 'Portfolio — Luis Granero | Proyectos React & Next.js',
+      description: 'Proyectos reales de desarrollo web con React, Next.js y tecnologías modernas.',
+      images: [DEFAULT_OG_IMAGE],
     },
     alternates: {
-      canonical: 'https://www.luisgranero.com/portfolio',
+      canonical: `${SITE_URL}/portfolio`,
     },
   };
 }
 
 export default async function PortfolioPage({ searchParams }: PortfolioPageProps) {
-  const resolvedSearchParams = await searchParams;
+  await searchParams;
 
   const [projects, portfolioSettings] = await Promise.all([
     getPortfolioData(),
@@ -138,7 +153,7 @@ export default async function PortfolioPage({ searchParams }: PortfolioPageProps
 
   // Generar schemas
   const portfolioListSchema = getItemListSchema(
-    projects.map((project: any) => ({
+    projects.map((project: PortfolioProject) => ({
       name: project.title,
       url: `/portfolio/${project.slug}`,
       image: project.images?.[0] || project.mainImage || project.image
