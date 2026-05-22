@@ -65,29 +65,6 @@ export default function AgendarPage() {
         throw new Error(data.error || 'Error al agendar')
       }
 
-      // ✅ 2. NUEVO: Pausar secuencias activas del lead
-      if (data.success && lead?._id) {
-        try {
-          const pauseRes = await fetch('/api/sequences/pause-for-lead', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              leadId: lead._id,
-              reason: 'Llamada agendada'
-            })
-          });
-
-          const pauseData = await pauseRes.json();
-          
-          if (pauseData.success) {
-            console.log(`✅ ${pauseData.pausedCount || 0} secuencias pausadas`);
-          }
-        } catch (pauseError) {
-          console.error('Error pausando secuencias:', pauseError);
-          // No fallar si esto da error, el appointment ya se creó
-        }
-      }
-
       setSuccess(true)
     } catch (error: any) {
       setError(error.message || 'Error al agendar la llamada')

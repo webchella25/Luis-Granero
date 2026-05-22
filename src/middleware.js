@@ -132,10 +132,7 @@ export async function middleware(request) {
   if (
     pathname.startsWith('/admin') ||
     pathname.startsWith('/api/admin') ||
-    pathname.startsWith('/api/leads') ||
-    pathname.startsWith('/api/sequences') ||
-    pathname.startsWith('/api/appointments') ||
-    pathname.startsWith('/api/templates')
+    pathname.startsWith('/api/appointments')
   ) {
     const token = request.cookies.get('session')?.value
 
@@ -177,10 +174,7 @@ export const config = {
   matcher: [
     '/admin/:path*',
     '/api/admin/:path*',
-    '/api/leads/:path*',
-    '/api/sequences/:path*',
     '/api/appointments/:path*',
-    '/api/templates/:path*',
     '/studio/:path*',
     '/api/studio/:path*',
   ]

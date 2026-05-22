@@ -5,11 +5,11 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, FileText, Briefcase, Wrench, Mail,
-  MessageSquare, Calculator, Scale, Settings, Search,
-  Users, Zap, FileCode2, Calendar, BarChart2,
+  MessageSquare, Calculator, Scale, Settings,
+  Users, Calendar,
   TrendingUp, UserCircle, GraduationCap, Award,
-  ChevronDown, Globe, Target, X, Layers, Star, BookOpen,
-  Kanban, LineChart, Bell, ChevronsLeft, ChevronsRight
+  ChevronDown, Globe, X, Layers, Star, BookOpen,
+  ChevronsLeft, ChevronsRight
 } from 'lucide-react'
 
 const sections = [
@@ -23,32 +23,10 @@ const sections = [
       { name: 'Servicios', href: '/admin/services', icon: Wrench },
       { name: 'Testimonios', href: '/admin/testimonials', icon: Star },
       { name: 'Mensajes', href: '/admin/messages', icon: MessageSquare },
+      { name: 'Citas Agendadas', href: '/admin/appointments', icon: Calendar },
       { name: 'Calculadora', href: '/admin/calculator', icon: Calculator },
       { name: 'Páginas Legales', href: '/admin/legal', icon: Scale },
       { name: 'Configuración', href: '/admin/settings', icon: Settings },
-    ]
-  },
-  {
-    key: 'crm',
-    title: 'CRM',
-    icon: Target,
-    badge: 'PRO',
-    items: [
-      { name: 'Buscar Leads', href: '/admin/test-scraper', icon: Search },
-      { name: 'Gestión de Leads', href: '/admin/leads', icon: Users },
-      { name: 'Pipeline Kanban', href: '/admin/pipeline', icon: Kanban },
-      { name: 'Secuencias', href: '/admin/sequences', icon: Zap },
-      { name: 'Templates Email', href: '/admin/templates', icon: FileCode2 },
-      { name: 'Citas Agendadas', href: '/admin/appointments', icon: Calendar },
-    ]
-  },
-  {
-    key: 'sales',
-    title: 'Ventas',
-    icon: LineChart,
-    items: [
-      { name: 'Métricas de Ventas', href: '/admin/sales-stats', icon: LineChart },
-      { name: 'Email Analytics', href: '/admin/email-analytics', icon: BarChart2 },
     ]
   },
   {
@@ -77,7 +55,7 @@ const sections = [
 export default function AdminSidebar({ isOpen, onClose, collapsed, onToggleCollapse }) {
   const pathname = usePathname()
   const [sectionsCollapsed, setSectionsCollapsed] = useState({
-    web: false, crm: false, sales: false, analytics: false, students: false
+    web: false, analytics: false, students: false
   })
 
   const toggle = (key) => setSectionsCollapsed(prev => ({ ...prev, [key]: !prev[key] }))

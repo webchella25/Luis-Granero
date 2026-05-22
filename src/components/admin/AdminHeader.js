@@ -148,7 +148,7 @@ export default function AdminHeader({ onMenuClick, user }) {
                         notifications.map(n => (
                           <Link
                             key={n._id}
-                            href={n.leadId ? `/admin/leads/${n.leadId}` : '/admin'}
+                            href="/admin"
                             onClick={() => setShowNotifications(false)}
                             className={`flex gap-3 px-4 py-3 border-b border-slate-800/60 hover:bg-slate-800/40 transition-colors ${!n.isRead ? 'bg-cyan-500/5' : ''}`}
                           >
@@ -164,8 +164,8 @@ export default function AdminHeader({ onMenuClick, user }) {
                       )}
                     </div>
                     <div className="px-4 py-2 border-t border-slate-800">
-                      <Link href="/admin/leads" className="text-xs text-cyan-400 hover:text-cyan-300" onClick={() => setShowNotifications(false)}>
-                        Ver todos los leads →
+                      <Link href="/admin/messages" className="text-xs text-cyan-400 hover:text-cyan-300" onClick={() => setShowNotifications(false)}>
+                        Ver mensajes de contacto →
                       </Link>
                     </div>
                   </div>

@@ -474,14 +474,7 @@ function AppointmentCard({
             <p>📅 {formatDate(appointment.scheduledDate)} {appointment.scheduledTime && `a las ${appointment.scheduledTime}`}</p>
             {appointment.phone && <p>📱 {appointment.phone}</p>}
             {appointment.email && <p>📧 {appointment.email}</p>}
-            {leadId && (
-              <Link 
-                href={`/admin/leads/${leadId}`}
-                className="text-cyan-500 hover:underline inline-flex items-center gap-1"
-              >
-                👤 Ver Lead →
-              </Link>
-            )}
+            {leadId && <p>Origen: contacto web asociado</p>}
           </div>
         </div>
 

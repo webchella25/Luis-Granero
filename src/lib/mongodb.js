@@ -36,7 +36,6 @@ async function connectDB() {
         await import('@/models/Appointment');
         await import('@/models/BlogPost');
         await import('@/models/LearningPath');
-        await import('@/models/MessageTemplate');
         console.log('✅ Modelos cargados correctamente');
       } catch (error) {
         console.warn('⚠️ Error cargando modelos:', error.message);

@@ -8,19 +8,6 @@ const EmailLogSchema = new mongoose.Schema({
     required: true
   },
   
-  sequenceId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Sequence'
-  },
-  
-  enrollmentId: {
-    type: mongoose.Schema.Types.ObjectId
-  },
-  
-  step: {
-    type: Number
-  },
-  
   templateId: {
     type: String
   },
@@ -94,7 +81,7 @@ const EmailLogSchema = new mongoose.Schema({
   // Metadata
   source: {
     type: String,
-    enum: ['manual', 'sequence', 'campaign'],
+    enum: ['manual', 'campaign', 'contact', 'email_course'],
     default: 'manual'
   },
   
@@ -107,9 +94,7 @@ const EmailLogSchema = new mongoose.Schema({
 });
 
 // Índices para optimizar queries
-EmailLogSchema.index({ leadId: 1, sequenceId: 1 });
 EmailLogSchema.index({ status: 1, scheduledFor: 1 });
-EmailLogSchema.index({ enrollmentId: 1 });
 EmailLogSchema.index({ messageId: 1 }, { unique: true, sparse: true });
 EmailLogSchema.index({ emailTo: 1, sentAt: -1 });
 EmailLogSchema.index({ opened: 1, clicked: 1 });

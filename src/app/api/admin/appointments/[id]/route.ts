@@ -2,8 +2,6 @@
 import { NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import Appointment from '@/models/Appointment';
-import SequenceEnrollment from '@/models/SequenceEnrollment';
-import EmailLog from '@/models/EmailLog';
 import Lead from '@/models/Lead';
 
 // PATCH - Actualizar estado de una cita

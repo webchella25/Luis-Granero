@@ -129,13 +129,8 @@ const leadSchema = new mongoose.Schema({
       enum: ['success', 'no_response', 'interested', 'not_interested', 'follow_up', 'other'],
       default: 'other'
     },
-    // ✅ NUEVO: Para plantillas de Instagram
-    templateUsed: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'MessageTemplate'
-    },
     templateName: String,
-    messageContent: String, // El mensaje enviado
+    messageContent: String,
     responded: {
       type: Boolean,
       default: false
